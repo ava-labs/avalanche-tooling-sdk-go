@@ -21,23 +21,6 @@ type SubnetParams struct {
 	CustomVM CustomVMParams
 }
 
-type CustomVMParams struct {
-	// File path of the Custom VM binary to use
-	VMFilePath string
-
-	// Git Repo URL to be used to build Custom VM
-	// Only set CustomVMRepoURL value when VMFilePath value is not set
-	CustomVMRepoURL string
-
-	// Git branch or commit to be used to build Custom VM
-	// Only set CustomVMBranch value when VMFilePath value is not set
-	CustomVMBranch string
-
-	// Filepath of the script to be used to build Custom VM
-	// Only set CustomVMBuildScript value when VMFilePath value is not set
-	CustomVMBuildScript string
-}
-
 type SubnetEVMParams struct {
 	// Version of Subnet-EVM to use
 	// Do not set EvmVersion value if UseLatestReleasedEvmVersion or
@@ -81,4 +64,21 @@ type SubnetEVMParams struct {
 	// See https://docs.avax.network/build/cross-chain/awm/relayer for
 	// information on AWM Relayer
 	EnableRelayer bool
+}
+
+type CustomVMParams struct {
+	// File path of the Custom VM binary to use
+	VMFilePath string
+
+	// Git Repo URL to be used to build Custom VM
+	// Only set CustomVMRepoURL value when VMFilePath value is not set
+	CustomVMRepoURL string
+
+	// Git branch or commit to be used to build Custom VM
+	// Only set CustomVMBranch value when VMFilePath value is not set
+	CustomVMBranch string
+
+	// Filepath of the script to be used to build Custom VM
+	// Only set CustomVMBuildScript value when VMFilePath value is not set
+	CustomVMBuildScript string
 }
