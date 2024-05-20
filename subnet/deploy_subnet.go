@@ -9,3 +9,8 @@ import "avalanche-tooling-sdk-go/avalanche"
 func DeploySubnet(subnet avalanche.Subnet) error {
 	return nil
 }
+
+// DeployBlockchain deploys blockchain to specified network
+func DeployBlockchain(subnet avalanche.Subnet) error {
+	return nil
+}
