@@ -3,6 +3,8 @@
 
 package avalanche
 
+import "avalanchego/ids"
+
 type SubnetParams struct {
 	// File path of Genesis to use
 	// Do not set EvmChainID, EvmToken and EvmDefaults values in SubnetEVM
@@ -81,4 +83,18 @@ type CustomVMParams struct {
 	// Filepath of the script to be used to build Custom VM
 	// Only set CustomVMBuildScript value when VMFilePath value is not set
 	CustomVMBuildScript string
+}
+
+type Subnet struct {
+	Genesis []byte
+
+	ControlKeys []string
+
+	SubnetAuthKeys []string
+
+	SubnetID ids.ID
+
+	TransferSubnetOwnershipTxID ids.ID
+
+	Chain string
 }

@@ -5,6 +5,7 @@ package subnet
 
 import "avalanche-tooling-sdk-go/avalanche"
 
-func New(subnetParams avalanche.SubnetParams) (*avalanche.Subnet, error) {
-	return nil, nil
+// DeploySubnet deploys subnet to specified network
+func DeploySubnet(subnet avalanche.Subnet) error {
+	return nil
 }
