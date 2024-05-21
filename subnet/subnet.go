@@ -21,6 +21,8 @@ type SubnetParams struct {
 	// Custom VM parameters to use
 	// Do not set CustomVM value if you are using Subnet-EVM
 	CustomVM CustomVMParams
+
+	Name string
 }
 
 type SubnetEVMParams struct {
@@ -86,11 +88,13 @@ type CustomVMParams struct {
 }
 
 type Subnet struct {
+	Name string
+
 	Genesis []byte
 
 	ControlKeys []string
 
-	SubnetAuthKeys []string
+	SubnetAuthKeys []ids.ShortID
 
 	SubnetID ids.ID
 
@@ -101,4 +105,10 @@ type Subnet struct {
 	Threshold uint32
 
 	VMID ids.ID
+
+	RPCVersion int
+
+	TokenName string
+
+	TokenSymbol string
 }
