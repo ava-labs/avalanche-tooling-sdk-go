@@ -31,7 +31,7 @@ type Node struct {
 	// Cloud configuration for the node
 	Cloud SupportedCloud
 
-	//CloudConfig is the cloud specific configuration for the node
+	// CloudConfig is the cloud specific configuration for the node
 	CloudConfig interface{}
 
 	// Roles of the node

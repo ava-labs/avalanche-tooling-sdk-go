@@ -3,6 +3,23 @@
 
 package node
 
+type CloudSpec struct {
+	CommonSpec
+	AWSSpec
+	GCPSpec
+}
+
+type CommonSpec struct {
+	// Region to use for the node
+	Region string
+
+	// Image to use for the node
+	Image string
+
+	// Instance type to use for the node
+	InstanceType string
+}
+
 // AWS specific configuration
 type AWSSpec struct {
 	// AWS profile to use for the node
@@ -25,15 +42,6 @@ type AWSSpec struct {
 
 	// AWS security group to use for the node
 	SecurityGroup string
-
-	// AWS Region to use for the node
-	Region string
-
-	// AWS AMI id to use for the node
-	Image string
-
-	// AWS Instance type to use for the node
-	InstanceType string
 }
 
 type GCPSpec struct {
@@ -48,10 +56,4 @@ type GCPSpec struct {
 
 	// GCP network label to use for the node
 	Network string
-
-	// GCP Image to use for the node
-	Image string
-
-	// GCP Instance type to use for the node
-	InstanceType string
 }
