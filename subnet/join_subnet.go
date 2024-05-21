@@ -3,9 +3,7 @@
 
 package subnet
 
-import "avalanche-tooling-sdk-go/avalanche"
-
-// JoinSubnet
-func JoinSubnet(subnet avalanche.Subnet) error {
+// JoinSubnet configures validator node to begin validating a new Subnet
+func JoinSubnet(subnet Subnet) error {
 	return nil
 }

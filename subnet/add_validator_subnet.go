@@ -3,9 +3,7 @@
 
 package subnet
 
-import "avalanche-tooling-sdk-go/avalanche"
-
 // AddValidator adds validator to subnet
-func AddValidator(subnet avalanche.Subnet) error {
+func AddValidator(subnet Subnet) error {
 	return nil
 }
