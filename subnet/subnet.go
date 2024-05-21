@@ -3,5 +3,4 @@
 
 package subnet
 
-type Subnet struct {
-}
+type Subnet struct{}

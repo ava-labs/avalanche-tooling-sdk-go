@@ -3,32 +3,6 @@
 
 package node
 
-// CloudConfig contains the configuration for deploying a node in the cloud
-type CloudConfig struct {
-	// Cloud region to deploy the node in
-	Region string
-
-	// Cloud image to use for the node.
-	// For AWS it's the AMI ID, for GCP it's the image name
-	Image string
-
-	// Cloud key pair to use for the node
-	KeyPair string
-
-	// Cloud security group to use for the node.
-	SecurityGroup string
-
-	// Cloud static IP assigned to the node
-	// It's empty if the node has ephemeral IP
-	ElasticIP string
-
-	// Cloud instance type to use for the node
-	InstanceType string
-
-	// Cloud specific configuration
-	CloudSpec interface{}
-}
-
 // AWS specific configuration
 type AWSSpec struct {
 	// AWS profile to use for the node
@@ -45,6 +19,21 @@ type AWSSpec struct {
 
 	// AWS volume throughput
 	VolumeThroughput int
+
+	// AWS Elastic IP to use for the node
+	ElasticIP string
+
+	// AWS security group to use for the node
+	SecurityGroup string
+
+	// AWS Region to use for the node
+	Region string
+
+	// AWS AMI id to use for the node
+	Image string
+
+	// AWS Instance type to use for the node
+	InstanceType string
 }
 
 type GCPSpec struct {
@@ -53,4 +42,16 @@ type GCPSpec struct {
 
 	// GCP credentials to use for the node
 	Credentials string
+
+	// GCP static IP to use for the node
+	StaticIP string
+
+	// GCP network label to use for the node
+	Network string
+
+	// GCP Image to use for the node
+	Image string
+
+	// GCP Instance type to use for the node
+	InstanceType string
 }
