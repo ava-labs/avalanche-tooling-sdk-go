@@ -6,7 +6,7 @@ package node
 // SSHConfig contains the configuration for connecting to a node over SSH
 type SSHConfig struct {
 	// Username to use when connecting to the nodeßß
-	User string
+	user string
 
 	// Path to the private key to use when connecting to the node
 	// If this is empty, the SSH agent will be used
