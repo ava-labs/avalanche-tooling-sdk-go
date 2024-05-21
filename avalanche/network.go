@@ -5,14 +5,6 @@ package avalanche
 
 type NetworkKind int64
 
-const (
-	Undefined NetworkKind = iota
-	Mainnet
-	Fuji
-	LocalNetwork
-	Devnet
-)
-
 type Network struct {
 	Kind NetworkKind
 
