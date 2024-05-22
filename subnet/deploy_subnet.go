@@ -44,10 +44,10 @@ func createSubnetTx(subnet Subnet, wallet primary.Wallet) (*txs.Tx, error) {
 
 // createBlockchainTx creates uncommitted createBlockchain transaction
 func createBlockchainTx(subnet Subnet, wallet primary.Wallet, network avalanche.Network, keyChain avalanche.Keychain) (*txs.Tx, error) {
-	wallet, err := loadCacheWallet(network, keyChain, wallet, subnet.SubnetID, subnet.TransferSubnetOwnershipTxID)
-	if err != nil {
-		return nil, err
-	}
+	//wallet, err := loadCacheWallet(network, keyChain, wallet, subnet.SubnetID, subnet.TransferSubnetOwnershipTxID)
+	//if err != nil {
+	//	return nil, err
+	//}
 	fxIDs := make([]ids.ID, 0)
 	options := getMultisigTxOptions(keyChain.Keychain, subnet.SubnetAuthKeys)
 	// create tx
