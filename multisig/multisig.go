@@ -3,10 +3,10 @@
 package multisig
 
 import (
-	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
 type PChainTxKind int
@@ -41,7 +41,7 @@ func (*PChainMultisig) FromFile(_ string) error {
 	return nil
 }
 
-func (*PChainMultisig) Sign(_ keychain.Keychain) error {
+func (*PChainMultisig) Sign(_ *primary.Wallet) error {
 	return nil
 }
 
