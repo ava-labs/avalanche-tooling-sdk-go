@@ -11,6 +11,4 @@ type Network struct {
 	ID uint32
 
 	Endpoint string
-
-	ClusterName string
 }
