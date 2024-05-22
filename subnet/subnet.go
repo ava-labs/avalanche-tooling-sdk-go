@@ -3,7 +3,10 @@
 
 package subnet
 
-import "github.com/ava-labs/avalanchego/ids"
+import (
+	"avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanchego/ids"
+)
 
 type SubnetParams struct {
 	// File path of Genesis to use
@@ -111,4 +114,13 @@ type Subnet struct {
 	TokenName string
 
 	TokenSymbol string
+
+	Logger avalanche.LeveledLoggerInterface
+}
+
+func New(client *avalanche.Client, subnetParams SubnetParams) Subnet {
+	subnet := Subnet{
+		Logger: client.Logger,
+	}
+	return subnet
 }
