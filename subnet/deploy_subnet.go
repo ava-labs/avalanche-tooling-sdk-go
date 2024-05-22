@@ -5,7 +5,6 @@ package subnet
 
 import (
 	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/utils"
 	"context"
 	"fmt"
 	"github.com/ava-labs/avalanchego/ids"
@@ -43,11 +42,7 @@ func createSubnetTx(subnet Subnet, wallet primary.Wallet) (*txs.Tx, error) {
 }
 
 // createBlockchainTx creates uncommitted createBlockchain transaction
-func createBlockchainTx(subnet Subnet, wallet primary.Wallet, network avalanche.Network, keyChain avalanche.Keychain) (*txs.Tx, error) {
-	wallet, err := loadCacheWallet(network, keyChain, wallet, subnet.SubnetID, subnet.TransferSubnetOwnershipTxID)
-	if err != nil {
-		return nil, err
-	}
+func createBlockchainTx(subnet Subnet, wallet primary.Wallet, keyChain avalanche.Keychain) (*txs.Tx, error) {
 	fxIDs := make([]ids.ID, 0)
 	options := getMultisigTxOptions(keyChain.Keychain, subnet.SubnetAuthKeys)
 	// create tx
@@ -86,31 +81,4 @@ func getMultisigTxOptions(keychain keychain.Keychain, subnetAuthKeys []ids.Short
 	}
 	options = append(options, common.WithChangeOwner(changeOwner))
 	return options
-}
-
-func loadCacheWallet(network avalanche.Network, keyChain avalanche.Keychain, wallet primary.Wallet, preloadTxs ...ids.ID) (primary.Wallet, error) {
-	var err error
-	if wallet == nil {
-		wallet, err = loadWallet(network, keyChain, preloadTxs...)
-	}
-	return wallet, err
-}
-
-func loadWallet(network avalanche.Network, keyChain avalanche.Keychain, preloadTxs ...ids.ID) (primary.Wallet, error) {
-	ctx := context.Background()
-	// filter out ids.Empty txs
-	filteredTxs := utils.Filter(preloadTxs, func(e ids.ID) bool { return e != ids.Empty })
-	wallet, err := primary.MakeWallet(
-		ctx,
-		&primary.WalletConfig{
-			URI:              network.Endpoint,
-			AVAXKeychain:     keyChain.Keychain,
-			EthKeychain:      secp256k1fx.NewKeychain(),
-			PChainTxsToFetch: set.Of(filteredTxs...),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return wallet, nil
 }
