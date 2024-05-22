@@ -118,9 +118,9 @@ type Subnet struct {
 	Logger avalanche.LeveledLoggerInterface
 }
 
-func New(client *avalanche.Client, subnetParams SubnetParams) Subnet {
+func New(client *avalanche.Client, subnetParams *SubnetParams) *Subnet {
 	subnet := Subnet{
 		Logger: client.Logger,
 	}
-	return subnet
+	return &subnet
 }

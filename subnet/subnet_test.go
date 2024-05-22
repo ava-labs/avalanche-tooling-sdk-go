@@ -25,7 +25,7 @@ func TestSubnetDeploy(t *testing.T) {
 			EnableRelayer:               true,
 		},
 	}
-	newSubnet := New(client, subnetParams)
+	newSubnet := New(client, &subnetParams)
 	ctx := context.Background()
 	wallet, _ := primary.MakeWallet(
 		ctx,

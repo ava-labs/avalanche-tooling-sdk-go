@@ -19,7 +19,7 @@ import (
 )
 
 // createSubnetTx creates uncommitted createSubnet transaction
-func createSubnetTx(subnet Subnet, wallet primary.Wallet) (*txs.Tx, error) {
+func createSubnetTx(subnet *Subnet, wallet primary.Wallet) (*txs.Tx, error) {
 	addrs, err := address.ParseToIDs(subnet.ControlKeys)
 	if err != nil {
 		return nil, fmt.Errorf("failure parsing control keys: %w", err)
@@ -43,7 +43,7 @@ func createSubnetTx(subnet Subnet, wallet primary.Wallet) (*txs.Tx, error) {
 }
 
 // createBlockchainTx creates uncommitted createBlockchain transaction
-func createBlockchainTx(subnet Subnet, wallet primary.Wallet, network avalanche.Network, keyChain avalanche.Keychain) (*txs.Tx, error) {
+func createBlockchainTx(subnet *Subnet, wallet primary.Wallet, network avalanche.Network, keyChain avalanche.Keychain) (*txs.Tx, error) {
 	wallet, err := loadCacheWallet(network, keyChain, wallet, subnet.SubnetID, subnet.TransferSubnetOwnershipTxID)
 	if err != nil {
 		return nil, err
