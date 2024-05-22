@@ -9,7 +9,6 @@ import (
 
 	"avalanche-tooling-sdk-go/avalanche"
 
-  "avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
