@@ -13,7 +13,7 @@ import (
 )
 
 func TestSubnetDeploy(t *testing.T) {
-	client := avalanche.New()
+	baseApp := avalanche.New()
 	subnetParams := SubnetParams{
 		SubnetEVM: SubnetEVMParams{
 			EvmChainID:                  1234567,
@@ -25,7 +25,7 @@ func TestSubnetDeploy(t *testing.T) {
 			EnableRelayer:               true,
 		},
 	}
-	newSubnet := New(client, &subnetParams)
+	newSubnet := New(baseApp, &subnetParams)
 	ctx := context.Background()
 	wallet, _ := primary.MakeWallet(
 		ctx,
