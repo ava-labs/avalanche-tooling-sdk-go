@@ -4,7 +4,11 @@ go 1.21.9
 
 toolchain go1.21.10
 
-require github.com/ava-labs/avalanchego v1.11.5
+require (
+	github.com/ava-labs/avalanchego v1.11.5
+	github.com/ava-labs/subnet-evm v0.6.4
+    github.com/ava-labs/teleporter v1.0.0
+)
 
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect

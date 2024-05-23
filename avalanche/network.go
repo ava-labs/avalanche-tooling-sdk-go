@@ -5,6 +5,28 @@ package avalanche
 
 type NetworkKind int64
 
+const (
+	Undefined NetworkKind = iota
+	Mainnet
+	Fuji
+	Local
+	Devnet
+)
+
+func (nk NetworkKind) String() string {
+	switch nk {
+	case Mainnet:
+		return "Mainnet"
+	case Fuji:
+		return "Fuji"
+	case Local:
+		return "Local Network"
+	case Devnet:
+		return "Devnet"
+	}
+	return "invalid network"
+}
+
 type Network struct {
 	Kind NetworkKind
 
@@ -12,3 +34,5 @@ type Network struct {
 
 	Endpoint string
 }
+
+var UndefinedNetwork = Network{}
