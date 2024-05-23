@@ -13,7 +13,7 @@ import (
 )
 
 func TestSubnetDeploy(t *testing.T) {
-	client := avalanche.New()
+	client := avalanche.New(avalanche.DefaultLeveledLogger)
 	subnetParams := SubnetParams{
 		SubnetEVM: SubnetEVMParams{
 			EvmChainID:                  1234567,
