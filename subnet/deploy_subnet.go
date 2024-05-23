@@ -19,15 +19,15 @@ import (
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 )
 
-// createSubnetTx creates uncommitted createSubnet transaction
-func createSubnetTx(subnet *Subnet, wallet primary.Wallet) (*txs.Tx, error) {
-	addrs, err := address.ParseToIDs(subnet.ControlKeys)
+// CreateSubnetTx creates uncommitted createSubnet transaction
+func (c *Subnet) CreateSubnetTx(wallet primary.Wallet) (*txs.Tx, error) {
+	addrs, err := address.ParseToIDs(c.ControlKeys)
 	if err != nil {
 		return nil, fmt.Errorf("failure parsing control keys: %w", err)
 	}
 	owners := &secp256k1fx.OutputOwners{
 		Addrs:     addrs,
-		Threshold: subnet.Threshold,
+		Threshold: c.Threshold,
 		Locktime:  0,
 	}
 	unsignedTx, err := wallet.P().Builder().NewCreateSubnetTx(
@@ -43,17 +43,17 @@ func createSubnetTx(subnet *Subnet, wallet primary.Wallet) (*txs.Tx, error) {
 	return &tx, nil
 }
 
-// createBlockchainTx creates uncommitted createBlockchain transaction
-func createBlockchainTx(subnet Subnet, wallet primary.Wallet, keyChain avalanche.Keychain) (*txs.Tx, error) {
+// CreateBlockchainTx creates uncommitted createBlockchain transaction
+func (c *Subnet) CreateBlockchainTx(wallet primary.Wallet, keyChain avalanche.Keychain) (*txs.Tx, error) {
 	fxIDs := make([]ids.ID, 0)
-	options := getMultisigTxOptions(keyChain.Keychain, subnet.SubnetAuthKeys)
+	options := getMultisigTxOptions(keyChain.Keychain, c.SubnetAuthKeys)
 	// create tx
 	unsignedTx, err := wallet.P().Builder().NewCreateChainTx(
-		subnet.SubnetID,
-		subnet.Genesis,
-		subnet.VMID,
+		c.SubnetID,
+		c.Genesis,
+		c.VMID,
 		fxIDs,
-		subnet.Name,
+		c.Name,
 		options...,
 	)
 	if err != nil {
