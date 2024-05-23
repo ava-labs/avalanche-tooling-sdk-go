@@ -4,6 +4,8 @@
 package subnet
 
 import (
+	"context"
+
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/set"
@@ -16,6 +18,17 @@ type Wallet struct {
 	primary.Wallet
 	keychain keychain.Keychain
 	options  []common.Option
+}
+
+func NewWallet(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
+	wallet, err := primary.MakeWallet(
+		ctx,
+		config,
+	)
+	return Wallet{
+		Wallet:   wallet,
+		keychain: config.AVAXKeychain,
+	}, err
 }
 
 // secure that a fee paying address (wallet's keychain) will receive the change,
