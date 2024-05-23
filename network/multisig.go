@@ -3,7 +3,7 @@
 package multisig
 
 import (
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -69,8 +69,8 @@ func (*PChainMultisig) GetKind() PChainTxKind {
 	return Invalid
 }
 
-func (*PChainMultisig) GetNetwork() (network.Network, error) {
-	return nil, nil
+func (*PChainMultisig) GetNetwork() (avalanche.Network, error) {
+	return avalanche.UndefinedNetwork, nil
 }
 
 func (*PChainMultisig) GetSubnetID() (ids.ID, error) {
