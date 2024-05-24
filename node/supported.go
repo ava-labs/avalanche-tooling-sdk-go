@@ -6,8 +6,8 @@ package node
 type SupportedCloud int
 
 const (
-	AWS SupportedCloud = iota
-	GCP
+	AWSCloud SupportedCloud = iota
+	GCPCloud
 	Docker // fake Cloud used for E2E tests
 )
 

@@ -3,7 +3,7 @@
 
 package node
 
-// Destoy destroys a node.
-func Destoy(node Node) error {
+// Destroy destroys a node.
+func Destroy(node Node) error {
 	return nil
 }

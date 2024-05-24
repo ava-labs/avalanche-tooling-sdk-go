@@ -3,13 +3,13 @@
 
 package node
 
-type CloudSpec struct {
-	CommonSpec
-	AWSSpec
-	GCPSpec
+type CloudParams struct {
+	CommonParams
+	AWSParams
+	GCPParams
 }
 
-type CommonSpec struct {
+type CommonParams struct {
 	// Region to use for the node
 	Region string
 
@@ -18,10 +18,13 @@ type CommonSpec struct {
 
 	// Instance type to use for the node
 	InstanceType string
+
+	// Static IP to use for the node
+	StaticIP string
 }
 
-// AWS specific configuration
-type AWSSpec struct {
+// AWS Paramsific configuration
+type AWSParams struct {
 	// AWS profile to use for the node
 	Profile string
 
@@ -37,22 +40,16 @@ type AWSSpec struct {
 	// AWS volume throughput
 	VolumeThroughput int
 
-	// AWS Elastic IP to use for the node
-	ElasticIP string
-
 	// AWS security group to use for the node
 	SecurityGroup string
 }
 
-type GCPSpec struct {
+type GCPParams struct {
 	// GCP project to use for the node
 	Project string
 
 	// GCP credentials to use for the node
 	Credentials string
-
-	// GCP static IP to use for the node
-	StaticIP string
 
 	// GCP network label to use for the node
 	Network string
