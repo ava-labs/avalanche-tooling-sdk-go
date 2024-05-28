@@ -36,7 +36,7 @@ func TestSubnetDeploy(t *testing.T) {
 			PChainTxsToFetch: nil,
 		},
 	)
-	//deploy Subnet returns tx ID and error
+	// deploy Subnet returns tx ID and error
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
 	fmt.Printf("deploySubnetTx %s", deploySubnetTx)
 }
