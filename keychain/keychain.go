@@ -5,11 +5,12 @@ package keychain
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
-
 	"avalanche-tooling-sdk-go/avalanche"
+	"avalanche-tooling-sdk-go/key"
 	"avalanche-tooling-sdk-go/ledger"
 	"avalanche-tooling-sdk-go/utils"
+
+	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 
 	"golang.org/x/exp/maps"
 )
@@ -65,61 +66,60 @@ func (kc *Keychain) AddLedgerFunds(amount uint64) error {
 	return fmt.Errorf("keychain is not ledger enabled")
 }
 
-func GetKeychain(
-	app *application.Avalanche,
+func NewKeychain(
+	network avalanche.Network,
+	keyPath string,
 	useEwoq bool,
 	useLedger bool,
 	ledgerAddresses []string,
-	network models.Network,
 	requiredFunds uint64,
 ) (*Keychain, error) {
 	// get keychain accessor
 	if useLedger {
-		ledgerDevice, err := ledger.New()
+		dev, err := ledger.New()
 		if err != nil {
 			return nil, err
 		}
-		// always have index 0, for change
-		ledgerIndices := []uint32{0}
+		kc := Keychain{
+			ledgerDevice: dev,
+			network:      network,
+		}
+		if err := kc.AddLedgerIndices([]uint32{0}); err != nil {
+			return nil, err
+		}
 		if requiredFunds > 0 {
-			ledgerIndicesAux, err := searchForFundedLedgerIndices(network, ledgerDevice, requiredFunds)
-			if err != nil {
+			if err := kc.AddLedgerFunds(requiredFunds); err != nil {
 				return nil, err
 			}
-			ledgerIndices = append(ledgerIndices, ledgerIndicesAux...)
 		}
 		if len(ledgerAddresses) > 0 {
-			ledgerIndicesAux, err := getLedgerIndices(ledgerDevice, ledgerAddresses)
-			if err != nil {
+			if err := kc.AddLedgerAddresses(ledgerAddresses); err != nil {
 				return nil, err
 			}
-			ledgerIndices = append(ledgerIndices, ledgerIndicesAux...)
 		}
-		ledgerIndicesSet := set.Set[uint32]{}
-		ledgerIndicesSet.Add(ledgerIndices...)
-		ledgerIndices = ledgerIndicesSet.List()
-		utils.SortUint32(ledgerIndices)
-		if err := showLedgerAddresses(network, ledgerDevice, ledgerIndices); err != nil {
-			return nil, err
-		}
-		kc, err := keychain.NewLedgerKeychainFromIndices(ledgerDevice, ledgerIndices)
-		if err != nil {
-			return nil, err
-		}
-		return NewKeychain(network, kc, ledgerDevice, ledgerIndices), nil
+		return &kc, nil
 	}
 	if useEwoq {
-		sf, err := app.GetKey("ewoq", network, false)
+		sf, err := key.LoadEwoq()
 		if err != nil {
 			return nil, err
 		}
-		kc := sf.KeyChain()
-		return NewKeychain(network, kc, nil, nil), nil
+		kc := Keychain{
+			Keychain: sf.KeyChain(),
+			network:  network,
+		}
+		return &kc, nil
 	}
-	sf, err := app.GetKey(keyName, network, false)
-	if err != nil {
-		return nil, err
+	if keyPath != "" {
+		sf, err := key.LoadSoft(keyPath)
+		if err != nil {
+			return nil, err
+		}
+		kc := Keychain{
+			Keychain: sf.KeyChain(),
+			network:  network,
+		}
+		return &kc, nil
 	}
-	kc := sf.KeyChain()
-	return NewKeychain(network, kc, nil, nil), nil
+	return nil, fmt.Errorf("not keychain option defined")
 }

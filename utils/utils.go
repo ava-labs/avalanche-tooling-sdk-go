@@ -4,6 +4,7 @@ package utils
 
 import (
 	"context"
+	"os"
 	"sort"
 	"time"
 
@@ -12,7 +13,8 @@ import (
 )
 
 const (
-	APIRequestTimeout = 30 * time.Second
+	APIRequestTimeout      = 30 * time.Second
+	WriteReadUserOnlyPerms = 0o600
 )
 
 func MapE[T, U any](input []T, f func(T) (U, error)) ([]U, error) {
@@ -59,4 +61,13 @@ func P(
 			return address.Format("P", networkHRP, addr[:])
 		},
 	)
+}
+
+// FileExists checks if a file exists.
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

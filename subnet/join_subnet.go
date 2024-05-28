@@ -4,6 +4,6 @@
 package subnet
 
 // JoinSubnet configures validator node to begin validating a new Subnet
-func JoinSubnet(subnet Subnet) error {
+func JoinSubnet(_ Subnet) error {
 	return nil
 }

@@ -23,6 +23,10 @@ func New(_ *txs.Tx) *Multisig {
 	return nil
 }
 
+func (*Multisig) String() string {
+	return ""
+}
+
 func (*Multisig) ToBytes() ([]byte, error) {
 	return nil, nil
 }

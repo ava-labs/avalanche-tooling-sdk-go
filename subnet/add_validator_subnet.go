@@ -4,6 +4,6 @@
 package subnet
 
 // AddValidator adds validator to subnet
-func AddValidator(subnet Subnet) error {
+func AddValidator(_ Subnet) error {
 	return nil
 }
