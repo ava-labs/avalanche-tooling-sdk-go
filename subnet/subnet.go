@@ -5,6 +5,7 @@ package subnet
 
 import (
 	"avalanche-tooling-sdk-go/avalanche"
+
 	"github.com/ava-labs/avalanchego/ids"
 )
 
@@ -118,7 +119,7 @@ type Subnet struct {
 	Logger avalanche.LeveledLoggerInterface
 }
 
-func New(client *avalanche.BaseApp, subnetParams *SubnetParams) *Subnet {
+func New(client *avalanche.BaseApp, _ *SubnetParams) *Subnet {
 	subnet := Subnet{
 		Logger: client.Logger,
 	}

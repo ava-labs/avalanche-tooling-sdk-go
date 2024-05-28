@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"avalanche-tooling-sdk-go/multisig"
+	"avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
@@ -16,7 +17,7 @@ import (
 )
 
 // CreateSubnetTx creates uncommitted createSubnet transaction
-func (c *Subnet) CreateSubnetTx(wallet Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
 	addrs, err := address.ParseToIDs(c.ControlKeys)
 	if err != nil {
 		return nil, fmt.Errorf("failure parsing control keys: %w", err)
@@ -40,7 +41,7 @@ func (c *Subnet) CreateSubnetTx(wallet Wallet) (*multisig.Multisig, error) {
 }
 
 // CreateBlockchainTx creates uncommitted createBlockchain transaction
-func (c *Subnet) CreateBlockchainTx(wallet Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
 	wallet.SetSubnetAuthMultisig(c.SubnetAuthKeys)
 	// create tx
 	fxIDs := make([]ids.ID, 0)

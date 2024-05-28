@@ -1,13 +1,12 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-
-package subnet
+package wallet
 
 import (
+	"avalanche-tooling-sdk-go/keychain"
 	"context"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -20,14 +19,16 @@ type Wallet struct {
 	options  []common.Option
 }
 
-func NewWallet(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
+func New(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
 	wallet, err := primary.MakeWallet(
 		ctx,
 		config,
 	)
 	return Wallet{
-		Wallet:   wallet,
-		keychain: config.AVAXKeychain,
+		Wallet: wallet,
+		keychain: keychain.Keychain{
+			Keychain: config.AVAXKeychain,
+		},
 	}, err
 }
 
@@ -41,7 +42,6 @@ func (w *Wallet) SecureWalletIsChangeOwner() {
 		Threshold: 1,
 		Addrs:     []ids.ShortID{changeAddr},
 	}
-	// TODO: avoid continuosly adding the options in succesive calls
 	w.options = append(w.options, common.WithChangeOwner(changeOwner))
 	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.options...)
 }
@@ -52,7 +52,6 @@ func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
 	addrsSet := set.Set[ids.ShortID]{}
 	addrsSet.Add(addrs...)
 	addrsSet.Add(authKeys...)
-	// TODO: avoid continuosly adding the options in succesive calls
 	w.options = append(w.options, common.WithCustomAddresses(addrsSet))
 	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.options...)
 }
