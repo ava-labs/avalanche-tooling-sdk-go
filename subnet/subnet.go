@@ -4,16 +4,17 @@
 package subnet
 
 import (
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/key"
-	"avalanche-tooling-sdk-go/teleporter"
-	"avalanche-tooling-sdk-go/vm"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 	"time"
+
+	"avalanche-tooling-sdk-go/avalanche"
+	"avalanche-tooling-sdk-go/key"
+	"avalanche-tooling-sdk-go/teleporter"
+	"avalanche-tooling-sdk-go/vm"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/coreth/utils"

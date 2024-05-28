@@ -4,12 +4,14 @@
 package subnet
 
 import (
-	"avalanche-tooling-sdk-go/avalanche"
 	"context"
 	"fmt"
+	"testing"
+
+	"avalanche-tooling-sdk-go/avalanche"
+
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
-	"testing"
 )
 
 func TestSubnetDeploy(t *testing.T) {
