@@ -46,29 +46,11 @@ type SubnetParams struct {
 }
 
 type SubnetEVMParams struct {
-	//// Version of Subnet-EVM to use
-	//// Do not set EvmVersion value if UseLatestReleasedEvmVersion or
-	//// UseLatestPreReleasedEvmVersion is set to true
-	//
-	//// Available Subnet-EVM versions can be found at https://github.com/ava-labs/subnet-evm/releases
-	//EvmVersion string
-
 	// Chain ID to use in Subnet-EVM
 	EvmChainID uint64
 
-	//// Token name to use in Subnet-EVM
-	//EvmToken string
-
 	// Use default settings for fees, airdrop, precompiles and teleporter in Subnet-EVM
 	EvmDefaults bool
-
-	//// Use latest Subnet-EVM pre-released version
-	//// Available Subnet-EVM versions can be found at https://github.com/ava-labs/subnet-evm/releases
-	//UseLatestPreReleasedEvmVersion bool
-	//
-	//// Use latest Subnet-EVM version
-	//// Available Subnet-EVM versions can be found at https://github.com/ava-labs/subnet-evm/releases
-	//UseLatestReleasedEvmVersion bool
 
 	// Enable Avalanche Warp Messaging (AWM) when deploying a VM
 
@@ -260,12 +242,6 @@ func ensureAdminsHaveBalance(admins []common.Address, alloc core.GenesisAlloc) e
 }
 
 func getNewAllocation(defaultAirdropAmount string, key *key.SoftKey) (core.GenesisAlloc, error) {
-	//keyName := getDefaultSubnetAirdropKeyName(subnetName)
-	//k, err := app.GetKey(keyName, models.NewLocalNetwork(), true)
-	//if err != nil {
-	//	return core.GenesisAlloc{}, err
-	//}
-	//ux.Logger.PrintToUser("prefunding address %s with balance %s", k.C(), defaultAirdropAmount)
 	allocation := core.GenesisAlloc{}
 	defaultAmount, ok := new(big.Int).SetString(defaultAirdropAmount, 10)
 	if !ok {
