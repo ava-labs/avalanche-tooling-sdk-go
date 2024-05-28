@@ -7,9 +7,10 @@ import (
 	"avalanche-tooling-sdk-go/avalanche"
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
-	"testing"
 )
 
 func TestSubnetDeploy(t *testing.T) {
@@ -27,7 +28,7 @@ func TestSubnetDeploy(t *testing.T) {
 	}
 	newSubnet := New(baseApp, &subnetParams)
 	ctx := context.Background()
-	wallet, _ := primary.MakeWallet(
+	wallet, _ := NewWallet(
 		ctx,
 		&primary.WalletConfig{
 			URI:              "",
