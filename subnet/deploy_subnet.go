@@ -21,6 +21,15 @@ import (
 
 // CreateSubnetTx creates uncommitted createSubnet transaction
 func (c *Subnet) CreateSubnetTx(wallet primary.Wallet) (*txs.Tx, error) {
+	if c.DeployInfo.ControlKeys == nil {
+		return nil, fmt.Errorf("control keys are not provided")
+	}
+	if c.DeployInfo.SubnetAuthKeys == nil {
+		return nil, fmt.Errorf("subnet authkeys are not provided")
+	}
+	if c.DeployInfo.Threshold == 0 {
+		return nil, fmt.Errorf("threshold is not provided")
+	}
 	addrs, err := address.ParseToIDs(c.DeployInfo.ControlKeys)
 	if err != nil {
 		return nil, fmt.Errorf("failure parsing control keys: %w", err)
@@ -45,6 +54,21 @@ func (c *Subnet) CreateSubnetTx(wallet primary.Wallet) (*txs.Tx, error) {
 
 // CreateBlockchainTx creates uncommitted createBlockchain transaction
 func (c *Subnet) CreateBlockchainTx(wallet primary.Wallet, keyChain avalanche.Keychain) (*txs.Tx, error) {
+	if c.SubnetID == ids.Empty {
+		return nil, fmt.Errorf("subnet ID is not provided")
+	}
+	if c.DeployInfo.SubnetAuthKeys == nil {
+		return nil, fmt.Errorf("subnet authkeys are not provided")
+	}
+	if c.Genesis == nil {
+		return nil, fmt.Errorf("threshold is not provided")
+	}
+	if c.VMID == ids.Empty {
+		return nil, fmt.Errorf("vm ID is not provided")
+	}
+	if c.Name == "" {
+		return nil, fmt.Errorf("subnet name is not provided")
+	}
 	fxIDs := make([]ids.ID, 0)
 	options := getMultisigTxOptions(keyChain.Keychain, c.DeployInfo.SubnetAuthKeys)
 	// create tx
