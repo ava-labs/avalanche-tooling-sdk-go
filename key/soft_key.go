@@ -11,7 +11,7 @@ import (
 	"io"
 	"os"
 	"strings"
-  
+
 	"avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -129,7 +129,7 @@ func NewSoft(opts ...SOpOption) (*SoftKey, error) {
 
 		keyChain: keyChain,
 	}
-  
+
 	return m, nil
 }
 
