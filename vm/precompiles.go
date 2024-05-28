@@ -16,15 +16,6 @@ import (
 
 type Precompile string
 
-const (
-	NativeMint        = "Native Minting"
-	ContractAllowList = "Contract Deployment Allow List"
-	TxAllowList       = "Transaction Allow List"
-	FeeManager        = "Manage Fee Settings"
-	RewardManager     = "RewardManagerConfig"
-	Warp              = "Warp"
-)
-
 func ConfigureWarp(timestamp *uint64) warp.Config {
 	config := warp.Config{
 		QuorumNumerator: warp.WarpDefaultQuorumNumerator,
