@@ -7,11 +7,35 @@ import "github.com/ava-labs/avalanchego/utils/constants"
 
 type NetworkKind int64
 
+const (
+	Undefined NetworkKind = iota
+	Mainnet
+	Fuji
+	Local
+	Devnet
+)
+
+func (nk NetworkKind) String() string {
+	switch nk {
+	case Mainnet:
+		return "Mainnet"
+	case Fuji:
+		return "Fuji"
+	case Local:
+		return "Local Network"
+	case Devnet:
+		return "Devnet"
+	}
+	return "invalid network"
+}
+
 type Network struct {
 	Kind     NetworkKind
 	ID       uint32
 	Endpoint string
 }
+
+var UndefinedNetwork = Network{}
 
 func (n Network) HRP() string {
 	switch n.ID {

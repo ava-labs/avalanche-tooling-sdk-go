@@ -4,30 +4,31 @@
 package subnet
 
 import (
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/wallet"
 	"context"
 	"fmt"
 	"testing"
+
+	"avalanche-tooling-sdk-go/avalanche"
+	"avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
 func TestSubnetDeploy(_ *testing.T) {
+	// Initialize a new Avalanche Object which will be used to set shared properties
+	// like logging, metrics preferences, etc
 	baseApp := avalanche.New(avalanche.DefaultLeveledLogger)
 	subnetParams := SubnetParams{
 		SubnetEVM: SubnetEVMParams{
-			EvmChainID:                  1234567,
-			EvmToken:                    "AVAX",
-			EvmDefaults:                 true,
-			UseLatestReleasedEvmVersion: true,
-			EnableWarp:                  true,
-			EnableTeleporter:            true,
-			EnableRelayer:               true,
+			EvmChainID:       1234567,
+			EvmDefaults:      true,
+			EnableWarp:       true,
+			EnableTeleporter: true,
+			EnableRelayer:    true,
 		},
 	}
-	newSubnet := New(baseApp, &subnetParams)
+	newSubnet, _ := New(baseApp, &subnetParams)
 	ctx := context.Background()
 	wallet, _ := wallet.New(
 		ctx,
