@@ -4,79 +4,85 @@ package multisig
 
 import (
 	"avalanche-tooling-sdk-go/avalanche"
+
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
-type PChainTxKind int
-
-const (
-	Invalid = iota
-	CreateBlockchain
-	TransferSubnetOwnership
-)
-
-type PChainMultisig struct {
-	_ *txs.Tx
+type TxKind struct {
+	_ string // vm
+	_ string // tx
 }
 
-func New(_ *txs.Tx) *PChainMultisig {
+type Multisig struct {
+	_ *txs.Tx // pChainTx
+}
+
+func New(_ *txs.Tx) *Multisig {
 	return nil
 }
 
-func (*PChainMultisig) ToBytes() ([]byte, error) {
+func (*Multisig) String() string {
+	return ""
+}
+
+func (*Multisig) ToBytes() ([]byte, error) {
 	return nil, nil
 }
 
-func (*PChainMultisig) FromBytes(_ []byte) error {
+func (*Multisig) FromBytes(_ []byte) error {
 	return nil
 }
 
-func (*PChainMultisig) ToFile(_ string) error {
+func (*Multisig) ToFile(_ string) error {
 	return nil
 }
 
-func (*PChainMultisig) FromFile(_ string) error {
+func (*Multisig) FromFile(_ string) error {
 	return nil
 }
 
-func (*PChainMultisig) Sign(_ *primary.Wallet) error {
+func (*Multisig) Sign(_ *primary.Wallet) error {
 	return nil
 }
 
-func (*PChainMultisig) Commit() error {
+func (*Multisig) Commit() error {
 	return nil
 }
 
-func (*PChainMultisig) IsReadyToCommit() error {
+func (*Multisig) IsReadyToCommit() error {
 	return nil
 }
 
-func (*PChainMultisig) GetRemainingSigners() ([]ids.ID, error) {
+func (*Multisig) GetRemainingSigners() ([]ids.ID, error) {
 	return nil, nil
 }
 
-func (*PChainMultisig) GetAuthSigners() ([]ids.ID, error) {
+func (*Multisig) GetAuthSigners() ([]ids.ID, error) {
 	return nil, nil
 }
 
-func (*PChainMultisig) GetFeeSigners() ([]ids.ID, error) {
+func (*Multisig) GetFeeSigners() ([]ids.ID, error) {
 	return nil, nil
 }
 
-func (*PChainMultisig) GetKind() PChainTxKind {
-	return Invalid
+func (*Multisig) GetTxKind() TxKind {
+	return TxKind{}
 }
 
-func (*PChainMultisig) GetNetwork() (avalanche.Network, error) {
-	return avalanche.UndefinedNetwork, nil
+func (*Multisig) GetNetwork() (avalanche.Network, error) {
+	return avalanche.Network{}, nil
 }
 
-func (*PChainMultisig) GetSubnetID() (ids.ID, error) {
+func (*Multisig) GetBlockchainID() (ids.ID, error) {
 	return ids.Empty, nil
 }
 
-func (*PChainMultisig) GetSubnetOwners() ([]ids.ID, int, error) {
+func (*Multisig) GetSubnetID() (ids.ID, error) {
+	return ids.Empty, nil
+}
+
+func (*Multisig) GetSubnetOwners() ([]ids.ID, int, error) {
 	return nil, 0, nil
 }

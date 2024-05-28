@@ -4,6 +4,8 @@
 package subnet
 
 import (
+	"avalanche-tooling-sdk-go/avalanche"
+	"avalanche-tooling-sdk-go/wallet"
 	"context"
 	"fmt"
 	"testing"
@@ -14,7 +16,7 @@ import (
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
-func TestSubnetDeploy(t *testing.T) {
+func TestSubnetDeploy(_ *testing.T) {
 	// Initialize a new Avalanche Object which will be used to set shared properties
 	// like logging, metrics preferences, etc
 	baseApp := avalanche.New(avalanche.DefaultLeveledLogger)
@@ -29,7 +31,7 @@ func TestSubnetDeploy(t *testing.T) {
 	}
 	newSubnet, _ := New(baseApp, &subnetParams)
 	ctx := context.Background()
-	wallet, _ := primary.MakeWallet(
+	wallet, _ := wallet.New(
 		ctx,
 		&primary.WalletConfig{
 			URI:              "",
@@ -38,7 +40,7 @@ func TestSubnetDeploy(t *testing.T) {
 			PChainTxsToFetch: nil,
 		},
 	)
-	// deploy Subnet returns tx ID and error
+	// deploy Subnet returns multisig and error
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
 	fmt.Printf("deploySubnetTx %s", deploySubnetTx)
 }

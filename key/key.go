@@ -24,7 +24,7 @@ var (
 // Key defines methods for key manager interface.
 type Key interface {
 	// P returns all formatted P-Chain addresses.
-	P() []string
+	P(string) (string, error)
 	// C returns the C-Chain address in Ethereum format
 	C() string
 	// Addresses returns the all raw ids.ShortID address.
@@ -77,19 +77,6 @@ func WithTargetAmount(ta uint64) OpOption {
 func WithFeeDeduct(fee uint64) OpOption {
 	return func(op *Op) {
 		op.feeDeduct = fee
-	}
-}
-
-func GetHRP(networkID uint32) string {
-	switch networkID {
-	case constants.LocalID:
-		return constants.LocalHRP
-	case constants.FujiID:
-		return constants.FujiHRP
-	case constants.MainnetID:
-		return constants.MainnetHRP
-	default:
-		return constants.FallbackHRP
 	}
 }
 
