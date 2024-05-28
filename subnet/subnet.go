@@ -265,5 +265,6 @@ func addTeleporterAddressToAllocations(
 ) core.GenesisAlloc {
 	if alloc != nil {
 		addAllocation(alloc, teleporterKeyAddress, teleporterKeyBalance)
+	}
 	return alloc
 }

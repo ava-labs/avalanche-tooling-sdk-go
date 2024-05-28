@@ -51,7 +51,7 @@ func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error
 
 // CreateBlockchainTx creates uncommitted createBlockchain transaction
 func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
-  if c.SubnetID == ids.Empty {
+	if c.SubnetID == ids.Empty {
 		return nil, fmt.Errorf("subnet ID is not provided")
 	}
 	if c.DeployInfo.SubnetAuthKeys == nil {
@@ -66,8 +66,8 @@ func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, e
 	if c.Name == "" {
 		return nil, fmt.Errorf("subnet name is not provided")
 	}
-	wallet.SetSubnetAuthMultisig(c.SubnetAuthKeys)
-  
+	wallet.SetSubnetAuthMultisig(c.DeployInfo.SubnetAuthKeys)
+
 	// create tx
 	fxIDs := make([]ids.ID, 0)
 	unsignedTx, err := wallet.P().Builder().NewCreateChainTx(

@@ -4,13 +4,12 @@
 package subnet
 
 import (
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/wallet"
 	"context"
 	"fmt"
 	"testing"
 
 	"avalanche-tooling-sdk-go/avalanche"
+	"avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
