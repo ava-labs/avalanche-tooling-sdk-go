@@ -10,7 +10,6 @@ import (
 	"sort"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/vms/components/avax"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
@@ -31,7 +30,7 @@ type Key interface {
 	Addresses() []ids.ShortID
 	// Match attempts to match a list of addresses up to the provided threshold.
 	Match(owners *secp256k1fx.OutputOwners, time uint64) ([]uint32, []ids.ShortID, bool)
-	// Spend attempts to spend all specified UTXOs (outputs)
+	// Spends attempts to spend all specified UTXOs (outputs)
 	// and returns the new UTXO inputs.
 	//
 	// If target amount is specified, it only uses the
