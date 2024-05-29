@@ -6,6 +6,7 @@ package subnet
 import "C"
 import (
 	"avalanche-tooling-sdk-go/avalanche"
+	"avalanche-tooling-sdk-go/multisig"
 	"avalanche-tooling-sdk-go/wallet"
 	"fmt"
 	"github.com/ava-labs/avalanchego/ids"
@@ -29,18 +30,17 @@ type ValidatorParams struct {
 }
 
 // AddValidator adds validator to subnet
-func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorParams) error {
-	controlKeys, threshold, err := getOwners(network, c.SubnetID, c.DeployInfo.TransferSubnetOwnershipTxID)
+func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorParams) (*multisig.Multisig, error) {
+	controlKeys, threshold, err := GetOwners(network, c.SubnetID, c.DeployInfo.TransferSubnetOwnershipTxID)
 	if err != nil {
 		return err
 	}
-	if err := CheckSubnetAuthKeys(kcKeys, c.DeployInfo.SubnetAuthKeys, controlKeys, threshold); err != nil {
-		return err
+	if err := checkSubnetAuthKeys(wallet.Keychain, c.DeployInfo.SubnetAuthKeys, controlKeys, threshold); err != nil {
+		return nil, err
 	}
 	validator := &txs.SubnetValidator{
 		Validator: txs.Validator{
 			NodeID: validatorInput.NodeID,
-			Start:  uint64(validatorInput.StartTime.Unix()),
 			End:    uint64(validatorInput.StartTime.Add(validatorInput.Duration).Unix()),
 			Wght:   validatorInput.Weight,
 		},
@@ -50,16 +50,16 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorPara
 	wallet.SetSubnetAuthMultisig(c.DeployInfo.SubnetAuthKeys)
 	unsignedTx, err := wallet.P().Builder().NewAddSubnetValidatorTx(validator)
 	if err != nil {
-		return fmt.Errorf("error building tx: %w", err)
+		return nil, fmt.Errorf("error building tx: %w", err)
 	}
 	tx := txs.Tx{Unsigned: unsignedTx}
 	if err := wallet.P().Signer().Sign(context.Background(), &tx); err != nil {
-		return fmt.Errorf("error signing tx: %w", err)
+		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return nil
+	return multisig.New(&tx), nil
 }
 
-func CheckSubnetAuthKeys(walletKeys []string, subnetAuthKeys []string, controlKeys []string, threshold uint32) error {
+func checkSubnetAuthKeys(walletKeys []string, subnetAuthKeys []string, controlKeys []string, threshold uint32) error {
 	for _, walletKey := range walletKeys {
 		if slices.Contains(controlKeys, walletKey) && !slices.Contains(subnetAuthKeys, walletKey) {
 			return fmt.Errorf("wallet key %s is a subnet control key so it must be included in subnet auth keys", walletKey)
@@ -83,7 +83,7 @@ func CheckSubnetAuthKeys(walletKeys []string, subnetAuthKeys []string, controlKe
 	return nil
 }
 
-func getOwners(network avalanche.Network, subnetID ids.ID, transferSubnetOwnershipTxID ids.ID) ([]string, uint32, error) {
+func GetOwners(network avalanche.Network, subnetID ids.ID, transferSubnetOwnershipTxID ids.ID) ([]string, uint32, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
 	ctx := context.Background()
 	var owner *secp256k1fx.OutputOwners
