@@ -4,6 +4,6 @@
 package node
 
 // Destroy destroys a node.
-func Destroy(node Node) error {
+func (node *Node) Destroy() error {
 	return nil
 }
