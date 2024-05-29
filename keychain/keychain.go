@@ -4,6 +4,7 @@ package keychain
 
 import (
 	"fmt"
+
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 
 	"avalanche-tooling-sdk-go/avalanche"

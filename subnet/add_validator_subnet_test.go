@@ -42,5 +42,4 @@ func TestAddValidatorDeploy(_ *testing.T) {
 	fmt.Printf("deploySubnetTx %s", createSubnetTx)
 	createBlockchainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	fmt.Printf("deploySubnetTx %s", createBlockchainTx)
-
 }
