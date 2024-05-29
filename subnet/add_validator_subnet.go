@@ -13,7 +13,6 @@ import (
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"golang.org/x/exp/slices"
 	"golang.org/x/net/context"
 	"time"
@@ -33,7 +32,7 @@ type ValidatorParams struct {
 
 // AddValidator adds validator to subnet
 func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorParams) (*multisig.Multisig, error) {
-	controlKeys, threshold, err := GetOwners(validatorInput.Network, c.SubnetID, c.DeployInfo.TransferSubnetOwnershipTxID)
+	controlKeys, threshold, err := GetOwners(validatorInput.Network, c.SubnetID)
 	if err != nil {
 		return nil, err
 	}
@@ -93,51 +92,15 @@ func checkSubnetAuthKeys(walletKeys []string, subnetAuthKeys []string, controlKe
 	return nil
 }
 
-func GetOwners(network avalanche.Network, subnetID ids.ID, transferSubnetOwnershipTxID ids.ID) ([]string, uint32, error) {
+func GetOwners(network avalanche.Network, subnetID ids.ID) ([]string, uint32, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
 	ctx := context.Background()
-	var owner *secp256k1fx.OutputOwners
-	if transferSubnetOwnershipTxID != ids.Empty {
-		txBytes, err := pClient.GetTx(ctx, transferSubnetOwnershipTxID)
-		if err != nil {
-			return nil, 0, fmt.Errorf("tx %s query error: %w", transferSubnetOwnershipTxID, err)
-		}
-		var tx txs.Tx
-		if _, err := txs.Codec.Unmarshal(txBytes, &tx); err != nil {
-			return nil, 0, fmt.Errorf("couldn't unmarshal tx %s: %w", transferSubnetOwnershipTxID, err)
-		}
-		transferSubnetOwnershipTx, ok := tx.Unsigned.(*txs.TransferSubnetOwnershipTx)
-		if !ok {
-			return nil, 0, fmt.Errorf("got unexpected type %T for tx %s", tx.Unsigned, transferSubnetOwnershipTxID)
-		}
-		owner, ok = transferSubnetOwnershipTx.Owner.(*secp256k1fx.OutputOwners)
-		if !ok {
-			return nil, 0, fmt.Errorf(
-				"got unexpected type %T for subnet owners tx %s",
-				transferSubnetOwnershipTx.Owner,
-				transferSubnetOwnershipTxID,
-			)
-		}
-	} else {
-		txBytes, err := pClient.GetTx(ctx, subnetID)
-		if err != nil {
-			return nil, 0, fmt.Errorf("subnet tx %s query error: %w", subnetID, err)
-		}
-		var tx txs.Tx
-		if _, err := txs.Codec.Unmarshal(txBytes, &tx); err != nil {
-			return nil, 0, fmt.Errorf("couldn't unmarshal tx %s: %w", subnetID, err)
-		}
-		createSubnetTx, ok := tx.Unsigned.(*txs.CreateSubnetTx)
-		if !ok {
-			return nil, 0, fmt.Errorf("got unexpected type %T for subnet tx %s", tx.Unsigned, subnetID)
-		}
-		owner, ok = createSubnetTx.Owner.(*secp256k1fx.OutputOwners)
-		if !ok {
-			return nil, 0, fmt.Errorf("got unexpected type %T for subnet owners tx %s", createSubnetTx.Owner, subnetID)
-		}
+	subnetResponse, err := pClient.GetSubnet(ctx, subnetID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("subnet tx %s query error: %w", subnetID, err)
 	}
-	controlKeys := owner.Addrs
-	threshold := owner.Threshold
+	controlKeys := subnetResponse.ControlKeys
+	threshold := subnetResponse.Threshold
 	hrp := network.HRP()
 	controlKeysStrs := []string{}
 	for _, addr := range controlKeys {
