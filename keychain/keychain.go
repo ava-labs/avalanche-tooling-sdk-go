@@ -125,7 +125,7 @@ func (kc *Keychain) AddLedgerFunds(amount uint64) error {
 	return fmt.Errorf("keychain is not ledger enabled")
 }
 
-func (kc *Keychain) PChainFormattedStrAddresses() ([]string, error) {
+func (kc *Keychain) GetPChainAddresses() ([]string, error) {
 	addrs := kc.Addresses().List()
 	if len(addrs) == 0 {
 		return nil, fmt.Errorf("no addresses in keychain")

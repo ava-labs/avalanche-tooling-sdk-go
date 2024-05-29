@@ -27,15 +27,25 @@ type ValidatorParams struct {
 	Duration time.Duration
 
 	Weight uint64
+
+	Network avalanche.Network
 }
 
 // AddValidator adds validator to subnet
 func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorParams) (*multisig.Multisig, error) {
-	controlKeys, threshold, err := GetOwners(network, c.SubnetID, c.DeployInfo.TransferSubnetOwnershipTxID)
+	controlKeys, threshold, err := GetOwners(validatorInput.Network, c.SubnetID, c.DeployInfo.TransferSubnetOwnershipTxID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := checkSubnetAuthKeys(wallet.Keychain, c.DeployInfo.SubnetAuthKeys, controlKeys, threshold); err != nil {
+	pChainAddr, err := wallet.Keychain.GetPChainAddresses()
+	if err != nil {
+		return nil, err
+	}
+	var subnetAuthKeysStr []string
+	for _, subnetAuthKey := range subnetAuthKeysStr {
+		subnetAuthKeysStr = append(subnetAuthKeysStr, subnetAuthKey)
+	}
+	if err := checkSubnetAuthKeys(pChainAddr, subnetAuthKeysStr, controlKeys, threshold); err != nil {
 		return nil, err
 	}
 	validator := &txs.SubnetValidator{
