@@ -10,3 +10,16 @@ func Belongs[T comparable](input []T, elem T) bool {
 	}
 	return false
 }
+
+// AppendSlices appends multiple slices into a single slice.
+func AppendSlices[T any](slices ...[]T) []T {
+	totalLength := 0
+	for _, slice := range slices {
+		totalLength += len(slice)
+	}
+	result := make([]T, 0, totalLength)
+	for _, slice := range slices {
+		result = append(result, slice...)
+	}
+	return result
+}

@@ -40,8 +40,8 @@ type GcpCloud struct {
 	projectID string
 }
 
-// newGCPClients creates new GCP client
-func newGCPClient(ctx context.Context, creds string) (*compute.Service, error) {
+// NewGCPClients creates new GCP client
+func NewGCPClient(ctx context.Context, creds string) (*compute.Service, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -52,7 +52,7 @@ func newGCPClient(ctx context.Context, creds string) (*compute.Service, error) {
 }
 
 // NewGcpCloud creates a GCP cloud
-func NewGcpCloud(gcpClient *compute.Service, projectID string, ctx context.Context) (*GcpCloud, error) {
+func NewGcpCloud(ctx context.Context, gcpClient *compute.Service, projectID string) (*GcpCloud, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}

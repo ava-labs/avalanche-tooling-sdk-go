@@ -3,6 +3,14 @@
 
 package node
 
+import (
+	"encoding/json"
+	"io"
+	"os"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+)
+
 // getDefaultProjectNameFromGCPCredentials returns the default GCP project name
 func getDefaultProjectNameFromGCPCredentials(credentialsFilePath string) (string, error) {
 	type GCPConfig struct {
@@ -17,7 +25,7 @@ func getDefaultProjectNameFromGCPCredentials(credentialsFilePath string) (string
 		return "", err
 	}
 	defer file.Close()
-	bytes, err := ioutil.ReadAll(file)
+	bytes, err := io.ReadAll(file)
 	if err != nil {
 		return "", err
 	}
@@ -25,5 +33,5 @@ func getDefaultProjectNameFromGCPCredentials(credentialsFilePath string) (string
 	if err := json.Unmarshal(bytes, &gcpConfig); err != nil {
 		return "", err
 	}
-	return GCPConfig.QuotaProjectID, nil
+	return gcpConfig.QuotaProjectID, nil
 }
