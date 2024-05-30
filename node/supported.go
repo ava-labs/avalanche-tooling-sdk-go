@@ -17,6 +17,6 @@ const (
 	Validator SupportedRole = iota
 	API
 	AWMRelayer
+	Loadtest
+	Monitor
 )
-
-// LoadTest and Monitor nodes are not supported yet
