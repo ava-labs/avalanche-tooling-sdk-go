@@ -37,12 +37,14 @@ type AwsCloud struct {
 }
 
 // NewAwsCloud creates an AWS cloud
-func NewAwsCloud(awsProfile, region string) (*AwsCloud, error) {
+func NewAwsCloud(ctx context.Context, awsProfile, region string) (*AwsCloud, error) {
 	var (
 		cfg aws.Config
 		err error
 	)
-	ctx := context.Background()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if os.Getenv("AWS_ACCESS_KEY_ID") != "" {
 		// Load session from env variables
 		cfg, err = config.LoadDefaultConfig(

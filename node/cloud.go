@@ -3,6 +3,12 @@
 
 package node
 
+import (
+	"context"
+
+	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
+)
+
 type CloudParams struct {
 	CommonParams
 	AWSParams
@@ -53,4 +59,60 @@ type GCPParams struct {
 
 	// GCP network label to use for the node
 	Network string
+}
+
+// New returns a new CloudParams with
+func GetDefaultValues(ctx context.Context, cloud SupportedCloud) (*CloudParams, error) {
+	//make sure that CloudParams is initialized with default values
+	switch cloud {
+	case AWSCloud:
+		cp := &CloudParams{
+			Profile:       "default",
+			VolumeSize:    1000,
+			VolumeType:    "gp3",
+			SecurityGroup: "avalanche-tooling-sdk-go-us-east-1",
+			Region:        "us-east-1",
+			InstanceType:  constants.AWSDefaultInstanceType,
+			StaticIP:      "",
+		}
+		awsSvc, err := awsAPI.NewAwsCloud(ctx, cp.Profile, cp.Region)
+		if err != nil {
+			return nil, err
+		}
+		arch, err := awsSvc.GetInstanceTypeArch(cp.InstanceType)
+		if err != nil {
+			return nil, err
+		}
+		imageId, error := awsAPI.GetUbuntuAMIID(arch, constants.UbuntuVersionLTS)
+		if err != nil {
+			return nil, err
+		}
+		cp.Image = imageId
+		return cp, nil
+	case GCPCloud:
+		projectName, err := getDefaultProjectNameFromGCPCredentials(constants.GCPDefaultAuthKeyPath)
+		if err != nil {
+			return nil, err
+		}
+		cp := &CloudParams{
+			Project:      projectName,
+			Credentials:  constants.GCPDefaultAuthKeyPath,
+			Network:      "avalanche-tooling-sdk-go-us-east1",
+			Region:       "us-east1",
+			InstanceType: constants.GCPDefaultInstanceType,
+			StaticIP:     "",
+		}
+		gcpSvc, err := gcpAPI.NewGcpCloud(ctx, cp.Project, cp.Credentials)
+		if err != nil {
+			return nil, err
+		}
+		imageID, err := gcpCloud.GetUbuntuImageID()
+		if err != nil {
+			return nil, err
+		}
+		cp.Image = imageID
+		return cp, nil
+	default:
+		return nil, fmt.Errorf("unsupported cloud: %s", cloud)
+	}
 }

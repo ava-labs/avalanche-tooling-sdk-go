@@ -3,8 +3,9 @@
 package wallet
 
 import (
-	"avalanche-tooling-sdk-go/keychain"
 	"context"
+
+	"avalanche-tooling-sdk-go/keychain"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/set"

@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,17 @@ type GcpCloud struct {
 	gcpClient *compute.Service
 	ctx       context.Context
 	projectID string
+}
+
+// newGCPClients creates new GCP client
+func newGCPClient(ctx context.Context, creds string) (*compute.Service, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := os.Setenv(constants.GCPEnvVar, creds); err != nil {
+		return nil, err
+	}
+	return compute.NewService(ctx)
 }
 
 // NewGcpCloud creates a GCP cloud

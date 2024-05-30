@@ -6,7 +6,7 @@ package remoteconfig
 import (
 	"embed"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/internal/utils"
+	"internal/utils"
 )
 
 //go:embed templates/*
