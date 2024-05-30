@@ -5,10 +5,10 @@ package keychain
 import (
 	"fmt"
 
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/key"
-	"avalanche-tooling-sdk-go/ledger"
-	"avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/ledger"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 
