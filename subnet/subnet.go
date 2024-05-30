@@ -164,6 +164,9 @@ func createEvmGenesis(
 	allocation := core.GenesisAlloc{}
 	if genesisParams.Allocation == nil {
 		allocation, err = getNewAllocation(vm.DefaultEvmAirdropAmount, genesisParams.AllocationKey)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if genesisParams.TeleporterInfo != nil {
