@@ -11,10 +11,10 @@ import (
 	"math/big"
 	"time"
 
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/key"
-	"avalanche-tooling-sdk-go/teleporter"
-	"avalanche-tooling-sdk-go/vm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/coreth/utils"

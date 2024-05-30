@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"avalanche-tooling-sdk-go/multisig"
-	"avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
