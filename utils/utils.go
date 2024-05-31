@@ -14,6 +14,7 @@ import (
 
 const (
 	APIRequestTimeout      = 30 * time.Second
+	APIRequestLargeTimeout = 2 * time.Minute
 	WriteReadUserOnlyPerms = 0o600
 )
 
@@ -49,6 +50,11 @@ func Uint32Sort(arr []uint32) {
 // Context for API requests
 func GetAPIContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), APIRequestTimeout)
+}
+
+// Context for API requests with large timeout
+func GetAPILargeContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), APIRequestLargeTimeout)
 }
 
 func P(

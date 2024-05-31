@@ -36,7 +36,7 @@ func New(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
 // SecureWalletIsChangeOwner ensures that a fee paying address (wallet's keychain) will receive
 // the change UTXO and not a randomly selected auth key that may not be paying fees
 func (w *Wallet) SecureWalletIsChangeOwner() {
-	addrs := w.keychain.Addresses().List()
+	addrs := w.Addresses()
 	changeAddr := addrs[0]
 	// sets change to go to wallet addr (instead of any other subnet auth key)
 	changeOwner := &secp256k1fx.OutputOwners{
@@ -50,7 +50,7 @@ func (w *Wallet) SecureWalletIsChangeOwner() {
 // SetAuthKeys sets auth keys that will be used when signing txs, besides the wallet's keychain fee
 // paying ones
 func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
-	addrs := w.keychain.Addresses().List()
+	addrs := w.Addresses()
 	addrsSet := set.Set[ids.ShortID]{}
 	addrsSet.Add(addrs...)
 	addrsSet.Add(authKeys...)
@@ -61,4 +61,8 @@ func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
 func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {
 	w.SecureWalletIsChangeOwner()
 	w.SetAuthKeys(authKeys)
+}
+
+func (w *Wallet) Addresses() []ids.ShortID {
+	return w.keychain.Addresses().List()
 }

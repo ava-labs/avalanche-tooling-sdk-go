@@ -1,20 +1,25 @@
-// Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 222, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package multisig
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/utils/formatting"
 	"github.com/ava-labs/avalanchego/vms/components/verify"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
+	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
-	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
 type TxKind int64
@@ -31,9 +36,11 @@ const (
 
 type Multisig struct {
 	pChainTx    *txs.Tx
-	controlKeys []ids.ID
+	controlKeys []ids.ShortID
 	threshold   uint32
 }
+
+var ErrNoRemainingAuthSignersInWallet = errors.New("wallet does not contain any renaububg auth signer")
 
 func New(pChainTx *txs.Tx) *Multisig {
 	ms := Multisig{
@@ -108,12 +115,33 @@ func (ms *Multisig) FromFile(txPath string) error {
 	return ms.FromBytes(txBytes)
 }
 
-func (*Multisig) Sign(_ *primary.Wallet) error {
-	return nil
-}
-
-func (*Multisig) Commit() error {
-	return nil
+func (ms *Multisig) Commit(wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
+	const (
+		repeats             = 3
+		sleepBetweenRepeats = 2 * time.Second
+	)
+	var issueTxErr error
+	for i := 0; i < repeats; i++ {
+		ctx, cancel := utils.GetAPILargeContext()
+		defer cancel()
+		options := []common.Option{common.WithContext(ctx)}
+		if !waitForTxAcceptance {
+			options = append(options, common.WithAssumeDecided())
+		}
+		// TODO: split error checking and recovery between issuing and waiting for status
+		issueTxErr = wallet.P().IssueTx(ms.pChainTx, options...)
+		if issueTxErr == nil {
+			break
+		}
+		if ctx.Err() != nil {
+			issueTxErr = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", ms.pChainTx.ID(), issueTxErr)
+		} else {
+			issueTxErr = fmt.Errorf("error issuing tx with ID %s: %w", ms.pChainTx.ID(), issueTxErr)
+		}
+		time.Sleep(sleepBetweenRepeats)
+	}
+	// TODO: having a commit error, maybe should be useful to reestart the wallet internal info
+	return ms.pChainTx.ID(), issueTxErr
 }
 
 func (ms *Multisig) IsReadyToCommit() (bool, error) {
@@ -136,7 +164,7 @@ func (ms *Multisig) IsReadyToCommit() (bool, error) {
 //     authSigners by using the index) to the remaining signers list
 //
 // if the tx is fully signed, returns empty slice
-func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ID, []ids.ID, error) {
+func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
 	if ms.pChainTx != nil {
 		authSigners, err := ms.GetAuthSigners()
 		if err != nil {
@@ -170,7 +198,7 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ID, []ids.ID, error) {
 				len(authSigners),
 			)
 		}
-		remainingSigners := []ids.ID{}
+		remainingSigners := []ids.ShortID{}
 		for i, sig := range cred.Sigs {
 			if sig == emptySig {
 				remainingSigners = append(remainingSigners, authSigners[i])
@@ -186,7 +214,7 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ID, []ids.ID, error) {
 //   - get subnet auth indices from the tx, field tx.UnsignedTx.SubnetAuth
 //   - creates the string slice of required subnet auth addresses by applying
 //     the indices to the control keys slice
-func (ms *Multisig) GetAuthSigners() ([]ids.ID, error) {
+func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
 	if ms.pChainTx != nil {
 		controlKeys, _, err := ms.GetSubnetOwners()
 		if err != nil {
@@ -212,7 +240,7 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ID, error) {
 		if !ok {
 			return nil, fmt.Errorf("expected subnetAuth of type *secp256k1fx.Input, got %T", subnetAuth)
 		}
-		authSigners := []ids.ID{}
+		authSigners := []ids.ShortID{}
 		for _, sigIndex := range subnetInput.SigIndices {
 			if sigIndex >= uint32(len(controlKeys)) {
 				return nil, fmt.Errorf("signer index %d exceeds number of control keys", sigIndex)
@@ -224,7 +252,7 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ID, error) {
 	return nil, fmt.Errorf("undefined tx")
 }
 
-func (*Multisig) GetSpendSigners() ([]ids.ID, error) {
+func (*Multisig) GetSpendSigners() ([]ids.ShortID, error) {
 	return nil, fmt.Errorf("not implemented yet")
 }
 
@@ -344,7 +372,7 @@ func (ms *Multisig) GetSubnetID() (ids.ID, error) {
 	return ids.Empty, fmt.Errorf("undefined tx")
 }
 
-func (ms *Multisig) GetSubnetOwners() ([]ids.ID, uint32, error) {
+func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 	if ms.controlKeys == nil {
 		subnetID, err := ms.GetSubnetID()
 		if err != nil {
@@ -358,8 +386,61 @@ func (ms *Multisig) GetSubnetOwners() ([]ids.ID, uint32, error) {
 		if err != nil {
 			return nil, 0, err
 		}
-		ms.controlKeys = ms.controlKeys
-		ms.threshold = ms.threshold
+		ms.controlKeys = controlKeys
+		ms.threshold = threshold
 	}
 	return ms.controlKeys, ms.threshold, nil
+}
+
+func GetOwners(_ avalanche.Network, _ ids.ID) ([]ids.ShortID, uint32, error) {
+	return nil, 0, fmt.Errorf("not implemented")
+}
+
+func (ms *Multisig) Sign(
+	wallet wallet.Wallet,
+	checkAuth bool,
+	commitIfReady bool,
+	waitForTxAcceptanceOnCommit bool,
+) (bool, bool, ids.ID, error) {
+	if ms.pChainTx != nil {
+		if checkAuth {
+			remainingInWallet, err := ms.GetRemainingAuthSignersInWallet(wallet)
+			if err != nil {
+				return false, false, ids.Empty, fmt.Errorf("error signing tx: %w", err)
+			}
+			if len(remainingInWallet) == 0 {
+				return false, false, ids.Empty, ErrNoRemainingAuthSignersInWallet
+			}
+		}
+		if err := wallet.P().Signer().Sign(context.Background(), ms.pChainTx); err != nil {
+			return false, false, ids.Empty, fmt.Errorf("error signing tx: %w", err)
+		}
+		isReady, err := ms.IsReadyToCommit()
+		if err != nil {
+			return false, false, ids.Empty, err
+		}
+		if commitIfReady && isReady {
+			_, err := ms.Commit(wallet, waitForTxAcceptanceOnCommit)
+			return isReady, err == nil, ms.pChainTx.ID(), err
+		}
+		return isReady, false, ms.pChainTx.ID(), nil
+	}
+	return false, false, ids.Empty, fmt.Errorf("undefined tx")
+}
+
+func (ms *Multisig) GetRemainingAuthSignersInWallet(wallet wallet.Wallet) ([]ids.ShortID, error) {
+	_, subnetAuth, err := ms.GetRemainingAuthSigners()
+	if err != nil {
+		return nil, err
+	}
+	walletAddrs := wallet.Addresses()
+	subnetAuthInWallet := []ids.ShortID{}
+	for _, walletAddr := range walletAddrs {
+		for _, addr := range subnetAuth {
+			if addr == walletAddr {
+				subnetAuthInWallet = append(subnetAuthInWallet, addr)
+			}
+		}
+	}
+	return subnetAuthInWallet, nil
 }
