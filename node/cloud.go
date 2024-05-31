@@ -59,7 +59,7 @@ type CloudParams struct {
 
 // New returns a new CloudParams with
 func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudParams, error) {
-	//make sure that CloudParams is initialized with default values
+	// make sure that CloudParams is initialized with default values
 	switch cloud {
 	case AWSCloud:
 		cp := &CloudParams{
@@ -119,7 +119,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 
 // Verify checks that the CloudParams are valid for deployment
 func (cp *CloudParams) Verify() error {
-	//common checks
+	// common checks
 	if cp.Region == "" {
 		return fmt.Errorf("region is required")
 	}
@@ -129,7 +129,11 @@ func (cp *CloudParams) Verify() error {
 	if cp.InstanceType == "" {
 		return fmt.Errorf("instance type is required")
 	}
-	switch cp.Cloud() {
+	cloud, err := cp.Cloud()
+	if err != nil {
+		return err
+	}
+	switch cloud {
 	case AWSCloud:
 		if cp.AWSProfile == "" {
 			return fmt.Errorf("AWS profile is required")
@@ -161,6 +165,8 @@ func (cp *CloudParams) Verify() error {
 		}
 	default:
 		return fmt.Errorf("unsupported cloud")
+	}
+	return nil
 }
 
 // Cloud returns the SupportedCloud for the CloudParams
