@@ -9,6 +9,7 @@ const (
 	AWSCloud SupportedCloud = iota
 	GCPCloud
 	Docker // fake Cloud used for E2E tests
+	NotSupported
 )
 
 type SupportedRole int

@@ -25,7 +25,7 @@ type CloudParams struct {
 	// Static IP to use for the node
 	StaticIP string
 
-	// AWS Paramsific configuration
+	// AWS specific configuration
 
 	// AWS profile to use for the node
 	AWSProfile string
@@ -58,7 +58,7 @@ type CloudParams struct {
 }
 
 // New returns a new CloudParams with
-func GetDefaultValues(ctx context.Context, cloud SupportedCloud) (*CloudParams, error) {
+func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudParams, error) {
 	//make sure that CloudParams is initialized with default values
 	switch cloud {
 	case AWSCloud:
@@ -113,6 +113,63 @@ func GetDefaultValues(ctx context.Context, cloud SupportedCloud) (*CloudParams, 
 		cp.Image = imageID
 		return cp, nil
 	default:
-		return nil, fmt.Errorf("unsupported cloud: %s", cloud)
+		return nil, fmt.Errorf("unsupported cloud: %s", string(cloud))
+	}
+}
+
+// Verify checks that the CloudParams are valid for deployment
+func (cp *CloudParams) Verify() error {
+	//common checks
+	if cp.Region == "" {
+		return fmt.Errorf("region is required")
+	}
+	if cp.Image == "" {
+		return fmt.Errorf("image is required")
+	}
+	if cp.InstanceType == "" {
+		return fmt.Errorf("instance type is required")
+	}
+	switch cp.Cloud() {
+	case AWSCloud:
+		if cp.AWSProfile == "" {
+			return fmt.Errorf("AWS profile is required")
+		}
+		if cp.AWSSecurityGroup == "" {
+			return fmt.Errorf("AWS security group is required")
+		}
+		if cp.AWSVolumeSize < 0 {
+			return fmt.Errorf("AWS volume size must be positive")
+		}
+		if cp.AWSVolumeType == "" {
+			return fmt.Errorf("AWS volume type is required")
+		}
+		if cp.AWSVolumeIOPS < 0 {
+			return fmt.Errorf("AWS volume IOPS must be positive")
+		}
+		if cp.AWSVolumeThroughput < 0 {
+			return fmt.Errorf("AWS volume throughput must be positive")
+		}
+	case GCPCloud:
+		if cp.GCPNetwork == "" {
+			return fmt.Errorf("GCP network is required")
+		}
+		if cp.GCPProject == "" {
+			return fmt.Errorf("GCP project is required")
+		}
+		if cp.GCPCredentials == "" {
+			return fmt.Errorf("GCP credentials is required")
+		}
+	default:
+		return fmt.Errorf("unsupported cloud")
+}
+
+// Cloud returns the SupportedCloud for the CloudParams
+func (cp *CloudParams) Cloud() (SupportedCloud, error) {
+	if cp.AWSProfile != "" {
+		return SupportedCloud(AWSCloud), nil
+	} else if cp.GCPProject != "" || cp.GCPCredentials != "" {
+		return SupportedCloud(GCPCloud), nil
+	} else {
+		return NotSupported, fmt.Errorf("cloud not specified")
 	}
 }
