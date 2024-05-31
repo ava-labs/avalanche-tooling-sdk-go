@@ -6,6 +6,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
@@ -13,6 +14,9 @@ import (
 )
 
 type CloudParams struct {
+	// Name of the node
+	Name string
+
 	// Region to use for the node
 	Region string
 
@@ -55,6 +59,9 @@ type CloudParams struct {
 
 	// GCP network label to use for the node
 	GCPNetwork string
+
+	//GCP zone to use for the node
+	GCPZone string
 }
 
 // New returns a new CloudParams with
@@ -63,6 +70,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 	switch cloud {
 	case AWSCloud:
 		cp := &CloudParams{
+			Name:             "avalanche-tooling-sdk-go",
 			AWSProfile:       "default",
 			AWSVolumeSize:    1000,
 			AWSVolumeType:    "gp3",
@@ -91,18 +99,16 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 			return nil, err
 		}
 		cp := &CloudParams{
+			Name:           "avalanche-tooling-sdk-go",
 			GCPProject:     projectName,
 			GCPCredentials: constants.GCPDefaultAuthKeyPath,
 			GCPNetwork:     "avalanche-tooling-sdk-go-us-east1",
+			GCPZone:        "us-east1-b",
 			Region:         "us-east1",
 			InstanceType:   constants.GCPDefaultInstanceType,
 			StaticIP:       "",
 		}
-		gcpClient, err := gcpAPI.NewGCPClient(ctx, cp.GCPProject)
-		if err != nil {
-			return nil, err
-		}
-		gcpSvc, err := gcpAPI.NewGcpCloud(ctx, gcpClient, cp.GCPProject)
+		gcpSvc, err := gcpAPI.NewGcpCloud(ctx, cp.GCPProject, cp.GCPCredentials)
 		if err != nil {
 			return nil, err
 		}
@@ -117,9 +123,12 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 	}
 }
 
-// Verify checks that the CloudParams are valid for deployment
-func (cp *CloudParams) Verify() error {
+// Validate checks that the CloudParams are valid for deployment
+func (cp *CloudParams) Validate() error {
 	// common checks
+	if cp.Name == "" {
+		return fmt.Errorf("name is required")
+	}
 	if cp.Region == "" {
 		return fmt.Errorf("region is required")
 	}
@@ -163,6 +172,12 @@ func (cp *CloudParams) Verify() error {
 		if cp.GCPCredentials == "" {
 			return fmt.Errorf("GCP credentials is required")
 		}
+		if cp.GCPZone == "" {
+			return fmt.Errorf("GCP zone is required")
+		}
+		if !strings.HasPrefix(cp.GCPZone, cp.Region) {
+			return fmt.Errorf("GCP zone must be in the region %s", cp.Region)
+		}
 	default:
 		return fmt.Errorf("unsupported cloud")
 	}
@@ -176,6 +191,6 @@ func (cp *CloudParams) Cloud() (SupportedCloud, error) {
 	} else if cp.GCPProject != "" || cp.GCPCredentials != "" {
 		return GCPCloud, nil
 	} else {
-		return NotSupported, fmt.Errorf("cloud not specified")
+		return Unknown, fmt.Errorf("cloud not specified")
 	}
 }

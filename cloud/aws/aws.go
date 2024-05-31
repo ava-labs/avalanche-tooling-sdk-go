@@ -195,15 +195,9 @@ func (c *AwsCloud) DeleteSecurityGroupRule(groupID, direction, protocol, ip stri
 }
 
 // CreateEC2Instances creates EC2 instances
-func (c *AwsCloud) CreateEC2Instances(prefix string, count int, amiID, instanceType, keyName, securityGroupID string, forMonitoring bool, iops, throughput int, volumeType types.VolumeType, volumeSize int) ([]string, error) {
-	var diskVolumeSize int32
-	if forMonitoring {
-		diskVolumeSize = constants.MonitoringCloudServerStorageSize
-	} else {
-		diskVolumeSize = int32(volumeSize)
-	}
+func (c *AwsCloud) CreateEC2Instances(name string, count int, amiID, instanceType, keyName, securityGroupID string, iops, throughput int, volumeType types.VolumeType, volumeSize int) ([]string, error) {
 	ebsValue := &types.EbsBlockDevice{
-		VolumeSize:          aws.Int32(diskVolumeSize),
+		VolumeSize:          aws.Int32(int32(volumeSize)),
 		VolumeType:          volumeType,
 		DeleteOnTermination: aws.Bool(true),
 	}
@@ -215,7 +209,7 @@ func (c *AwsCloud) CreateEC2Instances(prefix string, count int, amiID, instanceT
 	}
 
 	runResult, err := c.ec2Client.RunInstances(c.ctx, &ec2.RunInstancesInput{
-		imageID:          aws.String(amiID),
+		ImageId:          aws.String(amiID),
 		InstanceType:     types.InstanceType(instanceType),
 		KeyName:          aws.String(keyName),
 		SecurityGroupIds: []string{securityGroupID},
@@ -233,7 +227,7 @@ func (c *AwsCloud) CreateEC2Instances(prefix string, count int, amiID, instanceT
 				Tags: []types.Tag{
 					{
 						Key:   aws.String("Name"),
-						Value: aws.String(prefix),
+						Value: aws.String(name),
 					},
 					{
 						Key:   aws.String("Managed-By"),
@@ -571,7 +565,7 @@ func (c *AwsCloud) GetUbuntuAMIID(arch string, ubuntuVerLTS string) (string, err
 		return *images.Images[i].CreationDate > *images.Images[j].CreationDate
 	})
 	// get image with the latest creation date
-	amiID := images.Images[0].imageID
+	amiID := images.Images[0].ImageId
 	return *amiID, nil
 }
 
