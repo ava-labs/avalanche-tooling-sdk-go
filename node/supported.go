@@ -9,7 +9,7 @@ const (
 	AWSCloud SupportedCloud = iota
 	GCPCloud
 	Docker // fake Cloud used for E2E tests
-	NotSupported
+	Unknown
 )
 
 type SupportedRole int
@@ -21,3 +21,16 @@ const (
 	Loadtest
 	Monitor
 )
+
+func (c *SupportedCloud) String() string {
+	switch *c {
+	case AWSCloud:
+		return "aws"
+	case GCPCloud:
+		return "gcp"
+	case Docker:
+		return "docker"
+	default:
+		return "unknown"
+	}
+}

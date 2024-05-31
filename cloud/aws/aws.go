@@ -215,7 +215,7 @@ func (c *AwsCloud) CreateEC2Instances(prefix string, count int, amiID, instanceT
 	}
 
 	runResult, err := c.ec2Client.RunInstances(c.ctx, &ec2.RunInstancesInput{
-		ImageId:          aws.String(amiID),
+		imageID:          aws.String(amiID),
 		InstanceType:     types.InstanceType(instanceType),
 		KeyName:          aws.String(keyName),
 		SecurityGroupIds: []string{securityGroupID},
@@ -571,7 +571,7 @@ func (c *AwsCloud) GetUbuntuAMIID(arch string, ubuntuVerLTS string) (string, err
 		return *images.Images[i].CreationDate > *images.Images[j].CreationDate
 	})
 	// get image with the latest creation date
-	amiID := images.Images[0].ImageId
+	amiID := images.Images[0].imageID
 	return *amiID, nil
 }
 

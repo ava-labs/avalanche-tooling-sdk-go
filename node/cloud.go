@@ -79,11 +79,11 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		imageId, err := awsSvc.GetUbuntuAMIID(arch, constants.UbuntuVersionLTS)
+		imageID, err := awsSvc.GetUbuntuAMIID(arch, constants.UbuntuVersionLTS)
 		if err != nil {
 			return nil, err
 		}
-		cp.Image = imageId
+		cp.Image = imageID
 		return cp, nil
 	case GCPCloud:
 		projectName, err := getDefaultProjectNameFromGCPCredentials(constants.GCPDefaultAuthKeyPath)
@@ -106,14 +106,14 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		imageID, err := gcpSvc.GetUbuntuImageID()
+		imageID, err := gcpSvc.GetUbuntuimageID()
 		if err != nil {
 			return nil, err
 		}
 		cp.Image = imageID
 		return cp, nil
 	default:
-		return nil, fmt.Errorf("unsupported cloud: %s", string(cloud))
+		return nil, fmt.Errorf("unsupported cloud")
 	}
 }
 
@@ -172,9 +172,9 @@ func (cp *CloudParams) Verify() error {
 // Cloud returns the SupportedCloud for the CloudParams
 func (cp *CloudParams) Cloud() (SupportedCloud, error) {
 	if cp.AWSProfile != "" {
-		return SupportedCloud(AWSCloud), nil
+		return AWSCloud, nil
 	} else if cp.GCPProject != "" || cp.GCPCredentials != "" {
-		return SupportedCloud(GCPCloud), nil
+		return GCPCloud, nil
 	} else {
 		return NotSupported, fmt.Errorf("cloud not specified")
 	}
