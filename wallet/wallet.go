@@ -17,7 +17,7 @@ import (
 type Wallet struct {
 	primary.Wallet
 	Keychain keychain.Keychain
-	Options  []common.Option
+	options  []common.Option
 }
 
 func New(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
@@ -43,8 +43,8 @@ func (w *Wallet) SecureWalletIsChangeOwner() {
 		Threshold: 1,
 		Addrs:     []ids.ShortID{changeAddr},
 	}
-	w.Options = append(w.Options, common.WithChangeOwner(changeOwner))
-	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.Options...)
+	w.options = append(w.options, common.WithChangeOwner(changeOwner))
+	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.options...)
 }
 
 // SetAuthKeys sets auth keys that will be used when signing txs, besides the wallet's Keychain fee
@@ -54,8 +54,8 @@ func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
 	addrsSet := set.Set[ids.ShortID]{}
 	addrsSet.Add(addrs...)
 	addrsSet.Add(authKeys...)
-	w.Options = append(w.Options, common.WithCustomAddresses(addrsSet))
-	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.Options...)
+	w.options = append(w.options, common.WithCustomAddresses(addrsSet))
+	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.options...)
 }
 
 func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {

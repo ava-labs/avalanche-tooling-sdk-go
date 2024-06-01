@@ -9,8 +9,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/ledger"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
-
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 
 	"golang.org/x/exp/maps"
@@ -123,21 +121,4 @@ func (kc *Keychain) AddLedgerFunds(amount uint64) error {
 		return kc.AddLedgerIndices(indices)
 	}
 	return fmt.Errorf("keychain is not ledger enabled")
-}
-
-func (kc *Keychain) GetPChainAddresses() ([]string, error) {
-	addrs := kc.Addresses().List()
-	if len(addrs) == 0 {
-		return nil, fmt.Errorf("no addresses in keychain")
-	}
-	hrp := kc.network.HRP()
-	addrsStr := []string{}
-	for _, addr := range addrs {
-		addrStr, err := address.Format("P", hrp, addr[:])
-		if err != nil {
-			return nil, err
-		}
-		addrsStr = append(addrsStr, addrStr)
-	}
-	return addrsStr, nil
 }

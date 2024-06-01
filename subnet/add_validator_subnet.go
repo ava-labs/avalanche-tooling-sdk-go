@@ -21,8 +21,6 @@ import (
 type ValidatorParams struct {
 	NodeID ids.NodeID
 
-	StartTime time.Time
-
 	Duration time.Duration
 
 	Weight uint64
@@ -36,7 +34,7 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorPara
 	if err != nil {
 		return nil, err
 	}
-	pChainAddr, err := wallet.Keychain.GetPChainAddresses()
+	pChainAddr, err := wallet.Keychain.P()
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +48,7 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorPara
 	validator := &txs.SubnetValidator{
 		Validator: txs.Validator{
 			NodeID: validatorInput.NodeID,
-			End:    uint64(validatorInput.StartTime.Add(validatorInput.Duration).Unix()),
+			End:    uint64(time.Now().Add(validatorInput.Duration).Unix()),
 			Wght:   validatorInput.Weight,
 		},
 		Subnet: c.SubnetID,
