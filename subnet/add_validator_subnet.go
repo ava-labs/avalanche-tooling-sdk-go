@@ -3,19 +3,19 @@
 
 package subnet
 
-import "C"
 import (
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/multisig"
-	"avalanche-tooling-sdk-go/wallet"
 	"fmt"
+	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"golang.org/x/exp/slices"
 	"golang.org/x/net/context"
-	"time"
 )
 
 type ValidatorParams struct {
