@@ -9,7 +9,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/ledger"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 
 	"golang.org/x/exp/maps"
@@ -20,50 +19,6 @@ type Keychain struct {
 	network       avalanche.Network
 	ledgerDevice  *ledger.LedgerDevice
 	ledgerIndices []uint32
-}
-
-func (kc *Keychain) P() ([]string, error) {
-	return utils.P(kc.network.HRP(), kc.Addresses().List())
-}
-
-func (kc *Keychain) LedgerEnabled() bool {
-	return kc.ledgerDevice != nil
-}
-
-func (kc *Keychain) AddLedgerIndices(indices []uint32) error {
-	if kc.LedgerEnabled() {
-		kc.ledgerIndices = utils.Unique(append(kc.ledgerIndices, indices...))
-		utils.Uint32Sort(kc.ledgerIndices)
-		newKc, err := keychain.NewLedgerKeychainFromIndices(kc.ledgerDevice, kc.ledgerIndices)
-		if err != nil {
-			return err
-		}
-		kc.Keychain = newKc
-		return nil
-	}
-	return fmt.Errorf("keychain is not ledger enabled")
-}
-
-func (kc *Keychain) AddLedgerAddresses(addresses []string) error {
-	if kc.LedgerEnabled() {
-		indices, err := kc.ledgerDevice.FindAddresses(addresses, 0)
-		if err != nil {
-			return err
-		}
-		return kc.AddLedgerIndices(maps.Values(indices))
-	}
-	return fmt.Errorf("keychain is not ledger enabled")
-}
-
-func (kc *Keychain) AddLedgerFunds(amount uint64) error {
-	if kc.LedgerEnabled() {
-		indices, err := kc.ledgerDevice.FindFunds(kc.network, amount, 0)
-		if err != nil {
-			return err
-		}
-		return kc.AddLedgerIndices(indices)
-	}
-	return fmt.Errorf("keychain is not ledger enabled")
 }
 
 func NewKeychain(
@@ -122,4 +77,48 @@ func NewKeychain(
 		return &kc, nil
 	}
 	return nil, fmt.Errorf("not keychain option defined")
+}
+
+func (kc *Keychain) P() ([]string, error) {
+	return utils.P(kc.network.HRP(), kc.Addresses().List())
+}
+
+func (kc *Keychain) LedgerEnabled() bool {
+	return kc.ledgerDevice != nil
+}
+
+func (kc *Keychain) AddLedgerIndices(indices []uint32) error {
+	if kc.LedgerEnabled() {
+		kc.ledgerIndices = utils.Unique(append(kc.ledgerIndices, indices...))
+		utils.Uint32Sort(kc.ledgerIndices)
+		newKc, err := keychain.NewLedgerKeychainFromIndices(kc.ledgerDevice, kc.ledgerIndices)
+		if err != nil {
+			return err
+		}
+		kc.Keychain = newKc
+		return nil
+	}
+	return fmt.Errorf("keychain is not ledger enabled")
+}
+
+func (kc *Keychain) AddLedgerAddresses(addresses []string) error {
+	if kc.LedgerEnabled() {
+		indices, err := kc.ledgerDevice.FindAddresses(addresses, 0)
+		if err != nil {
+			return err
+		}
+		return kc.AddLedgerIndices(maps.Values(indices))
+	}
+	return fmt.Errorf("keychain is not ledger enabled")
+}
+
+func (kc *Keychain) AddLedgerFunds(amount uint64) error {
+	if kc.LedgerEnabled() {
+		indices, err := kc.ledgerDevice.FindFunds(kc.network, amount, 0)
+		if err != nil {
+			return err
+		}
+		return kc.AddLedgerIndices(indices)
+	}
+	return fmt.Errorf("keychain is not ledger enabled")
 }
