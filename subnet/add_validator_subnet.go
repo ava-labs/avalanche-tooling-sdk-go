@@ -5,6 +5,7 @@ package subnet
 
 import (
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
@@ -100,13 +101,14 @@ func GetOwners(network avalanche.Network, subnetID ids.ID) ([]string, uint32, er
 	controlKeys := subnetResponse.ControlKeys
 	threshold := subnetResponse.Threshold
 	hrp := network.HRP()
-	controlKeysStrs := []string{}
-	for _, addr := range controlKeys {
-		addrStr, err := address.Format("P", hrp, addr[:])
-		if err != nil {
-			return nil, 0, err
-		}
-		controlKeysStrs = append(controlKeysStrs, addrStr)
+	controlKeysStrs, err := utils.MapE(
+		controlKeys,
+		func(addr ids.ShortID) (string, error) {
+			return address.Format("P", hrp, addr[:])
+		},
+	)
+	if err != nil {
+		return nil, 0, err
 	}
 	return controlKeysStrs, threshold, nil
 }
