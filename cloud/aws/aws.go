@@ -15,9 +15,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
-	"github.com/ava-labs/avalanche-cli/pkg/ux"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -344,49 +342,44 @@ func (c *AwsCloud) checkInstanceIsRunning(nodeID string) (bool, error) {
 }
 
 // DestroyAWSNode terminates an EC2 instance with the given ID.
-func (c *AwsCloud) DestroyAWSNode(nodeConfig models.NodeConfig, clusterName string) error {
-	isRunning, err := c.checkInstanceIsRunning(nodeConfig.NodeID)
+func (c *AwsCloud) DestroyAWSNode(nodeID string) error {
+	isRunning, err := c.checkInstanceIsRunning(nodeID)
 	if err != nil {
-		ux.Logger.PrintToUser(fmt.Sprintf("Failed to destroy node %s due to %s", nodeConfig.NodeID, err.Error()))
 		return err
 	}
 	if !isRunning {
-		return fmt.Errorf("%w: instance %s, cluster %s", ErrNodeNotFoundToBeRunning, nodeConfig.NodeID, clusterName)
+		return fmt.Errorf("%w: instance %s", ErrNodeNotFoundToBeRunning, nodeID)
 	}
-	ux.Logger.PrintToUser(fmt.Sprintf("Terminating node instance %s in cluster %s...", nodeConfig.NodeID, clusterName))
-	return c.DestroyInstance(nodeConfig.NodeID, nodeConfig.ElasticIP, nodeConfig.UseStaticIP)
-}
-
-// DestroyInstance terminates an EC2 instance with the given ID.
-func (c *AwsCloud) DestroyInstance(instanceID, publicIP string, releasePublicIP bool) error {
 	input := &ec2.TerminateInstancesInput{
-		InstanceIds: []string{instanceID},
+		InstanceIds: []string{nodeID},
 	}
 	if _, err := c.ec2Client.TerminateInstances(c.ctx, input); err != nil {
 		return err
 	}
-	if releasePublicIP {
-		if publicIP == "" {
-			ux.Logger.RedXToUser("Unable to remove public IP for instance %s: undefined", instanceID)
-		} else {
-			describeAddressInput := &ec2.DescribeAddressesInput{
-				Filters: []types.Filter{
-					{Name: aws.String("public-ip"), Values: []string{publicIP}},
-				},
-			}
-			addressOutput, err := c.ec2Client.DescribeAddresses(c.ctx, describeAddressInput)
-			if err != nil {
-				return err
-			}
-			if len(addressOutput.Addresses) == 0 {
-				return ErrNoAddressFound
-			}
-			releaseAddressInput := &ec2.ReleaseAddressInput{
-				AllocationId: aws.String(*addressOutput.Addresses[0].AllocationId),
-			}
-			if _, err = c.ec2Client.ReleaseAddress(c.ctx, releaseAddressInput); err != nil {
-				return err
-			}
+	return nil
+}
+
+func (c *AwsCloud) ReleasePublicIP(publicIP string) error {
+	if net.ParseIP(publicIP) == nil {
+		return fmt.Errorf("invalid IP address: %s", publicIP)
+	} else {
+		describeAddressInput := &ec2.DescribeAddressesInput{
+			Filters: []types.Filter{
+				{Name: aws.String("public-ip"), Values: []string{publicIP}},
+			},
+		}
+		addressOutput, err := c.ec2Client.DescribeAddresses(c.ctx, describeAddressInput)
+		if err != nil {
+			return err
+		}
+		if len(addressOutput.Addresses) == 0 {
+			return ErrNoAddressFound
+		}
+		releaseAddressInput := &ec2.ReleaseAddressInput{
+			AllocationId: aws.String(*addressOutput.Addresses[0].AllocationId),
+		}
+		if _, err = c.ec2Client.ReleaseAddress(c.ctx, releaseAddressInput); err != nil {
+			return err
 		}
 	}
 	return nil

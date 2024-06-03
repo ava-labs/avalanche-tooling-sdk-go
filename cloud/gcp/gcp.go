@@ -20,9 +20,7 @@ import (
 	"google.golang.org/api/compute/v1"
 
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
-	"github.com/ava-labs/avalanche-cli/pkg/ux"
 )
 
 const (
@@ -415,27 +413,26 @@ func (c *GcpCloud) checkInstanceIsRunning(zone, nodeID string) (bool, error) {
 }
 
 // DestroyGCPNode terminates GCP node in GCP
-func (c *GcpCloud) DestroyGCPNode(nodeConfig models.NodeConfig, clusterName string) error {
-	isRunning, err := c.checkInstanceIsRunning(nodeConfig.Region, nodeConfig.NodeID)
+func (c *GcpCloud) DestroyGCPNode(ctx context.Context, nodeRegion string, nodeID string) error {
+	isRunning, err := c.checkInstanceIsRunning(nodeRegion, nodeID)
 	if err != nil {
 		return err
 	}
 	if !isRunning {
-		return fmt.Errorf("%w: instance %s, cluster %s", ErrNodeNotFoundToBeRunning, nodeConfig.NodeID, clusterName)
+		return fmt.Errorf("%w: instance %s", ErrNodeNotFoundToBeRunning, nodeID)
 	}
-	ux.Logger.PrintToUser(fmt.Sprintf("Destroying node instance %s in cluster %s...", nodeConfig.NodeID, clusterName))
-	instancesStopCall := c.gcpClient.Instances.Delete(c.projectID, nodeConfig.Region, nodeConfig.NodeID)
+	instancesStopCall := c.gcpClient.Instances.Delete(c.projectID, nodeRegion, nodeID)
 	if _, err = instancesStopCall.Do(); err != nil {
 		return err
 	}
-	if nodeConfig.UseStaticIP {
-		ux.Logger.PrintToUser(fmt.Sprintf("Releasing static IP address %s ...", nodeConfig.ElasticIP))
-		// GCP node region is stored in format of "us-east1-b", we need "us-east1"
-		region := strings.Join(strings.Split(nodeConfig.Region, "-")[:2], "-")
-		addressReleaseCall := c.gcpClient.Addresses.Delete(c.projectID, region, fmt.Sprintf("%s-%s", constants.GCPStaticIPPrefix, nodeConfig.NodeID))
-		if _, err = addressReleaseCall.Do(); err != nil {
-			return fmt.Errorf("%s, %w", constants.ErrReleasingGCPStaticIP, err)
-		}
+	return nil
+}
+
+// ReleaseStaticIP releases static IP in GCP
+func (c *GcpCloud) ReleaseStaticIP(ctx context.Context, projectID, region, staticIPName string) error {
+	addressReleaseCall := c.gcpClient.Addresses.Delete(projectID, region, staticIPName)
+	if _, err := addressReleaseCall.Do(); err != nil {
+		return fmt.Errorf("%s, %w", constants.ErrReleasingGCPStaticIP, err)
 	}
 	return nil
 }
