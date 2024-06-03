@@ -5,8 +5,10 @@ package node
 
 import (
 	"context"
+	"fmt"
 
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
+	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
 )
 
 // Create creates a new node.
@@ -15,9 +17,9 @@ func CreateInstance(ctx context.Context, cp CloudParams) (Node, error) {
 	if err := cp.Validate(); err != nil {
 		return Node{}, err
 	}
-	switch cp.Cloud {
+	switch cp.Cloud() {
 	case AWSCloud:
-		ec2Svc, err:= awsAPI.NewAwsCloud(
+		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
 			cp.AWSProfile,
 			cp.Region,
@@ -30,36 +32,55 @@ func CreateInstance(ctx context.Context, cp CloudParams) (Node, error) {
 			1,
 			cp.Image,
 			cp.InstanceType,
-			cp.InstanceType,
-			cp.KeyName,
-			cp.SecurityGroup,
+			cp.AWSKeyPair,
+			cp.AWSSecurityGroupID,
 			cp.AWSVolumeIOPS,
 			cp.AWSVolumeThroughput,
-			cp/cp.AWSVolumeType,
+			cp.AWSVolumeType,
 			cp.AWSVolumeSize,
 		)
-		if err != nil || len(instanceIds) == 0{
+		if err != nil || len(instanceIds) == 0 {
 			return Node{}, err
 		}
 		return Node{
-			ID: instanceID[0],
-			IP: "",
-			Cloud: cp.Cloud,
+			ID:          instanceIds[0],
+			IP:          "",
+			Cloud:       cp.Cloud(),
 			CloudConfig: cp,
-			Roles: nil,
+			Roles:       nil,
 		}, nil
-		case GCPCloud:
-			gcpSvc,err := gcpAPI.NewGCPCloud(
-				ctx,
-				cp.GCPProject,
-				cp.GCPCredentials,
-			)
-			if err != nil {
-				return Node{}, err
-			}
-			instanceIds, err := gcpSvc.SetupInstances(
-				cp.Name,
-
-
-
+	case GCPCloud:
+		gcpSvc, err := gcpAPI.NewGcpCloud(
+			ctx,
+			cp.GCPProject,
+			cp.GCPCredentials,
+		)
+		if err != nil {
+			return Node{}, err
+		}
+		computeInstances, err := gcpSvc.SetupInstances(
+			cp.Name,
+			cp.GCPZone,
+			cp.GCPNetwork,
+			cp.GCPSSHKey,
+			cp.Image,
+			cp.Name,
+			cp.InstanceType,
+			[]string{cp.StaticIP},
+			1,
+			cp.GCPVolumeSize,
+		)
+		if err != nil || len(computeInstances) == 0 {
+			return Node{}, err
+		}
+		return Node{
+			ID:          computeInstances[0].Name,
+			IP:          computeInstances[0].NetworkInterfaces[0].NetworkIP,
+			Cloud:       cp.Cloud(),
+			CloudConfig: cp,
+			Roles:       nil,
+		}, nil
+	default:
+		return Node{}, fmt.Errorf("unsupported cloud")
+	}
 }

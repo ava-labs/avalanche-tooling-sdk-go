@@ -34,6 +34,9 @@ type CloudParams struct {
 	// AWS profile to use for the node
 	AWSProfile string
 
+	// AWS KeyPair to use for the node
+	AWSKeyPair string
+
 	// AWS volume size in GB
 	AWSVolumeSize int
 
@@ -47,7 +50,7 @@ type CloudParams struct {
 	AWSVolumeThroughput int
 
 	// AWS security group to use for the node
-	AWSSecurityGroup string
+	AWSSecurityGroupID string
 
 	// GCP Specific configuration
 
@@ -60,8 +63,14 @@ type CloudParams struct {
 	// GCP network label to use for the node
 	GCPNetwork string
 
-	//GCP zone to use for the node
+	// GCP zone to use for the node
 	GCPZone string
+
+	// GCP Volume size in GB
+	GCPVolumeSize int
+
+	// GCP SSH Public Key
+	GCPSSHKey string
 }
 
 // New returns a new CloudParams with
@@ -70,14 +79,14 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 	switch cloud {
 	case AWSCloud:
 		cp := &CloudParams{
-			Name:             "avalanche-tooling-sdk-go",
-			AWSProfile:       "default",
-			AWSVolumeSize:    1000,
-			AWSVolumeType:    "gp3",
-			AWSSecurityGroup: "avalanche-tooling-sdk-go-us-east-1",
-			Region:           "us-east-1",
-			InstanceType:     constants.AWSDefaultInstanceType,
-			StaticIP:         "",
+			Name:          "avalanche-tooling-sdk-go",
+			AWSProfile:    "default",
+			AWSKeyPair:    "default",
+			AWSVolumeSize: 1000,
+			AWSVolumeType: "gp3",
+			Region:        "us-east-1",
+			InstanceType:  constants.AWSDefaultInstanceType,
+			StaticIP:      "",
 		}
 		awsSvc, err := awsAPI.NewAwsCloud(ctx, cp.AWSProfile, cp.Region)
 		if err != nil {
@@ -98,11 +107,17 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
+		sshKey, err := GetPublicKeyFromDefaultSSHKey()
+		if err != nil {
+			return nil, err
+		}
 		cp := &CloudParams{
 			Name:           "avalanche-tooling-sdk-go",
 			GCPProject:     projectName,
 			GCPCredentials: constants.GCPDefaultAuthKeyPath,
+			GCPVolumeSize:  constants.CloudServerStorageSize,
 			GCPNetwork:     "avalanche-tooling-sdk-go-us-east1",
+			GCPSSHKey:      sshKey,
 			GCPZone:        "us-east1-b",
 			Region:         "us-east1",
 			InstanceType:   constants.GCPDefaultInstanceType,
@@ -138,16 +153,12 @@ func (cp *CloudParams) Validate() error {
 	if cp.InstanceType == "" {
 		return fmt.Errorf("instance type is required")
 	}
-	cloud, err := cp.Cloud()
-	if err != nil {
-		return err
-	}
-	switch cloud {
+	switch cp.Cloud() {
 	case AWSCloud:
 		if cp.AWSProfile == "" {
 			return fmt.Errorf("AWS profile is required")
 		}
-		if cp.AWSSecurityGroup == "" {
+		if cp.AWSSecurityGroupID == "" {
 			return fmt.Errorf("AWS security group is required")
 		}
 		if cp.AWSVolumeSize < 0 {
@@ -162,6 +173,9 @@ func (cp *CloudParams) Validate() error {
 		if cp.AWSVolumeThroughput < 0 {
 			return fmt.Errorf("AWS volume throughput must be positive")
 		}
+		if cp.AWSKeyPair == "" {
+			return fmt.Errorf("AWS key pair is required")
+		}
 	case GCPCloud:
 		if cp.GCPNetwork == "" {
 			return fmt.Errorf("GCP network is required")
@@ -175,8 +189,14 @@ func (cp *CloudParams) Validate() error {
 		if cp.GCPZone == "" {
 			return fmt.Errorf("GCP zone is required")
 		}
+		if cp.GCPVolumeSize < 0 {
+			return fmt.Errorf("GCP volume size must be positive")
+		}
 		if !strings.HasPrefix(cp.GCPZone, cp.Region) {
 			return fmt.Errorf("GCP zone must be in the region %s", cp.Region)
+		}
+		if cp.GCPSSHKey == "" {
+			return fmt.Errorf("GCP SSH key is required")
 		}
 	default:
 		return fmt.Errorf("unsupported cloud")
@@ -185,12 +205,13 @@ func (cp *CloudParams) Validate() error {
 }
 
 // Cloud returns the SupportedCloud for the CloudParams
-func (cp *CloudParams) Cloud() (SupportedCloud, error) {
-	if cp.AWSProfile != "" {
-		return AWSCloud, nil
-	} else if cp.GCPProject != "" || cp.GCPCredentials != "" {
-		return GCPCloud, nil
-	} else {
-		return Unknown, fmt.Errorf("cloud not specified")
+func (cp *CloudParams) Cloud() SupportedCloud {
+	switch {
+	case cp.AWSProfile != "":
+		return AWSCloud
+	case cp.GCPProject != "" || cp.GCPCredentials != "":
+		return GCPCloud
+	default:
+		return Unknown
 	}
 }

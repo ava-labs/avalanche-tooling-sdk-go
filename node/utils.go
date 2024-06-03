@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
@@ -34,4 +35,14 @@ func getDefaultProjectNameFromGCPCredentials(credentialsFilePath string) (string
 		return "", err
 	}
 	return gcpConfig.QuotaProjectID, nil
+}
+
+// GetPublicKeyFromDefaultSSHKey returns the public key from the default SSH key
+func GetPublicKeyFromDefaultSSHKey() (string, error) {
+	keyPath := utils.ExpandHome("~/.ssh/id_rsa.pub")
+	key, err := os.ReadFile(keyPath)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(string(key), "\n"), nil
 }
