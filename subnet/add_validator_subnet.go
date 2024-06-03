@@ -40,7 +40,7 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorPara
 	if err != nil {
 		return nil, err
 	}
-	var subnetAuthKeysStr []string
+	subnetAuthKeysStr := []string{}
 	subnetAuthKeysStr = append(subnetAuthKeysStr, subnetAuthKeysStr...)
 	if err := checkSubnetAuthKeys(pChainAddr, subnetAuthKeysStr, controlKeys, threshold); err != nil {
 		return nil, err
