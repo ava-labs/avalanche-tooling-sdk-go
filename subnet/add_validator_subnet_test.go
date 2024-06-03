@@ -4,13 +4,16 @@
 package subnet
 
 import (
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/wallet"
 	"fmt"
+	"testing"
+	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"golang.org/x/net/context"
-	"testing"
 )
 
 func TestAddValidatorDeploy(_ *testing.T) {
@@ -41,5 +44,14 @@ func TestAddValidatorDeploy(_ *testing.T) {
 	createSubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
 	fmt.Printf("deploySubnetTx %s", createSubnetTx)
 	createBlockchainTx, _ := newSubnet.CreateBlockchainTx(wallet)
-	fmt.Printf("deploySubnetTx %s", createBlockchainTx)
+	fmt.Printf("deployBlockchainTx %s", createBlockchainTx)
+	nodeID, _ := ids.NodeIDFromString("node-123")
+	validatorInput := ValidatorParams{
+		NodeID:   nodeID,
+		Duration: time.Hour * 48,
+		Weight:   20,
+		Network:  avalanche.Network{Kind: avalanche.Fuji},
+	}
+	addValidatorTx, _ := newSubnet.AddValidator(wallet, validatorInput)
+	fmt.Printf("addValidatorTx %s", addValidatorTx)
 }

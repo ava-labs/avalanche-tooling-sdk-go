@@ -5,8 +5,9 @@ package subnet
 
 import (
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
@@ -39,10 +40,8 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorPara
 	if err != nil {
 		return nil, err
 	}
-	var subnetAuthKeysStr []string
-	for _, subnetAuthKey := range subnetAuthKeysStr {
-		subnetAuthKeysStr = append(subnetAuthKeysStr, subnetAuthKey)
-	}
+	subnetAuthKeysStr := []string{}
+	subnetAuthKeysStr = append(subnetAuthKeysStr, subnetAuthKeysStr...)
 	if err := checkSubnetAuthKeys(pChainAddr, subnetAuthKeysStr, controlKeys, threshold); err != nil {
 		return nil, err
 	}
