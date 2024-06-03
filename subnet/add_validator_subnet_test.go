@@ -5,14 +5,15 @@ package subnet
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"golang.org/x/net/context"
-	"testing"
-	"time"
 )
 
 func TestAddValidatorDeploy(_ *testing.T) {
