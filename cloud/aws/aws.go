@@ -317,6 +317,9 @@ func (c *AwsCloud) GetInstancePublicIPs(nodeIDs []string) (map[string]string, er
 
 // checkInstanceIsRunning checks that EC2 instance nodeID is running in EC2
 func (c *AwsCloud) checkInstanceIsRunning(nodeID string) (bool, error) {
+	if nodeID == "" {
+		return false, fmt.Errorf("nodeID is empty")
+	}
 	instanceInput := &ec2.DescribeInstancesInput{
 		InstanceIds: []string{
 			*aws.String(nodeID),

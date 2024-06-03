@@ -401,6 +401,9 @@ func (c *GcpCloud) GetInstancePublicIPs(zone string, nodeIDs []string) (map[stri
 
 // checkInstanceIsRunning checks that GCP instance nodeID is running in GCP
 func (c *GcpCloud) checkInstanceIsRunning(zone, nodeID string) (bool, error) {
+	if zone == "" || nodeID == "" {
+		return false, fmt.Errorf("zone or nodeID cannot be empty")
+	}
 	instanceGetCall := c.gcpClient.Instances.Get(c.projectID, zone, nodeID)
 	instance, err := instanceGetCall.Do()
 	if err != nil {
@@ -413,7 +416,7 @@ func (c *GcpCloud) checkInstanceIsRunning(zone, nodeID string) (bool, error) {
 }
 
 // DestroyGCPNode terminates GCP node in GCP
-func (c *GcpCloud) DestroyGCPNode(ctx context.Context, nodeRegion string, nodeID string) error {
+func (c *GcpCloud) DestroyGCPNode(nodeRegion string, nodeID string) error {
 	isRunning, err := c.checkInstanceIsRunning(nodeRegion, nodeID)
 	if err != nil {
 		return err
