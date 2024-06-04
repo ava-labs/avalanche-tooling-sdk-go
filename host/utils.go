@@ -5,7 +5,6 @@ package host
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -29,7 +28,6 @@ func getDefaultProjectNameFromGCPCredentials(credentialsFilePath string) (string
 		RefreshToken   string `json:"refresh_token"`
 		Type           string `json:"type"`
 	}
-	fmt.Println(utils.ExpandHome(credentialsFilePath))
 	file, err := os.Open(utils.ExpandHome(credentialsFilePath))
 	if err != nil {
 		return "", err
@@ -47,8 +45,10 @@ func getDefaultProjectNameFromGCPCredentials(credentialsFilePath string) (string
 }
 
 // GetPublicKeyFromDefaultSSHKey returns the public key from the default SSH key
-func GetPublicKeyFromDefaultSSHKey() (string, error) {
-	keyPath := utils.ExpandHome("~/.ssh/id_rsa.pub")
+func GetPublicKeyFromSSHKey(keyPath string) (string, error) {
+	if keyPath == "" {
+		keyPath = utils.ExpandHome("~/.ssh/id_rsa.pub")
+	}
 	key, err := os.ReadFile(keyPath)
 	if err != nil {
 		return "", err

@@ -110,7 +110,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		sshKey, err := GetPublicKeyFromDefaultSSHKey()
+		sshKey, err := GetPublicKeyFromSSHKey("")
 		if err != nil {
 			return nil, err
 		}
