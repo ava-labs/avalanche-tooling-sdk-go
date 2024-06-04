@@ -11,6 +11,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 type CloudParams struct {
@@ -116,7 +117,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		cp := &CloudParams{
 			Name:           "avalanche-tooling-sdk-go",
 			GCPProject:     projectName,
-			GCPCredentials: constants.GCPDefaultAuthKeyPath,
+			GCPCredentials: utils.ExpandHome(constants.GCPDefaultAuthKeyPath),
 			GCPVolumeSize:  constants.CloudServerStorageSize,
 			GCPNetwork:     "avalanche-tooling-sdk-go-us-east1",
 			GCPSSHKey:      sshKey,
