@@ -21,7 +21,7 @@ func TestAddValidatorDeploy(_ *testing.T) {
 	// like logging, metrics preferences, etc
 	baseApp := avalanche.New(avalanche.DefaultLeveledLogger)
 	subnetParams := SubnetParams{
-		SubnetEVM: SubnetEVMParams{
+		SubnetEVM: &SubnetEVMParams{
 			EvmChainID:       1234567,
 			EvmDefaults:      true,
 			EnableWarp:       true,

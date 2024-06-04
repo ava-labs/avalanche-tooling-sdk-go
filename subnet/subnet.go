@@ -37,11 +37,11 @@ type SubnetParams struct {
 
 	// Subnet-EVM parameters to use
 	// Do not set SubnetEVM value if you are using Custom VM
-	SubnetEVM SubnetEVMParams
+	SubnetEVM *SubnetEVMParams
 
 	// Custom VM parameters to use
 	// Do not set CustomVM value if you are using Subnet-EVM
-	CustomVM CustomVMParams
+	CustomVM *CustomVMParams
 
 	Name string
 }
@@ -72,7 +72,7 @@ type SubnetEVMParams struct {
 	// information on AWM Relayer
 	EnableRelayer bool
 
-	GenesisParams EVMGenesisParams
+	GenesisParams *EVMGenesisParams
 }
 
 type CustomVMParams struct {
@@ -129,6 +129,12 @@ type EVMGenesisParams struct {
 }
 
 func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error) {
+	if subnetParams.GenesisFilePath != "" && (subnetParams.CustomVM != nil || subnetParams.SubnetEVM != nil) {
+		return nil, fmt.Errorf("genesis file path cannot be non-empty if either CustomVM params or SubnetEVM params is not empty")
+	}
+	if subnetParams.SubnetEVM == nil && subnetParams.CustomVM != nil {
+		return nil, fmt.Errorf("SubnetEVM params and CustomVM params cannot both be non-empty")
+	}
 	genesisBytes, err := createEvmGenesis(
 		subnetParams.SubnetEVM.EvmChainID,
 		subnetParams.SubnetEVM.GenesisParams,
@@ -146,7 +152,7 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 // removed usewarp from argument, to use warp add it manualluy to precompile
 func createEvmGenesis(
 	chainID uint64,
-	genesisParams EVMGenesisParams,
+	genesisParams *EVMGenesisParams,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
 	genesis.Timestamp = *utils.TimeToNewUint64(time.Now())
