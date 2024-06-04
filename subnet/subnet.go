@@ -138,15 +138,17 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	}
 	var genesisBytes []byte
 	var err error
-	if subnetParams.GenesisFilePath != "" {
+	switch {
+	case subnetParams.GenesisFilePath != "":
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
-	} else if subnetParams.SubnetEVM != nil {
+	case subnetParams.SubnetEVM != nil:
 		genesisBytes, err = createEvmGenesis(
 			subnetParams.SubnetEVM.EvmChainID,
 			subnetParams.SubnetEVM.GenesisParams,
 		)
-	} else {
+	case subnetParams.CustomVM != nil:
 		genesisBytes, err = createCustomVMGenesis()
+	default:
 	}
 	if err != nil {
 		return nil, err
