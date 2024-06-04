@@ -5,8 +5,8 @@ package ledger
 import (
 	"fmt"
 
-	"avalanche-tooling-sdk-go/avalanche"
-	"avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/crypto/ledger"

@@ -4,18 +4,19 @@
 package subnet
 
 import (
-	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
-
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
+	"golang.org/x/net/context"
 )
 
-func TestSubnetDeploy(_ *testing.T) {
+func TestAddValidatorDeploy(_ *testing.T) {
 	// Initialize a new Avalanche Object which will be used to set shared properties
 	// like logging, metrics preferences, etc
 	baseApp := avalanche.New(avalanche.DefaultLeveledLogger)
@@ -40,6 +41,17 @@ func TestSubnetDeploy(_ *testing.T) {
 		},
 	)
 	// deploy Subnet returns multisig and error
-	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
-	fmt.Printf("deploySubnetTx %s", deploySubnetTx)
+	createSubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
+	fmt.Printf("deploySubnetTx %s", createSubnetTx)
+	createBlockchainTx, _ := newSubnet.CreateBlockchainTx(wallet)
+	fmt.Printf("deployBlockchainTx %s", createBlockchainTx)
+	nodeID, _ := ids.NodeIDFromString("node-123")
+	validatorInput := ValidatorParams{
+		NodeID:   nodeID,
+		Duration: time.Hour * 48,
+		Weight:   20,
+		Network:  avalanche.Network{Kind: avalanche.Fuji},
+	}
+	addValidatorTx, _ := newSubnet.AddValidator(wallet, validatorInput)
+	fmt.Printf("addValidatorTx %s", addValidatorTx)
 }

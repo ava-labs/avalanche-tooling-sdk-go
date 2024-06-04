@@ -1,4 +1,4 @@
-module avalanche-tooling-sdk-go
+module github.com/ava-labs/avalanche-tooling-sdk-go
 
 go 1.21.10
 
