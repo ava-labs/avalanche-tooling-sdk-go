@@ -22,6 +22,7 @@ const (
 	Monitor
 )
 
+// String returns the string representation of the SupportedRole
 func (c *SupportedCloud) String() string {
 	switch *c {
 	case AWSCloud:
@@ -32,5 +33,55 @@ func (c *SupportedCloud) String() string {
 		return "docker"
 	default:
 		return "unknown"
+	}
+}
+
+// StringToCloud converts a string to a SupportedCloud
+func StringToCloud(s string) SupportedCloud {
+	switch s {
+	case "aws":
+		return AWSCloud
+	case "gcp":
+		return GCPCloud
+	case "docker":
+		return Docker
+	default:
+		return Unknown
+	}
+}
+
+// String returns the string representation of the SupportedRole
+func (r *SupportedRole) String() string {
+	switch *r {
+	case Validator:
+		return "validator"
+	case API:
+		return "api"
+	case AWMRelayer:
+		return "awm-relayer"
+	case Loadtest:
+		return "loadtest"
+	case Monitor:
+		return "monitor"
+	default:
+		return "unknown"
+	}
+}
+
+// StringToRole converts a string to a SupportedRole
+func StringToRole(s string) SupportedRole {
+	switch s {
+	case "validator":
+		return Validator
+	case "api":
+		return API
+	case "awm-relayer":
+		return AWMRelayer
+	case "loadtest":
+		return Loadtest
+	case "monitor":
+		return Monitor
+	default:
+		return Monitor
 	}
 }
