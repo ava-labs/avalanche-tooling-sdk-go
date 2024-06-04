@@ -5,6 +5,7 @@ package host
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -28,6 +29,7 @@ func getDefaultProjectNameFromGCPCredentials(credentialsFilePath string) (string
 		RefreshToken   string `json:"refresh_token"`
 		Type           string `json:"type"`
 	}
+	fmt.Println(utils.ExpandHome(credentialsFilePath))
 	file, err := os.Open(utils.ExpandHome(credentialsFilePath))
 	if err != nil {
 		return "", err
