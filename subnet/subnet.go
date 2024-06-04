@@ -140,19 +140,16 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	var err error
 	if subnetParams.GenesisFilePath != "" {
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
-		if err != nil {
-			return nil, err
-		}
 	} else if subnetParams.SubnetEVM != nil {
 		genesisBytes, err = createEvmGenesis(
 			subnetParams.SubnetEVM.EvmChainID,
 			subnetParams.SubnetEVM.GenesisParams,
 		)
-		if err != nil {
-			return nil, err
-		}
 	} else {
-
+		genesisBytes, err = createCustomVMGenesis()
+	}
+	if err != nil {
+		return nil, err
 	}
 	subnet := Subnet{
 		Genesis: genesisBytes,
@@ -290,9 +287,7 @@ func addTeleporterAddressToAllocations(
 	return alloc
 }
 
-func createCustomVMGenesis(
-	chainID uint64,
-	genesisParams *EVMGenesisParams,
-) ([]byte, error) {
+// TODO: implement createCustomVMGenesis
+func createCustomVMGenesis() ([]byte, error) {
 	return nil, nil
 }
