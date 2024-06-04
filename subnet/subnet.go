@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
@@ -135,12 +136,23 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	if subnetParams.SubnetEVM == nil && subnetParams.CustomVM != nil {
 		return nil, fmt.Errorf("SubnetEVM params and CustomVM params cannot both be non-empty")
 	}
-	genesisBytes, err := createEvmGenesis(
-		subnetParams.SubnetEVM.EvmChainID,
-		subnetParams.SubnetEVM.GenesisParams,
-	)
-	if err != nil {
-		return nil, err
+	var genesisBytes []byte
+	var err error
+	if subnetParams.GenesisFilePath != "" {
+		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
+		if err != nil {
+			return nil, err
+		}
+	} else if subnetParams.SubnetEVM != nil {
+		genesisBytes, err = createEvmGenesis(
+			subnetParams.SubnetEVM.EvmChainID,
+			subnetParams.SubnetEVM.GenesisParams,
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+
 	}
 	subnet := Subnet{
 		Genesis: genesisBytes,
@@ -276,4 +288,11 @@ func addTeleporterAddressToAllocations(
 		addAllocation(alloc, teleporterKeyAddress, teleporterKeyBalance)
 	}
 	return alloc
+}
+
+func createCustomVMGenesis(
+	chainID uint64,
+	genesisParams *EVMGenesisParams,
+) ([]byte, error) {
+	return nil, nil
 }
