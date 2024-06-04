@@ -200,10 +200,10 @@ func (c *AwsCloud) CreateEC2Instances(name string, count int, amiID, instanceTyp
 		VolumeType:          volumeType,
 		DeleteOnTermination: aws.Bool(true),
 	}
-	if volumeType == types.VolumeTypeGp3 {
+	if volumeType == types.VolumeTypeGp3 && throughput > 0 {
 		ebsValue.Throughput = aws.Int32(int32(throughput))
-		ebsValue.Iops = aws.Int32(int32(iops))
-	} else if volumeType == types.VolumeTypeIo2 || volumeType == types.VolumeTypeIo1 {
+	}
+	if iops > 0 {
 		ebsValue.Iops = aws.Int32(int32(iops))
 	}
 
