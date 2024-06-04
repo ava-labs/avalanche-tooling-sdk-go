@@ -79,14 +79,16 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 	switch cloud {
 	case AWSCloud:
 		cp := &CloudParams{
-			Name:          "avalanche-tooling-sdk-go",
-			AWSProfile:    "default",
-			AWSKeyPair:    "default",
-			AWSVolumeSize: 1000,
-			AWSVolumeType: "gp3",
-			Region:        "us-east-1",
-			InstanceType:  constants.AWSDefaultInstanceType,
-			StaticIP:      "",
+			Name:                "avalanche-tooling-sdk-go",
+			AWSProfile:          "default",
+			AWSKeyPair:          "default",
+			AWSVolumeSize:       1000,
+			AWSVolumeThroughput: 500,
+			AWSVolumeIOPS:       1000,
+			AWSVolumeType:       "gp3",
+			Region:              "us-east-1",
+			InstanceType:        constants.AWSDefaultInstanceType,
+			StaticIP:            "",
 		}
 		awsSvc, err := awsAPI.NewAwsCloud(ctx, cp.AWSProfile, cp.Region)
 		if err != nil {
