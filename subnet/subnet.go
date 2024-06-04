@@ -138,13 +138,18 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	}
 	var genesisBytes []byte
 	var err error
+	subnet := *subnetParams
+	fmt.Printf("subnetParams %s \n", subnetParams)
+	fmt.Printf("subnetParams alt %s \n", subnet)
 	switch {
 	case subnetParams.GenesisFilePath != "":
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
+		fmt.Printf("obtained subnetParams.SubnetEVM.GenesisParams %s \n", subnetParams.SubnetEVM.GenesisParams)
+		fmt.Printf("alternative subnetParams.SubnetEVM.GenesisParams %s \n", subnet.SubnetEVM.GenesisParams)
 		genesisBytes, err = createEvmGenesis(
-			subnetParams.SubnetEVM.EvmChainID,
-			subnetParams.SubnetEVM.GenesisParams,
+			subnet.SubnetEVM.EvmChainID,
+			subnet.SubnetEVM.GenesisParams,
 		)
 	case subnetParams.CustomVM != nil:
 		genesisBytes, err = createCustomVMGenesis()
