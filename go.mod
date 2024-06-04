@@ -6,7 +6,6 @@ toolchain go1.22.1
 
 require (
 	github.com/ava-labs/avalanche-cli v1.6.1-0.20240603193904-57f3b0728b40
-	github.com/ava-labs/avalanche-tooling-sdk-go v0.0.0-00010101000000-000000000000
 	github.com/ava-labs/avalanchego v1.11.5
 	github.com/ava-labs/coreth v0.13.3-rc.2
 	github.com/ava-labs/subnet-evm v0.6.4
@@ -18,6 +17,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.23.0
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
+	golang.org/x/net v0.25.0
 	golang.org/x/sync v0.7.0
 	google.golang.org/api v0.182.0
 )
@@ -148,7 +148,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/oauth2 v0.20.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/term v0.20.0 // indirect
