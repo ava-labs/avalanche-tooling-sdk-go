@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package node
+package host
 
 import (
 	"context"
@@ -13,9 +13,9 @@ import (
 
 // Create creates a new node.
 // If wait is true, this function will block until the node is ready.
-func CreateInstance(ctx context.Context, cp CloudParams) (Node, error) {
+func CreateInstance(ctx context.Context, cp CloudParams) (Host, error) {
 	if err := cp.Validate(); err != nil {
-		return Node{}, err
+		return Host{}, err
 	}
 	switch cp.Cloud() {
 	case AWSCloud:
@@ -25,7 +25,7 @@ func CreateInstance(ctx context.Context, cp CloudParams) (Node, error) {
 			cp.Region,
 		)
 		if err != nil {
-			return Node{}, err
+			return Host{}, err
 		}
 		instanceIds, err := ec2Svc.CreateEC2Instances(
 			cp.Name,
@@ -40,10 +40,10 @@ func CreateInstance(ctx context.Context, cp CloudParams) (Node, error) {
 			cp.AWSVolumeSize,
 		)
 		if err != nil || len(instanceIds) == 0 {
-			return Node{}, err
+			return Host{}, err
 		}
-		return Node{
-			ID:          instanceIds[0],
+		return Host{
+			NodeID:      instanceIds[0],
 			IP:          "",
 			Cloud:       cp.Cloud(),
 			CloudConfig: cp,
@@ -56,7 +56,7 @@ func CreateInstance(ctx context.Context, cp CloudParams) (Node, error) {
 			cp.GCPCredentials,
 		)
 		if err != nil {
-			return Node{}, err
+			return Host{}, err
 		}
 		computeInstances, err := gcpSvc.SetupInstances(
 			cp.Name,
@@ -71,16 +71,16 @@ func CreateInstance(ctx context.Context, cp CloudParams) (Node, error) {
 			cp.GCPVolumeSize,
 		)
 		if err != nil || len(computeInstances) == 0 {
-			return Node{}, err
+			return Host{}, err
 		}
-		return Node{
-			ID:          computeInstances[0].Name,
+		return Host{
+			NodeID:      computeInstances[0].Name,
 			IP:          computeInstances[0].NetworkInterfaces[0].NetworkIP,
 			Cloud:       cp.Cloud(),
 			CloudConfig: cp,
 			Roles:       nil,
 		}, nil
 	default:
-		return Node{}, fmt.Errorf("unsupported cloud")
+		return Host{}, fmt.Errorf("unsupported cloud")
 	}
 }

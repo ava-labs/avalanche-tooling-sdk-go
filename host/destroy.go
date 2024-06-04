@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package node
+package host
 
 import (
 	"context"
@@ -12,29 +12,29 @@ import (
 )
 
 // Destroy destroys a node.
-func (node *Node) Destroy(ctx context.Context) error {
-	switch node.Cloud {
+func (h *Host) Destroy(ctx context.Context) error {
+	switch h.Cloud {
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
-			node.CloudConfig.(CloudParams).AWSProfile,
-			node.CloudConfig.(CloudParams).Region,
+			h.CloudConfig.(CloudParams).AWSProfile,
+			h.CloudConfig.(CloudParams).Region,
 		)
 		if err != nil {
 			return err
 		}
-		return ec2Svc.DestroyAWSNode(node.ID)
+		return ec2Svc.DestroyAWSNode(h.NodeID)
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
-			node.CloudConfig.(CloudParams).GCPProject,
-			node.CloudConfig.(CloudParams).GCPCredentials,
+			h.CloudConfig.(CloudParams).GCPProject,
+			h.CloudConfig.(CloudParams).GCPCredentials,
 		)
 		if err != nil {
 			return err
 		}
-		return gcpSvc.DestroyGCPNode(node.CloudConfig.(CloudParams).Region, node.ID)
+		return gcpSvc.DestroyGCPNode(h.CloudConfig.(CloudParams).Region, h.NodeID)
 	default:
-		return fmt.Errorf("unsupported cloud type: %s", node.Cloud.String())
+		return fmt.Errorf("unsupported cloud type: %s", h.Cloud.String())
 	}
 }
