@@ -138,18 +138,18 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	}
 	var genesisBytes []byte
 	var err error
-	tmpSubnet := *subnetParams
-	fmt.Printf("subnetParams %s \n", subnetParams)
-	fmt.Printf("subnetParams alt %s \n", tmpSubnet)
+	//tmpSubnet := *subnetParams
+	//fmt.Printf("subnetParams %s \n", subnetParams)
+	//fmt.Printf("subnetParams alt %s \n", tmpSubnet)
 	switch {
 	case subnetParams.GenesisFilePath != "":
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
-		fmt.Printf("obtained subnetParams.SubnetEVM.GenesisParams %s \n", subnetParams.SubnetEVM.GenesisParams)
-		fmt.Printf("alternative subnetParams.SubnetEVM.GenesisParams %s \n", tmpSubnet.SubnetEVM.GenesisParams)
+		//fmt.Printf("obtained subnetParams.SubnetEVM.GenesisParams %s \n", subnetParams.SubnetEVM.GenesisParams)
+		//fmt.Printf("alternative subnetParams.SubnetEVM.GenesisParams %s \n", tmpSubnet.SubnetEVM.GenesisParams)
 		genesisBytes, err = createEvmGenesis(
-			tmpSubnet.SubnetEVM.EvmChainID,
-			tmpSubnet.SubnetEVM.GenesisParams,
+			subnetParams.SubnetEVM.EvmChainID,
+			subnetParams.SubnetEVM.GenesisParams,
 		)
 	case subnetParams.CustomVM != nil:
 		genesisBytes, err = createCustomVMGenesis()
@@ -168,7 +168,7 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 // removed usewarp from argument, to use warp add it manualluy to precompile
 func createEvmGenesis(
 	chainID uint64,
-	evmGenesisParams *EVMGenesisParams,
+	genesisParams *EVMGenesisParams,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
 	genesis.Timestamp = *utils.TimeToNewUint64(time.Now())
@@ -177,7 +177,7 @@ func createEvmGenesis(
 	conf.NetworkUpgrades = params.NetworkUpgrades{}
 
 	var err error
-	genesisParams := *evmGenesisParams
+	//genesisParams := *evmGenesisParams
 	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
 		conf.FeeConfig = vm.StarterFeeConfig
 	} else {
