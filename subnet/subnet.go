@@ -163,7 +163,7 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 // removed usewarp from argument, to use warp add it manualluy to precompile
 func createEvmGenesis(
 	chainID uint64,
-	genesisParams *EVMGenesisParams,
+	evmGenesisParams *EVMGenesisParams,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
 	genesis.Timestamp = *utils.TimeToNewUint64(time.Now())
@@ -172,7 +172,7 @@ func createEvmGenesis(
 	conf.NetworkUpgrades = params.NetworkUpgrades{}
 
 	var err error
-
+	genesisParams := *evmGenesisParams
 	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
 		conf.FeeConfig = vm.StarterFeeConfig
 	} else {
