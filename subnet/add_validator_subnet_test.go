@@ -19,17 +19,14 @@ import (
 func TestAddValidatorDeploy(_ *testing.T) {
 	// Initialize a new Avalanche Object which will be used to set shared properties
 	// like logging, metrics preferences, etc
-	baseApp := avalanche.New(avalanche.DefaultLeveledLogger)
 	subnetParams := SubnetParams{
 		SubnetEVM: &SubnetEVMParams{
-			EvmChainID:       1234567,
-			EvmDefaults:      true,
 			EnableWarp:       true,
 			EnableTeleporter: true,
 			EnableRelayer:    true,
 		},
 	}
-	newSubnet, _ := New(baseApp, &subnetParams)
+	newSubnet, _ := New(&subnetParams)
 	ctx := context.Background()
 	wallet, _ := wallet.New(
 		ctx,
