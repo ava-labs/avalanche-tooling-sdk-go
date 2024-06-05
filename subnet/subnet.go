@@ -8,10 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	"math/big"
 	"os"
 	"time"
+
+	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
