@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	"math/big"
 	"os"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/txallowlist"
-	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -150,6 +150,7 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 		genesisBytes, err = createEvmGenesis(
 			subnetParams.SubnetEVM.EvmChainID,
 			subnetParams.SubnetEVM.GenesisParams,
+			subnetParams.SubnetEVM.EnableWarp,
 		)
 	case subnetParams.CustomVM != nil:
 		genesisBytes, err = createCustomVMGenesis()
@@ -165,10 +166,10 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	return &subnet, nil
 }
 
-// removed usewarp from argument, to use warp add it manualluy to precompile
 func createEvmGenesis(
 	chainID uint64,
 	genesisParams *EVMGenesisParams,
+	useWarp bool,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
 	genesis.Timestamp = *utils.TimeToNewUint64(time.Now())
@@ -179,18 +180,13 @@ func createEvmGenesis(
 	var err error
 
 	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
-		conf.FeeConfig = vm.StarterFeeConfig
-	} else {
-		conf.FeeConfig = genesisParams.FeeConfig
-	}
-	allocation := core.GenesisAlloc{}
-	if genesisParams.Allocation == nil {
-		allocation, err = getNewAllocation(vm.DefaultEvmAirdropAmount, genesisParams.AllocationKey)
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("genesis params fee config cannot be empty")
 	}
 
+	if genesisParams.Allocation == nil {
+		return nil, fmt.Errorf("genesis params allocation cannot be empty")
+	}
+	allocation := genesisParams.Allocation
 	if genesisParams.TeleporterInfo != nil {
 		allocation = addTeleporterAddressToAllocations(
 			allocation,
@@ -198,11 +194,14 @@ func createEvmGenesis(
 			genesisParams.TeleporterInfo.FundedBalance,
 		)
 	}
+
 	if genesisParams.Precompiles == nil {
+		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
+	}
+	if useWarp {
 		warpConfig := vm.ConfigureWarp(&genesis.Timestamp)
 		conf.GenesisPrecompiles[warp.ConfigKey] = &warpConfig
 	}
-
 	if genesisParams.TeleporterInfo != nil {
 		*conf = vm.AddTeleporterAddressesToAllowLists(
 			*conf,
