@@ -14,7 +14,6 @@ import (
 
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
@@ -102,8 +101,6 @@ type Subnet struct {
 	DeployInfo DeployParams
 
 	RPCVersion int
-
-	Logger avalanche.LeveledLoggerInterface
 }
 
 type DeployParams struct {
@@ -125,7 +122,7 @@ type EVMGenesisParams struct {
 	TeleporterInfo *teleporter.Info
 }
 
-func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error) {
+func New(subnetParams *SubnetParams) (*Subnet, error) {
 	if subnetParams.GenesisFilePath != "" && (subnetParams.CustomVM != nil || subnetParams.SubnetEVM != nil) {
 		return nil, fmt.Errorf("genesis file path cannot be non-empty if either CustomVM params or SubnetEVM params is not empty")
 	}
@@ -156,7 +153,6 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	}
 	subnet := Subnet{
 		Genesis: genesisBytes,
-		Logger:  client.Logger,
 	}
 	return &subnet, nil
 }
