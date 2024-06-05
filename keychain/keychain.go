@@ -9,6 +9,7 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/ledger"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 
 	"golang.org/x/exp/maps"
@@ -48,7 +49,7 @@ func NewKeychain(
 			}
 		}
 		if len(ledgerAddresses) > 0 {
-			if err := kc.AddLedgerAddresses(ledgerAddresses); err != nil {
+			if err := kc.AddLedgerStrAddresses(ledgerAddresses); err != nil {
 				return nil, err
 			}
 		}
@@ -101,9 +102,20 @@ func (kc *Keychain) AddLedgerIndices(indices []uint32) error {
 	return fmt.Errorf("keychain is not ledger enabled")
 }
 
-func (kc *Keychain) AddLedgerAddresses(addresses []string) error {
+func (kc *Keychain) AddLedgerAddresses(addresses []ids.ShortID) error {
 	if kc.LedgerEnabled() {
 		indices, err := kc.ledgerDevice.FindAddresses(addresses, 0)
+		if err != nil {
+			return err
+		}
+		return kc.AddLedgerIndices(maps.Values(indices))
+	}
+	return fmt.Errorf("keychain is not ledger enabled")
+}
+
+func (kc *Keychain) AddLedgerStrAddresses(addresses []string) error {
+	if kc.LedgerEnabled() {
+		indices, err := kc.ledgerDevice.FindStrAddresses(addresses, 0)
 		if err != nil {
 			return err
 		}
