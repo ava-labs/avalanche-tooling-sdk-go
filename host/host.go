@@ -221,6 +221,16 @@ func (h *Host) UntimedMkdirAll(remoteDir string) error {
 	return sftp.MkdirAll(remoteDir)
 }
 
+// Cmd returns a new command to be executed on the remote host.
+func (h *Host) Cmd(ctx context.Context, name string, script string) (*goph.Cmd, error) {
+	if !h.Connected() {
+		if err := h.Connect(0); err != nil {
+			return nil, err
+		}
+	}
+	return h.Connection.CommandContext(ctx, name, script)
+}
+
 // Command executes a shell command on a remote host.
 func (h *Host) Command(script string, env []string, timeout time.Duration) ([]byte, error) {
 	if !h.Connected() {

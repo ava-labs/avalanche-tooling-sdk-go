@@ -17,6 +17,7 @@ func TestGetDefaultProjectNameFromGCPCredentials(t *testing.T) {
 	defer os.Remove(tempFile.Name())
 
 	// Write a sample JSON configuration to the temporary file
+	// #nosec G101
 	sampleConfig := `{
 		"client_id": "test-client-id",
 		"client_secret": "test-client-secret",
@@ -26,7 +27,7 @@ func TestGetDefaultProjectNameFromGCPCredentials(t *testing.T) {
 	}`
 	_, err = tempFile.WriteString(sampleConfig)
 	assert.NoError(t, err)
-	tempFile.Close()
+	_ = tempFile.Close()
 
 	// Test the function with a valid credentials file
 	projectID, err := getDefaultProjectNameFromGCPCredentials(tempFile.Name())
@@ -44,7 +45,7 @@ func TestGetDefaultProjectNameFromGCPCredentials(t *testing.T) {
 
 	_, err = invalidFile.WriteString("invalid json")
 	assert.NoError(t, err)
-	invalidFile.Close()
+	_ = invalidFile.Close()
 
 	_, err = getDefaultProjectNameFromGCPCredentials(invalidFile.Name())
 	assert.Error(t, err)
@@ -57,7 +58,7 @@ func TestGetPublicKeyFromSSHKey(t *testing.T) {
 	// Create a test SSH public key file
 	testPublicKeyPath := tempDir + "/id_rsa.pub"
 	testPublicKeyContent := "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAr8E7T/ZoQ9Jyb5F1U1t/9F+nkRoSi8g8j6x0g7vZJ68dVVpREzK84+R5cOJ6ydP9Nd+G99kW1HLhfwK5BhJnW3uZ7h1mL0Hh/RZb8csViNe8sEc2FSgH5G8cl3ZX8Y1UtdbS4k5F3cC3B4JFF9y6vOZRwUBO4z1Z2BZaGP29sXXkW0ZGRrWaBswcq+S5FJ1QOeeJ38OjkB45L7zq2X2NQ== user@hostname"
-	err := os.WriteFile(testPublicKeyPath, []byte(testPublicKeyContent+"\n"), 0644)
+	err := os.WriteFile(testPublicKeyPath, []byte(testPublicKeyContent+"\n"), 0o600)
 	assert.NoError(t, err)
 
 	// Test cases
