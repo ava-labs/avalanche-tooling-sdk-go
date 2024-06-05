@@ -174,7 +174,7 @@ func createEvmGenesis(
 	var err error
 
 	if genesisParams.ChainID == 0 {
-		return nil, fmt.Errorf("SubnetEVM EvmChainID cannot be empty")
+		return nil, fmt.Errorf("genesis params chain ID cannot be empty")
 	}
 
 	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
