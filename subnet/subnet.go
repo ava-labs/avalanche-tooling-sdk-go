@@ -51,9 +51,6 @@ type SubnetEVMParams struct {
 	// Chain ID to use in Subnet-EVM
 	EvmChainID uint64
 
-	// Use default settings for fees, airdrop, precompiles and teleporter in Subnet-EVM
-	EvmDefaults bool
-
 	// Enable Avalanche Warp Messaging (AWM) when deploying a VM
 
 	// See https://docs.avax.network/build/cross-chain/awm/overview for

@@ -22,7 +22,6 @@ func TestSubnetDeploy(_ *testing.T) {
 	subnetParams := SubnetParams{
 		SubnetEVM: &SubnetEVMParams{
 			EvmChainID:       1234567,
-			EvmDefaults:      true,
 			EnableWarp:       true,
 			EnableTeleporter: true,
 			EnableRelayer:    true,
