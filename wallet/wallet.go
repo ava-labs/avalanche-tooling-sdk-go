@@ -21,7 +21,7 @@ import (
 
 var (
 	ErrNoRemainingAuthSignersInWallet = errors.New("wallet does not contain any remaining auth signer")
-	ErrNotReadyToCommit               = errors.New("tx is not fully signed so can't be commited")
+	ErrNotReadyToCommit               = errors.New("tx is not fully signed so can't be committed")
 )
 
 type Wallet struct {
@@ -45,7 +45,6 @@ func New(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
 	}, err
 }
 
-<<<<<<< HEAD
 func (w *Wallet) ResetKeychain(ctx context.Context, kc *keychain.Keychain) error {
 	w.config.AVAXKeychain = kc.Keychain
 	wallet, err := primary.MakeWallet(
@@ -56,7 +55,7 @@ func (w *Wallet) ResetKeychain(ctx context.Context, kc *keychain.Keychain) error
 		return err
 	}
 	w.Wallet = wallet
-	w.keychain = *kc
+	w.Keychain = *kc
 	return nil
 }
 
@@ -91,7 +90,7 @@ func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {
 }
 
 func (w *Wallet) Addresses() []ids.ShortID {
-	return w.keychain.Addresses().List()
+	return w.Keychain.Addresses().List()
 }
 
 func (w *Wallet) Sign(
@@ -103,13 +102,13 @@ func (w *Wallet) Sign(
 	if ms.Undefined() {
 		return false, false, ids.Empty, multisig.ErrUndefinedTx
 	}
-	if w.keychain.LedgerEnabled() {
+	if w.Keychain.LedgerEnabled() {
 		// let's see if there is we can find remaining subnet auth keys in the LedgerEnabled
 		_, remaining, err := ms.GetRemainingAuthSigners()
 		if err != nil {
 			return false, false, ids.Empty, err
 		}
-		kc := w.keychain
+		kc := w.Keychain
 		oldCount := len(kc.Addresses())
 		err = kc.AddLedgerAddresses(remaining)
 		if err != nil {
