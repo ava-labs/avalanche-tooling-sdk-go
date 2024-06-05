@@ -123,7 +123,6 @@ type EVMGenesisParams struct {
 	Allocation     core.GenesisAlloc
 	Precompiles    params.Precompiles
 	TeleporterInfo *teleporter.Info
-	AllocationKey  *key.SoftKey
 }
 
 func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error) {
