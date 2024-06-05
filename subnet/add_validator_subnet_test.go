@@ -22,7 +22,6 @@ func TestAddValidatorDeploy(_ *testing.T) {
 	baseApp := avalanche.New(avalanche.DefaultLeveledLogger)
 	subnetParams := SubnetParams{
 		SubnetEVM: &SubnetEVMParams{
-			EvmChainID:       1234567,
 			EnableWarp:       true,
 			EnableTeleporter: true,
 			EnableRelayer:    true,

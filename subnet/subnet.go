@@ -30,7 +30,7 @@ import (
 
 type SubnetParams struct {
 	// File path of Genesis to use
-	// Do not set EvmChainID, EvmToken and EvmDefaults values in SubnetEVM
+	// Do not set SubnetEVMParams or CustomVMParams
 	// if GenesisFilePath value is set
 
 	// See https://docs.avax.network/build/subnet/upgrade/customize-a-subnet#genesis for
@@ -49,9 +49,6 @@ type SubnetParams struct {
 }
 
 type SubnetEVMParams struct {
-	// Chain ID to use in Subnet-EVM
-	EvmChainID uint64
-
 	// Enable Avalanche Warp Messaging (AWM) when deploying a VM
 
 	// See https://docs.avax.network/build/cross-chain/awm/overview for
@@ -120,6 +117,8 @@ type DeployParams struct {
 }
 
 type EVMGenesisParams struct {
+	// Chain ID to use in Subnet-EVM
+	ChainID        uint64
 	FeeConfig      commontype.FeeConfig
 	Allocation     core.GenesisAlloc
 	Precompiles    params.Precompiles
@@ -137,9 +136,6 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 		if subnetParams.SubnetEVM.GenesisParams == nil {
 			return nil, fmt.Errorf("SubnetEVM Genesis params cannot be empty")
 		}
-		if subnetParams.SubnetEVM.EvmChainID == 0 {
-			return nil, fmt.Errorf("SubnetEVM EvmChainID cannot be empty")
-		}
 	}
 	var genesisBytes []byte
 	var err error
@@ -148,7 +144,6 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
 		genesisBytes, err = createEvmGenesis(
-			subnetParams.SubnetEVM.EvmChainID,
 			subnetParams.SubnetEVM.GenesisParams,
 			subnetParams.SubnetEVM.EnableWarp,
 		)
@@ -167,7 +162,6 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 }
 
 func createEvmGenesis(
-	chainID uint64,
 	genesisParams *EVMGenesisParams,
 	useWarp bool,
 ) ([]byte, error) {
@@ -178,6 +172,10 @@ func createEvmGenesis(
 	conf.NetworkUpgrades = params.NetworkUpgrades{}
 
 	var err error
+
+	if genesisParams.ChainID == 0 {
+		return nil, fmt.Errorf("SubnetEVM EvmChainID cannot be empty")
+	}
 
 	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
 		return nil, fmt.Errorf("genesis params fee config cannot be empty")
@@ -227,7 +225,7 @@ func createEvmGenesis(
 		}
 	}
 
-	conf.ChainID = new(big.Int).SetUint64(chainID)
+	conf.ChainID = new(big.Int).SetUint64(genesisParams.ChainID)
 
 	genesis.Alloc = allocation
 	genesis.Config = conf
