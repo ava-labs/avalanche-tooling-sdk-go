@@ -118,7 +118,7 @@ type DeployParams struct {
 
 type EVMGenesisParams struct {
 	// Chain ID to use in Subnet-EVM
-	ChainID        uint64
+	ChainID        *big.Int
 	FeeConfig      commontype.FeeConfig
 	Allocation     core.GenesisAlloc
 	Precompiles    params.Precompiles
@@ -173,7 +173,7 @@ func createEvmGenesis(
 
 	var err error
 
-	if genesisParams.ChainID == 0 {
+	if genesisParams.ChainID == nil {
 		return nil, fmt.Errorf("genesis params chain ID cannot be empty")
 	}
 
@@ -225,7 +225,7 @@ func createEvmGenesis(
 		}
 	}
 
-	conf.ChainID = new(big.Int).SetUint64(genesisParams.ChainID)
+	conf.ChainID = genesisParams.ChainID
 
 	genesis.Alloc = allocation
 	genesis.Config = conf
