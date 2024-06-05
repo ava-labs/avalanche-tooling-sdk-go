@@ -136,6 +136,9 @@ func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error)
 	if subnetParams.SubnetEVM == nil && subnetParams.CustomVM != nil {
 		return nil, fmt.Errorf("SubnetEVM params and CustomVM params cannot both be non-empty")
 	}
+	if subnetParams.SubnetEVM != nil && subnetParams.SubnetEVM.GenesisParams == nil {
+		return nil, fmt.Errorf("SubnetEVM Genesis params cannot be empty")
+	}
 	var genesisBytes []byte
 	var err error
 	switch {
