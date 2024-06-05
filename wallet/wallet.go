@@ -26,7 +26,7 @@ var (
 
 type Wallet struct {
 	primary.Wallet
-	keychain keychain.Keychain
+	Keychain keychain.Keychain
 	options  []common.Option
 	config   *primary.WalletConfig
 }
@@ -38,13 +38,14 @@ func New(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
 	)
 	return Wallet{
 		Wallet: wallet,
-		keychain: keychain.Keychain{
+		Keychain: keychain.Keychain{
 			Keychain: config.AVAXKeychain,
 		},
 		config: config,
 	}, err
 }
 
+<<<<<<< HEAD
 func (w *Wallet) ResetKeychain(ctx context.Context, kc *keychain.Keychain) error {
 	w.config.AVAXKeychain = kc.Keychain
 	wallet, err := primary.MakeWallet(
@@ -73,7 +74,7 @@ func (w *Wallet) SecureWalletIsChangeOwner() {
 	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.options...)
 }
 
-// SetAuthKeys sets auth keys that will be used when signing txs, besides the wallet's keychain fee
+// SetAuthKeys sets auth keys that will be used when signing txs, besides the wallet's Keychain fee
 // paying ones
 func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
 	addrs := w.Addresses()
