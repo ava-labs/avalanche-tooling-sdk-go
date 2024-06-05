@@ -14,7 +14,6 @@ import (
 
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 
@@ -258,16 +257,6 @@ func ensureAdminsHaveBalance(admins []common.Address, alloc core.GenesisAlloc) e
 	return errors.New(
 		"none of the addresses in the transaction allow list precompile have any tokens allocated to them. Currently, no address can transact on the network. Airdrop some funds to one of the allow list addresses to continue",
 	)
-}
-
-func getNewAllocation(defaultAirdropAmount string, key *key.SoftKey) (core.GenesisAlloc, error) {
-	allocation := core.GenesisAlloc{}
-	defaultAmount, ok := new(big.Int).SetString(defaultAirdropAmount, 10)
-	if !ok {
-		return allocation, errors.New("unable to decode default allocation")
-	}
-	addAllocation(allocation, key.C(), defaultAmount)
-	return allocation, nil
 }
 
 func addAllocation(alloc core.GenesisAlloc, address string, amount *big.Int) {
