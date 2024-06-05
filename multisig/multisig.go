@@ -142,12 +142,13 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 		return nil, nil, err
 	}
 	emptySig := [secp256k1.SignatureLen]byte{}
+	numCreds := len(ms.pChainTx.Creds)
 	// we should have at least 1 cred for output owners and 1 cred for subnet auth
-	if len(ms.pChainTx.Creds) < 2 {
-		return nil, nil, fmt.Errorf("expected tx.Creds of len 2, got %d", len(ms.pChainTx.Creds))
+	if numCreds < 2 {
+		return nil, nil, fmt.Errorf("expected tx.Creds of len 2, got %d. doesn't seem to be a multisig tx with subnet auth requirements", numCreds)
 	}
 	// signatures for output owners should be filled (all creds except last one)
-	for credIndex := range ms.pChainTx.Creds[:len(ms.pChainTx.Creds)-1] {
+	for credIndex := range ms.pChainTx.Creds[:numCreds-1] {
 		cred, ok := ms.pChainTx.Creds[credIndex].(*secp256k1fx.Credential)
 		if !ok {
 			return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.pChainTx.Creds[credIndex])
@@ -159,7 +160,7 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 		}
 	}
 	// signatures for subnet auth (last cred)
-	cred, ok := ms.pChainTx.Creds[len(ms.pChainTx.Creds)-1].(*secp256k1fx.Credential)
+	cred, ok := ms.pChainTx.Creds[numCreds-1].(*secp256k1fx.Credential)
 	if !ok {
 		return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.pChainTx.Creds[1])
 	}
