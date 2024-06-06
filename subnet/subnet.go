@@ -9,10 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
+	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 
@@ -22,13 +23,12 @@ import (
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/txallowlist"
-	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type SubnetParams struct {
 	// File path of Genesis to use
-	// Do not set EvmChainID, EvmToken and EvmDefaults values in SubnetEVM
+	// Do not set SubnetEVMParams or CustomVMParams
 	// if GenesisFilePath value is set
 
 	// See https://docs.avax.network/build/subnet/upgrade/customize-a-subnet#genesis for
@@ -37,22 +37,16 @@ type SubnetParams struct {
 
 	// Subnet-EVM parameters to use
 	// Do not set SubnetEVM value if you are using Custom VM
-	SubnetEVM SubnetEVMParams
+	SubnetEVM *SubnetEVMParams
 
 	// Custom VM parameters to use
 	// Do not set CustomVM value if you are using Subnet-EVM
-	CustomVM CustomVMParams
+	CustomVM *CustomVMParams
 
 	Name string
 }
 
 type SubnetEVMParams struct {
-	// Chain ID to use in Subnet-EVM
-	EvmChainID uint64
-
-	// Use default settings for fees, airdrop, precompiles and teleporter in Subnet-EVM
-	EvmDefaults bool
-
 	// Enable Avalanche Warp Messaging (AWM) when deploying a VM
 
 	// See https://docs.avax.network/build/cross-chain/awm/overview for
@@ -72,7 +66,7 @@ type SubnetEVMParams struct {
 	// information on AWM Relayer
 	EnableRelayer bool
 
-	GenesisParams EVMGenesisParams
+	GenesisParams *EVMGenesisParams
 }
 
 type CustomVMParams struct {
@@ -106,8 +100,6 @@ type Subnet struct {
 	DeployInfo DeployParams
 
 	RPCVersion int
-
-	Logger avalanche.LeveledLoggerInterface
 }
 
 type DeployParams struct {
@@ -121,32 +113,52 @@ type DeployParams struct {
 }
 
 type EVMGenesisParams struct {
+	// Chain ID to use in Subnet-EVM
+	ChainID        *big.Int
 	FeeConfig      commontype.FeeConfig
 	Allocation     core.GenesisAlloc
 	Precompiles    params.Precompiles
 	TeleporterInfo *teleporter.Info
-	AllocationKey  *key.SoftKey
 }
 
-func New(client *avalanche.BaseApp, subnetParams *SubnetParams) (*Subnet, error) {
-	genesisBytes, err := createEvmGenesis(
-		subnetParams.SubnetEVM.EvmChainID,
-		subnetParams.SubnetEVM.GenesisParams,
-	)
+func New(subnetParams *SubnetParams) (*Subnet, error) {
+	if subnetParams.GenesisFilePath != "" && (subnetParams.CustomVM != nil || subnetParams.SubnetEVM != nil) {
+		return nil, fmt.Errorf("genesis file path cannot be non-empty if either CustomVM params or SubnetEVM params is not empty")
+	}
+	if subnetParams.SubnetEVM == nil && subnetParams.CustomVM != nil {
+		return nil, fmt.Errorf("SubnetEVM params and CustomVM params cannot both be non-empty")
+	}
+	if subnetParams.SubnetEVM != nil {
+		if subnetParams.SubnetEVM.GenesisParams == nil {
+			return nil, fmt.Errorf("SubnetEVM Genesis params cannot be empty")
+		}
+	}
+	var genesisBytes []byte
+	var err error
+	switch {
+	case subnetParams.GenesisFilePath != "":
+		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
+	case subnetParams.SubnetEVM != nil:
+		genesisBytes, err = createEvmGenesis(
+			subnetParams.SubnetEVM.GenesisParams,
+			subnetParams.SubnetEVM.EnableWarp,
+		)
+	case subnetParams.CustomVM != nil:
+		genesisBytes, err = createCustomVMGenesis()
+	default:
+	}
 	if err != nil {
 		return nil, err
 	}
 	subnet := Subnet{
 		Genesis: genesisBytes,
-		Logger:  client.Logger,
 	}
 	return &subnet, nil
 }
 
-// removed usewarp from argument, to use warp add it manualluy to precompile
 func createEvmGenesis(
-	chainID uint64,
-	genesisParams EVMGenesisParams,
+	genesisParams *EVMGenesisParams,
+	useWarp bool,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
 	genesis.Timestamp = *utils.TimeToNewUint64(time.Now())
@@ -156,19 +168,18 @@ func createEvmGenesis(
 
 	var err error
 
-	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
-		conf.FeeConfig = vm.StarterFeeConfig
-	} else {
-		conf.FeeConfig = genesisParams.FeeConfig
-	}
-	allocation := core.GenesisAlloc{}
-	if genesisParams.Allocation == nil {
-		allocation, err = getNewAllocation(vm.DefaultEvmAirdropAmount, genesisParams.AllocationKey)
-		if err != nil {
-			return nil, err
-		}
+	if genesisParams.ChainID == nil {
+		return nil, fmt.Errorf("genesis params chain ID cannot be empty")
 	}
 
+	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
+		return nil, fmt.Errorf("genesis params fee config cannot be empty")
+	}
+
+	if genesisParams.Allocation == nil {
+		return nil, fmt.Errorf("genesis params allocation cannot be empty")
+	}
+	allocation := genesisParams.Allocation
 	if genesisParams.TeleporterInfo != nil {
 		allocation = addTeleporterAddressToAllocations(
 			allocation,
@@ -176,11 +187,14 @@ func createEvmGenesis(
 			genesisParams.TeleporterInfo.FundedBalance,
 		)
 	}
+
 	if genesisParams.Precompiles == nil {
+		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
+	}
+	if useWarp {
 		warpConfig := vm.ConfigureWarp(&genesis.Timestamp)
 		conf.GenesisPrecompiles[warp.ConfigKey] = &warpConfig
 	}
-
 	if genesisParams.TeleporterInfo != nil {
 		*conf = vm.AddTeleporterAddressesToAllowLists(
 			*conf,
@@ -206,7 +220,7 @@ func createEvmGenesis(
 		}
 	}
 
-	conf.ChainID = new(big.Int).SetUint64(chainID)
+	conf.ChainID = genesisParams.ChainID
 
 	genesis.Alloc = allocation
 	genesis.Config = conf
@@ -245,16 +259,6 @@ func ensureAdminsHaveBalance(admins []common.Address, alloc core.GenesisAlloc) e
 	)
 }
 
-func getNewAllocation(defaultAirdropAmount string, key *key.SoftKey) (core.GenesisAlloc, error) {
-	allocation := core.GenesisAlloc{}
-	defaultAmount, ok := new(big.Int).SetString(defaultAirdropAmount, 10)
-	if !ok {
-		return allocation, errors.New("unable to decode default allocation")
-	}
-	addAllocation(allocation, key.C(), defaultAmount)
-	return allocation, nil
-}
-
 func addAllocation(alloc core.GenesisAlloc, address string, amount *big.Int) {
 	alloc[common.HexToAddress(address)] = core.GenesisAccount{
 		Balance: amount,
@@ -270,4 +274,9 @@ func addTeleporterAddressToAllocations(
 		addAllocation(alloc, teleporterKeyAddress, teleporterKeyBalance)
 	}
 	return alloc
+}
+
+// TODO: implement createCustomVMGenesis
+func createCustomVMGenesis() ([]byte, error) {
+	return nil, nil
 }

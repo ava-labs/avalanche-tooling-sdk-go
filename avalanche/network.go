@@ -15,6 +15,13 @@ const (
 	Devnet
 )
 
+const (
+	LocalNetworkID     = 1337
+	FujiAPIEndpoint    = "https://api.avax-test.network"
+	MainnetAPIEndpoint = "https://api.avax.network"
+	LocalAPIEndpoint   = "http://127.0.0.1:9650"
+)
+
 func (nk NetworkKind) String() string {
 	switch nk {
 	case Mainnet:
@@ -48,4 +55,36 @@ func (n Network) HRP() string {
 	default:
 		return constants.FallbackHRP
 	}
+}
+
+func NetworkFromNetworkID(networkID uint32) Network {
+	switch networkID {
+	case constants.MainnetID:
+		return NewMainnetNetwork()
+	case constants.FujiID:
+		return NewFujiNetwork()
+	case LocalNetworkID:
+		return NewLocalNetwork()
+	}
+	return UndefinedNetwork
+}
+
+func NewNetwork(kind NetworkKind, id uint32, endpoint string) Network {
+	return Network{
+		Kind:     kind,
+		ID:       id,
+		Endpoint: endpoint,
+	}
+}
+
+func NewLocalNetwork() Network {
+	return NewNetwork(Local, LocalNetworkID, LocalAPIEndpoint)
+}
+
+func NewFujiNetwork() Network {
+	return NewNetwork(Fuji, constants.FujiID, FujiAPIEndpoint)
+}
+
+func NewMainnetNetwork() Network {
+	return NewNetwork(Mainnet, constants.MainnetID, MainnetAPIEndpoint)
 }
