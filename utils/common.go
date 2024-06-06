@@ -7,7 +7,28 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"golang.org/x/exp/slices"
 )
+
+func Any[T any](input []T, f func(T) bool) bool {
+	for _, e := range input {
+		if f(e) {
+			return true
+		}
+	}
+	return false
+}
+
+func Find[T any](input []T, f func(T) bool) *T {
+	for _, e := range input {
+		if f(e) {
+			return &e
+		}
+	}
+	return nil
+}
 
 func Belongs[T comparable](input []T, elem T) bool {
 	for _, e := range input {
@@ -16,6 +37,36 @@ func Belongs[T comparable](input []T, elem T) bool {
 		}
 	}
 	return false
+}
+
+func Filter[T any](input []T, f func(T) bool) []T {
+	output := make([]T, 0, len(input))
+	for _, e := range input {
+		if f(e) {
+			output = append(output, e)
+		}
+	}
+	return output
+}
+
+func Map[T, U any](input []T, f func(T) U) []U {
+	output := make([]U, 0, len(input))
+	for _, e := range input {
+		output = append(output, f(e))
+	}
+	return output
+}
+
+func MapWithError[T, U any](input []T, f func(T) (U, error)) ([]U, error) {
+	output := make([]U, 0, len(input))
+	for _, e := range input {
+		o, err := f(e)
+		if err != nil {
+			return nil, err
+		}
+		output = append(output, o)
+	}
+	return output, nil
 }
 
 // AppendSlices appends multiple slices into a single slice.
@@ -99,4 +150,12 @@ func RandomString(length int) string {
 		result[i] = chars[randG.Intn(len(chars))]
 	}
 	return string(result)
+}
+
+func SupportedAvagoArch() []string {
+	return []string{string(types.ArchitectureTypeArm64), string(types.ArchitectureTypeX8664)}
+}
+
+func ArchSupported(arch string) bool {
+	return slices.Contains(SupportedAvagoArch(), arch)
 }
