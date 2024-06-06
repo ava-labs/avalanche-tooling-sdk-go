@@ -232,7 +232,7 @@ func (h *Host) Cmd(ctx context.Context, name string, script string) (*goph.Cmd, 
 }
 
 // Command executes a shell command on a remote host.
-func (h *Host) Command(script string, env []string, timeout time.Duration) ([]byte, error) {
+func (h *Host) Command(env []string, timeout time.Duration, script string) ([]byte, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return nil, err
@@ -249,6 +249,11 @@ func (h *Host) Command(script string, env []string, timeout time.Duration) ([]by
 	}
 	output, err := cmd.CombinedOutput()
 	return output, err
+}
+
+// Commandf is a shorthand for Command with a formatted script.
+func (h *Host) Commandf(env []string, timeout time.Duration, format string, args ...interface{}) ([]byte, error) {
+	return h.Command(env, constants.SSHScriptTimeout, fmt.Sprintf(format, args...))
 }
 
 // Forward forwards the TCP connection to a remote address.
@@ -401,7 +406,7 @@ func (h *Host) Remove(path string, recursive bool) error {
 	defer sftp.Close()
 	if recursive {
 		// return sftp.RemoveAll(path) is very slow
-		_, err := h.Command(fmt.Sprintf("rm -rf %s", path), nil, constants.SSHLongRunningScriptTimeout)
+		_, err := h.Commandf(nil, constants.SSHLongRunningScriptTimeout, "rm -rf %s", path)
 		return err
 	} else {
 		return sftp.Remove(path)
@@ -446,7 +451,7 @@ func (h *Host) WaitForSSHShell(timeout time.Duration) error {
 			continue
 		}
 		if h.Connected() {
-			output, err := h.Command("echo", nil, timeout)
+			output, err := h.Command(nil, timeout, "echo")
 			if err == nil || len(output) > 0 {
 				return nil
 			}
