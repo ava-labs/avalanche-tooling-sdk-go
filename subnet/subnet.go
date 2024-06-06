@@ -280,3 +280,15 @@ func addTeleporterAddressToAllocations(
 func createCustomVMGenesis() ([]byte, error) {
 	return nil, nil
 }
+
+func (c *Subnet) SetVMID(vmID ids.ID) {
+	c.VMID = vmID
+}
+
+func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.ShortID, threshold uint32) {
+	c.DeployInfo = DeployParams{
+		ControlKeys:    controlKeys,
+		SubnetAuthKeys: subnetAuthKeys,
+		Threshold:      threshold,
+	}
+}
