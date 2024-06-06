@@ -93,13 +93,19 @@ type Subnet struct {
 
 	SubnetID ids.ID
 
-	Chain string
-
 	VMID ids.ID
 
 	DeployInfo DeployParams
 
 	RPCVersion int
+}
+
+func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.ShortID, threshold uint32) {
+	c.DeployInfo = DeployParams{
+		ControlKeys:    controlKeys,
+		SubnetAuthKeys: subnetAuthKeys,
+		Threshold:      threshold,
+	}
 }
 
 type DeployParams struct {
@@ -150,7 +156,13 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 	if err != nil {
 		return nil, err
 	}
+	vmID, err := vmID(subnetParams.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create VM ID from %s: %w", subnetParams.Name, err)
+	}
 	subnet := Subnet{
+		Name:    subnetParams.Name,
+		VMID:    vmID,
 		Genesis: genesisBytes,
 	}
 	return &subnet, nil
@@ -281,14 +293,11 @@ func createCustomVMGenesis() ([]byte, error) {
 	return nil, nil
 }
 
-func (c *Subnet) SetVMID(vmID ids.ID) {
-	c.VMID = vmID
-}
-
-func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.ShortID, threshold uint32) {
-	c.DeployInfo = DeployParams{
-		ControlKeys:    controlKeys,
-		SubnetAuthKeys: subnetAuthKeys,
-		Threshold:      threshold,
+func vmID(vmName string) (ids.ID, error) {
+	if len(vmName) > 32 {
+		return ids.Empty, fmt.Errorf("VM name must be <= 32 bytes, found %d", len(vmName))
 	}
+	b := make([]byte, 32)
+	copy(b, []byte(vmName))
+	return ids.ToID(b)
 }
