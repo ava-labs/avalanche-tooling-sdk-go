@@ -13,9 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/utils"
-	"github.com/ava-labs/avalanche-cli/pkg/ux"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 type dockerComposeInputs struct {
@@ -67,7 +66,7 @@ func (dh *DockerHost) PushComposeFile(localFile string, remoteFile string, merge
 		}
 		defer func() {
 			if err := dh.Host.Remove(tmpFile, false); err != nil {
-				ux.Logger.Error("Error removing temporary file %s:%s %s", dh.Host.NodeID, tmpFile, err)
+				dh.Logger.Errorf("Error removing temporary file %s:%s %s", dh.Host.NodeID, tmpFile, err)
 			}
 		}()
 		if err := dh.Host.Upload(localFile, tmpFile, constants.SSHFileOpsTimeout); err != nil {
@@ -227,7 +226,7 @@ func (dh *DockerHost) ComposeOverSSH(
 	}
 	dh.Logger.Infof("ValidateComposeFile [%s]%s", dh.Host.NodeID, composeDesc)
 	if err := dh.ValidateComposeFile(remoteComposeFile, timeout); err != nil {
-		ux.Logger.Error("ComposeOverSSH[%s]%s failed to validate: %v", dh.Host.NodeID, composeDesc, err)
+		dh.Logger.Errorf("ComposeOverSSH[%s]%s failed to validate: %v", dh.Host.NodeID, composeDesc, err)
 		return err
 	}
 	dh.Logger.Infof("StartDockerCompose [%s]%s", dh.Host.NodeID, composeDesc)

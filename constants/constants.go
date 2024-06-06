@@ -5,8 +5,12 @@ package constants
 import "time"
 
 const (
+	// versions
+	UbuntuVersionLTS      = "20.04"
+	BuildEnvGolangVersion = "1.22.1"
+
 	// clouds
-	UbuntuVersionLTS       = "20.04"
+
 	CloudOperationTimeout  = 2 * time.Minute
 	CloudServerStorageSize = 1000
 
@@ -35,11 +39,24 @@ const (
 	SSHLongRunningScriptTimeout = 10 * time.Minute
 	SSHFileOpsTimeout           = 100 * time.Second
 	SSHPOSTTimeout              = 10 * time.Second
+	SSHScriptTimeout            = 2 * time.Minute
 	AnsibleSSHUser              = "ubuntu"
 
+	// host
+	CloudNodeCLIConfigBasePath   = "/home/ubuntu/.avalanche-cli/"
+	CloudNodeConfigBasePath      = "/home/ubuntu/.avalanchego/"
+	CloudNodeSubnetEvmBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
+	CloudNodeStakingPath         = "/home/ubuntu/.avalanchego/staking/"
+	CloudNodeConfigPath          = "/home/ubuntu/.avalanchego/configs/"
+
 	// misc
-	IPAddressSuffix = "/32"
+	DefaultPerms755        = 0o755
+	WriteReadReadPerms     = 0o644
+	WriteReadUserOnlyPerms = 0o600
+	IPAddressSuffix        = "/32"
 
 	// avago
-	LocalAPIEndpoint = "http://127.0.0.1:9650"
+	LocalAPIEndpoint       = "http://127.0.0.1:9650"
+	AvalancheGoDockerImage = "avaplatform/avalanchego"
+	AvalancheGoGitRepo     = "https://github.com/ava-labs/avalanchego"
 )

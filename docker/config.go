@@ -6,13 +6,13 @@ package docker
 import (
 	"os"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/remoteconfig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	services "github.com/ava-labs/avalanche-tooling-sdk-go/docker/services"
 )
 
 func (dh *DockerHost) prepareAvalanchegoConfig(networkID string) (string, string, error) {
-	avagoConf := remoteconfig.DefaultCliAvalancheConfig(dh.Host.IP, networkID)
-	nodeConf, err := remoteconfig.RenderAvalancheNodeConfig(avagoConf)
+	avagoConf := services.DefaultCliAvalancheConfig(dh.Host.IP, networkID)
+	nodeConf, err := services.RenderAvalancheNodeConfig(avagoConf)
 	if err != nil {
 		return "", "", err
 	}
@@ -23,7 +23,7 @@ func (dh *DockerHost) prepareAvalanchegoConfig(networkID string) (string, string
 	if err := os.WriteFile(nodeConfFile.Name(), nodeConf, constants.WriteReadUserOnlyPerms); err != nil {
 		return "", "", err
 	}
-	cChainConf, err := remoteconfig.RenderAvalancheCChainConfig(avagoConf)
+	cChainConf, err := services.RenderAvalancheCChainConfig(avagoConf)
 	if err != nil {
 		return "", "", err
 	}
@@ -38,7 +38,7 @@ func (dh *DockerHost) prepareAvalanchegoConfig(networkID string) (string, string
 }
 
 func prepareGrafanaConfig() (string, string, string, string, error) {
-	grafanaDataSource, err := remoteconfig.RenderGrafanaLokiDataSourceConfig()
+	grafanaDataSource, err := services.RenderGrafanaLokiDataSourceConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -50,7 +50,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaPromDataSource, err := remoteconfig.RenderGrafanaPrometheusDataSourceConfigg()
+	grafanaPromDataSource, err := services.RenderGrafanaPrometheusDataSourceConfigg()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -62,7 +62,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaDashboards, err := remoteconfig.RenderGrafanaDashboardConfig()
+	grafanaDashboards, err := services.RenderGrafanaDashboardConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -74,7 +74,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaConfig, err := remoteconfig.RenderGrafanaConfig()
+	grafanaConfig, err := services.RenderGrafanaConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}

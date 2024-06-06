@@ -9,11 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/models"
-	"github.com/ava-labs/avalanche-cli/pkg/remoteconfig"
-	"github.com/ava-labs/avalanche-cli/pkg/utils"
-	"github.com/ava-labs/avalanche-cli/pkg/ux"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/docker/services"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 // ValidateComposeFile validates a docker-compose file on a remote host.
@@ -25,9 +24,9 @@ func (dh *DockerHost) ValidateComposeFile(composeFile string, timeout time.Durat
 }
 
 // ComposeSSHSetupNode sets up an AvalancheGo node and dependencies on a remote host over SSH.
-func (dh *DockerHost) ComposeSSHSetupNode(network models.Network, avalancheGoVersion string, withMonitoring bool) error {
+func (dh *DockerHost) ComposeSSHSetupNode(network avalanche.Network, avalancheGoVersion string, withMonitoring bool) error {
 	startTime := time.Now()
-	folderStructure := remoteconfig.RemoteFoldersToCreateAvalanchego()
+	folderStructure := services.RemoteFoldersToCreateAvalanchego()
 	for _, dir := range folderStructure {
 		if err := dh.Host.MkdirAll(dir, constants.SSHFileOpsTimeout); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
@@ -35,8 +34,8 @@ func (dh *DockerHost) ComposeSSHSetupNode(network models.Network, avalancheGoVer
 	}
 	dh.Logger.Infof("avalancheCLI folder structure created on remote host %s after %s", folderStructure, time.Since(startTime))
 	// configs
-	networkID := network.NetworkIDFlagValue()
-	if network.Kind == models.Local || network.Kind == models.Devnet {
+	networkID := network.HRP()
+	if network.Kind == avalanche.Local || network.Kind == avalanche.Devnet {
 		networkID = fmt.Sprintf("%d", network.ID)
 	}
 
@@ -52,17 +51,17 @@ func (dh *DockerHost) ComposeSSHSetupNode(network models.Network, avalancheGoVer
 	}
 	defer func() {
 		if err := os.Remove(nodeConfFile); err != nil {
-			ux.Logger.Error("Error removing temporary file %s: %s", nodeConfFile, err)
+			dh.Logger.Errorf("Error removing temporary file %s: %s", nodeConfFile, err)
 		}
 		if err := os.Remove(cChainConfFile); err != nil {
-			ux.Logger.Error("Error removing temporary file %s: %s", cChainConfFile, err)
+			dh.Logger.Errorf("Error removing temporary file %s: %s", cChainConfFile, err)
 		}
 	}()
 
-	if err := dh.Host.Upload(nodeConfFile, remoteconfig.GetRemoteAvalancheNodeConfig(), constants.SSHFileOpsTimeout); err != nil {
+	if err := dh.Host.Upload(nodeConfFile, services.GetRemoteAvalancheNodeConfig(), constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}
-	if err := dh.Host.Upload(cChainConfFile, remoteconfig.GetRemoteAvalancheCChainConfig(), constants.SSHFileOpsTimeout); err != nil {
+	if err := dh.Host.Upload(cChainConfFile, services.GetRemoteAvalancheCChainConfig(), constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}
 	dh.Logger.Infof("AvalancheGo configs uploaded to %s[%s] after %s", dh.Host.NodeID, dh.Host.IP, time.Since(startTime))
@@ -102,16 +101,16 @@ func (dh *DockerHost) ComposeSSHSetupMonitoring() error {
 	}
 	defer func() {
 		if err := os.Remove(grafanaLokiDatasourceFile); err != nil {
-			ux.Logger.Error("Error removing temporary file %s: %s", grafanaLokiDatasourceFile, err)
+			dh.Logger.Errorf("Error removing temporary file %s: %s", grafanaLokiDatasourceFile, err)
 		}
 		if err := os.Remove(grafanaPromDatasourceFile); err != nil {
-			ux.Logger.Error("Error removing temporary file %s: %s", grafanaPromDatasourceFile, err)
+			dh.Logger.Errorf("Error removing temporary file %s: %s", grafanaPromDatasourceFile, err)
 		}
 		if err := os.Remove(grafanaDashboardsFile); err != nil {
-			ux.Logger.Error("Error removing temporary file %s: %s", grafanaDashboardsFile, err)
+			dh.Logger.Errorf("Error removing temporary file %s: %s", grafanaDashboardsFile, err)
 		}
 		if err := os.Remove(grafanaConfigFile); err != nil {
-			ux.Logger.Error("Error removing temporary file %s: %s", grafanaConfigFile, err)
+			dh.Logger.Errorf("Error removing temporary file %s: %s", grafanaConfigFile, err)
 		}
 	}()
 

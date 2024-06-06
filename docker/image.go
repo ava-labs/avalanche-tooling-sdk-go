@@ -6,7 +6,7 @@ package docker
 import (
 	"strings"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
 // PullDockerImage pulls a docker image on a remote host.
