@@ -17,10 +17,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 // SSHConfig contains the configuration for connecting to a host over SSH

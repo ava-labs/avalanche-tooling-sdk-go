@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 

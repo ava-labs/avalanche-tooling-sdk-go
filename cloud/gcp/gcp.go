@@ -13,14 +13,12 @@ import (
 	"time"
 
 	"golang.org/x/exp/rand"
-
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"google.golang.org/api/compute/v1"
-
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/utils"
 )
 
 const (
@@ -435,7 +433,7 @@ func (c *GcpCloud) DestroyGCPNode(nodeRegion string, nodeID string) error {
 func (c *GcpCloud) ReleaseStaticIP(projectID, region, staticIPName string) error {
 	addressReleaseCall := c.gcpClient.Addresses.Delete(projectID, region, staticIPName)
 	if _, err := addressReleaseCall.Do(); err != nil {
-		return fmt.Errorf("%s, %w", constants.ErrReleasingGCPStaticIP, err)
+		return fmt.Errorf("%s, %w", constants.GCPErrReleasingStaticIP, err)
 	}
 	return nil
 }
