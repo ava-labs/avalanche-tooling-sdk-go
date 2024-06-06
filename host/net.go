@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
 // AvalanchegoTCPClient returns the connection to the node.
