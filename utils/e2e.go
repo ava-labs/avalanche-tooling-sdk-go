@@ -9,8 +9,10 @@ import (
 	"os/user"
 	"regexp"
 	"strings"
+)
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
+const (
+	E2EListenPrefix = "192.168.223"
 )
 
 // Config holds the information needed for the template
@@ -42,7 +44,7 @@ func E2EDocker() bool {
 // E2EConvertIP maps an IP address to an E2E IP address.
 func E2EConvertIP(ip string) string {
 	if suffix := E2ESuffix(ip); suffix != "" {
-		return fmt.Sprintf("%s.10%s", constants.E2EListenPrefix, suffix)
+		return fmt.Sprintf("%s.10%s", E2EListenPrefix, suffix)
 	} else {
 		return ""
 	}
