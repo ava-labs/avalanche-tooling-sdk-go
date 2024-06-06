@@ -4,7 +4,6 @@ package utils
 
 import (
 	"context"
-	"os"
 	"sort"
 	"time"
 
@@ -67,13 +66,4 @@ func P(
 			return address.Format("P", networkHRP, addr[:])
 		},
 	)
-}
-
-// FileExists checks if a file exists.
-func FileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
 }
