@@ -14,7 +14,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
-	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"golang.org/x/exp/slices"
 	"golang.org/x/net/context"
@@ -32,7 +31,7 @@ type ValidatorParams struct {
 
 // AddValidator adds validator to subnet
 func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorParams) (*multisig.Multisig, error) {
-	controlKeys, threshold, err := GetOwners(validatorInput.Network, c.SubnetID)
+	controlKeys, threshold, err := multisig.GetOwners(validatorInput.Network, c.SubnetID)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +41,8 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorPara
 	}
 	subnetAuthKeysStr := []string{}
 	subnetAuthKeysStr = append(subnetAuthKeysStr, subnetAuthKeysStr...)
-	if err := checkSubnetAuthKeys(pChainAddr, subnetAuthKeysStr, controlKeys, threshold); err != nil {
+	controlKeysStr, err := convertControlKeysToStr(controlKeys, validatorInput.Network)
+	if err := checkSubnetAuthKeys(pChainAddr, subnetAuthKeysStr, controlKeysStr, threshold); err != nil {
 		return nil, err
 	}
 	validator := &txs.SubnetValidator{
@@ -89,16 +89,7 @@ func checkSubnetAuthKeys(walletKeys []string, subnetAuthKeys []string, controlKe
 	}
 	return nil
 }
-
-func GetOwners(network avalanche.Network, subnetID ids.ID) ([]string, uint32, error) {
-	pClient := platformvm.NewClient(network.Endpoint)
-	ctx := context.Background()
-	subnetResponse, err := pClient.GetSubnet(ctx, subnetID)
-	if err != nil {
-		return nil, 0, fmt.Errorf("subnet tx %s query error: %w", subnetID, err)
-	}
-	controlKeys := subnetResponse.ControlKeys
-	threshold := subnetResponse.Threshold
+func convertControlKeysToStr(controlKeys []ids.ShortID, network avalanche.Network) ([]string, error) {
 	hrp := network.HRP()
 	controlKeysStrs, err := utils.MapE(
 		controlKeys,
@@ -106,8 +97,5 @@ func GetOwners(network avalanche.Network, subnetID ids.ID) ([]string, uint32, er
 			return address.Format("P", hrp, addr[:])
 		},
 	)
-	if err != nil {
-		return nil, 0, err
-	}
-	return controlKeysStrs, threshold, nil
+	return controlKeysStrs, err
 }

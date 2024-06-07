@@ -1,9 +1,11 @@
-// Copyright (C) 222, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package multisig
 
 import (
+	"context"
 	"fmt"
+	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"os"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
@@ -124,7 +126,7 @@ func (ms *Multisig) IsReadyToCommit() (bool, error) {
 	return len(remainingSigners) == 0, nil
 }
 
-// get subnet auth addresses that did not yet signed a given tx
+// GetRemainingAuthSigners gets subnet auth addresses that did not yet signed a given tx
 //   - get the string slice of auth signers for the tx (GetAuthSigners)
 //   - verifies that all creds in tx.Creds, except the last one, are fully signed
 //     (a cred is fully signed if all the signatures in cred.Sigs are non-empty)
@@ -179,7 +181,7 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 	return authSigners, remainingSigners, nil
 }
 
-// get all subnet auth addresses that are required to sign a given tx
+// GetAuthSigners gets all subnet auth addresses that are required to sign a given tx
 //   - get subnet control keys as string slice using P-Chain API (GetOwners)
 //   - get subnet auth indices from the tx, field tx.UnsignedTx.SubnetAuth
 //   - creates the string slice of required subnet auth addresses by applying
@@ -365,8 +367,16 @@ func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 	return ms.controlKeys, ms.threshold, nil
 }
 
-func GetOwners(_ avalanche.Network, _ ids.ID) ([]ids.ShortID, uint32, error) {
-	return nil, 0, fmt.Errorf("not implemented")
+func GetOwners(network avalanche.Network, subnetID ids.ID) ([]ids.ShortID, uint32, error) {
+	pClient := platformvm.NewClient(network.Endpoint)
+	ctx := context.Background()
+	subnetResponse, err := pClient.GetSubnet(ctx, subnetID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("subnet tx %s query error: %w", subnetID, err)
+	}
+	controlKeys := subnetResponse.ControlKeys
+	threshold := subnetResponse.Threshold
+	return controlKeys, threshold, nil
 }
 
 func (ms *Multisig) GetWrappedPChainTx() (*txs.Tx, error) {
