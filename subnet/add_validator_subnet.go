@@ -92,11 +92,10 @@ func checkSubnetAuthKeys(walletKeys []string, subnetAuthKeys []string, controlKe
 
 func convertControlKeysToStr(controlKeys []ids.ShortID, network avalanche.Network) ([]string, error) {
 	hrp := network.HRP()
-	controlKeysStrs, err := utils.MapE(
+	return utils.MapE(
 		controlKeys,
 		func(addr ids.ShortID) (string, error) {
 			return address.Format("P", hrp, addr[:])
 		},
 	)
-	return controlKeysStrs, err
 }
