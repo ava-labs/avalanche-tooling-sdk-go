@@ -5,8 +5,9 @@ package multisig
 import (
 	"context"
 	"fmt"
-	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"os"
+
+	"github.com/ava-labs/avalanchego/vms/platformvm"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
