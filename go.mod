@@ -5,7 +5,7 @@ go 1.21.10
 toolchain go1.22.1
 
 require (
-	github.com/ava-labs/avalanche-cli v1.6.1-0.20240603193904-57f3b0728b40
+	github.com/ava-labs/avalanche-cli v1.6.1
 	github.com/ava-labs/avalanchego v1.11.5
 	github.com/ava-labs/coreth v0.13.3-rc.2
 	github.com/ava-labs/subnet-evm v0.6.4
