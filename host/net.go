@@ -9,6 +9,7 @@ import (
 	"net/rpc"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
@@ -57,4 +58,22 @@ func (h *Host) Post(path string, requestBody string) ([]byte, error) {
 		"Content-Type: application/json\r\n\r\n", path, localhost.Host, len(requestBody))
 	httpRequest := requestHeaders + requestBody
 	return h.Forward(httpRequest, constants.SSHPOSTTimeout)
+}
+
+// WaitForPort waits for the SSH port to become available on the host.
+func (h *Host) WaitForPort(port uint, timeout time.Duration) error {
+	if port == 0 {
+		port = constants.SSHTCPPort
+	}
+	start := time.Now()
+	deadline := start.Add(timeout)
+	for {
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timeout: SSH port %d on host %s is not available after %vs", port, h.IP, timeout.Seconds())
+		}
+		if _, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", h.IP, port), time.Second); err == nil {
+			return nil
+		}
+		time.Sleep(constants.SSHSleepBetweenChecks)
+	}
 }

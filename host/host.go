@@ -20,6 +20,7 @@ import (
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
@@ -60,6 +61,9 @@ type Host struct {
 
 	// Roles of the host
 	Roles []SupportedRole
+
+	// Logger for host
+	Logger avalanche.LeveledLogger
 }
 
 // NewHostConnection creates a new SSH connection to the host
@@ -254,7 +258,7 @@ func (h *Host) Command(env []string, timeout time.Duration, script string) ([]by
 
 // Commandf is a shorthand for Command with a formatted script.
 func (h *Host) Commandf(env []string, timeout time.Duration, format string, args ...interface{}) ([]byte, error) {
-	return h.Command(env, constants.SSHScriptTimeout, fmt.Sprintf(format, args...))
+	return h.Command(env, timeout, fmt.Sprintf(format, args...))
 }
 
 // Forward forwards the TCP connection to a remote address.
@@ -411,24 +415,6 @@ func (h *Host) Remove(path string, recursive bool) error {
 		return err
 	} else {
 		return sftp.Remove(path)
-	}
-}
-
-// WaitForPort waits for the SSH port to become available on the host.
-func (h *Host) WaitForPort(port uint, timeout time.Duration) error {
-	if port == 0 {
-		port = constants.SSHTCPPort
-	}
-	start := time.Now()
-	deadline := start.Add(timeout)
-	for {
-		if time.Now().After(deadline) {
-			return fmt.Errorf("timeout: SSH port %d on host %s is not available after %vs", port, h.IP, timeout.Seconds())
-		}
-		if _, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", h.IP, port), time.Second); err == nil {
-			return nil
-		}
-		time.Sleep(constants.SSHSleepBetweenChecks)
 	}
 }
 

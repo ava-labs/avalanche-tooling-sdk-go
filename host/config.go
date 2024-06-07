@@ -1,18 +1,18 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package docker
+package host
 
 import (
 	"os"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	services "github.com/ava-labs/avalanche-tooling-sdk-go/docker/services"
+	config "github.com/ava-labs/avalanche-tooling-sdk-go/host/config"
 )
 
-func (dh *DockerHost) prepareAvalanchegoConfig(networkID string) (string, string, error) {
-	avagoConf := services.DefaultCliAvalancheConfig(dh.Host.IP, networkID)
-	nodeConf, err := services.RenderAvalancheNodeConfig(avagoConf)
+func (h *Host) prepareAvalanchegoConfig(networkID string) (string, string, error) {
+	avagoConf := config.DefaultCliAvalancheConfig(h.IP, networkID)
+	nodeConf, err := config.RenderAvalancheNodeConfig(avagoConf)
 	if err != nil {
 		return "", "", err
 	}
@@ -23,7 +23,7 @@ func (dh *DockerHost) prepareAvalanchegoConfig(networkID string) (string, string
 	if err := os.WriteFile(nodeConfFile.Name(), nodeConf, constants.WriteReadUserOnlyPerms); err != nil {
 		return "", "", err
 	}
-	cChainConf, err := services.RenderAvalancheCChainConfig(avagoConf)
+	cChainConf, err := config.RenderAvalancheCChainConfig(avagoConf)
 	if err != nil {
 		return "", "", err
 	}
@@ -38,7 +38,7 @@ func (dh *DockerHost) prepareAvalanchegoConfig(networkID string) (string, string
 }
 
 func prepareGrafanaConfig() (string, string, string, string, error) {
-	grafanaDataSource, err := services.RenderGrafanaLokiDataSourceConfig()
+	grafanaDataSource, err := config.RenderGrafanaLokiDataSourceConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -50,7 +50,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaPromDataSource, err := services.RenderGrafanaPrometheusDataSourceConfigg()
+	grafanaPromDataSource, err := config.RenderGrafanaPrometheusDataSourceConfigg()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -62,7 +62,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaDashboards, err := services.RenderGrafanaDashboardConfig()
+	grafanaDashboards, err := config.RenderGrafanaDashboardConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -74,7 +74,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaConfig, err := services.RenderGrafanaConfig()
+	grafanaConfig, err := config.RenderGrafanaConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}
