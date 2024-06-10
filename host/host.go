@@ -20,6 +20,7 @@ import (
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
@@ -60,6 +61,9 @@ type Host struct {
 
 	// Roles of the host
 	Roles []SupportedRole
+
+	// Logger for host
+	Logger avalanche.LeveledLogger
 }
 
 // NewHostConnection creates a new SSH connection to the host
@@ -233,7 +237,7 @@ func (h *Host) Cmd(ctx context.Context, name string, script string) (*goph.Cmd, 
 }
 
 // Command executes a shell command on a remote host.
-func (h *Host) Command(script string, env []string, timeout time.Duration) ([]byte, error) {
+func (h *Host) Command(env []string, timeout time.Duration, script string) ([]byte, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return nil, err
@@ -250,6 +254,11 @@ func (h *Host) Command(script string, env []string, timeout time.Duration) ([]by
 	}
 	output, err := cmd.CombinedOutput()
 	return output, err
+}
+
+// Commandf is a shorthand for Command with a formatted script.
+func (h *Host) Commandf(env []string, timeout time.Duration, format string, args ...interface{}) ([]byte, error) {
+	return h.Command(env, timeout, fmt.Sprintf(format, args...))
 }
 
 // Forward forwards the TCP connection to a remote address.
@@ -402,28 +411,10 @@ func (h *Host) Remove(path string, recursive bool) error {
 	defer sftp.Close()
 	if recursive {
 		// return sftp.RemoveAll(path) is very slow
-		_, err := h.Command(fmt.Sprintf("rm -rf %s", path), nil, constants.SSHLongRunningScriptTimeout)
+		_, err := h.Commandf(nil, constants.SSHLongRunningScriptTimeout, "rm -rf %s", path)
 		return err
 	} else {
 		return sftp.Remove(path)
-	}
-}
-
-// WaitForPort waits for the SSH port to become available on the host.
-func (h *Host) WaitForPort(port uint, timeout time.Duration) error {
-	if port == 0 {
-		port = constants.SSHTCPPort
-	}
-	start := time.Now()
-	deadline := start.Add(timeout)
-	for {
-		if time.Now().After(deadline) {
-			return fmt.Errorf("timeout: SSH port %d on host %s is not available after %vs", port, h.IP, timeout.Seconds())
-		}
-		if _, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", h.IP, port), time.Second); err == nil {
-			return nil
-		}
-		time.Sleep(constants.SSHSleepBetweenChecks)
 	}
 }
 
@@ -447,7 +438,7 @@ func (h *Host) WaitForSSHShell(timeout time.Duration) error {
 			continue
 		}
 		if h.Connected() {
-			output, err := h.Command("echo", nil, timeout)
+			output, err := h.Command(nil, timeout, "echo")
 			if err == nil || len(output) > 0 {
 				return nil
 			}
