@@ -354,6 +354,7 @@ func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 		if err != nil {
 			return nil, 0, err
 		}
+
 		network, err := ms.GetNetwork()
 		if err != nil {
 			return nil, 0, err
@@ -371,12 +372,25 @@ func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 func GetOwners(network avalanche.Network, subnetID ids.ID) ([]ids.ShortID, uint32, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
 	ctx := context.Background()
-	subnetResponse, err := pClient.GetSubnet(ctx, subnetID)
+	var owner *secp256k1fx.OutputOwners
+	txBytes, err := pClient.GetTx(ctx, subnetID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("subnet tx %s query error: %w", subnetID, err)
 	}
-	controlKeys := subnetResponse.ControlKeys
-	threshold := subnetResponse.Threshold
+	var tx txs.Tx
+	if _, err := txs.Codec.Unmarshal(txBytes, &tx); err != nil {
+		return nil, 0, fmt.Errorf("couldn't unmarshal tx %s: %w", subnetID, err)
+	}
+	createSubnetTx, ok := tx.Unsigned.(*txs.CreateSubnetTx)
+	if !ok {
+		return nil, 0, fmt.Errorf("got unexpected type %T for subnet tx %s", tx.Unsigned, subnetID)
+	}
+	owner, ok = createSubnetTx.Owner.(*secp256k1fx.OutputOwners)
+	if !ok {
+		return nil, 0, fmt.Errorf("got unexpected type %T for subnet owners tx %s", createSubnetTx.Owner, subnetID)
+	}
+	controlKeys := owner.Addrs
+	threshold := owner.Threshold
 	return controlKeys, threshold, nil
 }
 
