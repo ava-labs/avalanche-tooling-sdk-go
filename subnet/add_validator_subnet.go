@@ -42,6 +42,10 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorPara
 	subnetAuthKeysStr := []string{}
 	subnetAuthKeysStr = append(subnetAuthKeysStr, subnetAuthKeysStr...)
 	controlKeysStr, err := convertControlKeysToStr(controlKeys, validatorInput.Network)
+	fmt.Printf("obtained controkeysstr %s \n", controlKeysStr)
+	if err != nil {
+		return nil, err
+	}
 	if err := checkSubnetAuthKeys(pChainAddr, subnetAuthKeysStr, controlKeysStr, threshold); err != nil {
 		return nil, err
 	}
