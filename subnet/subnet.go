@@ -30,7 +30,7 @@ type SubnetParams struct {
 	// File path of Genesis to use
 	// Do not set SubnetEVMParams or CustomVMParams
 	// if GenesisFilePath value is set
-
+	//
 	// See https://docs.avax.network/build/subnet/upgrade/customize-a-subnet#genesis for
 	// information on Genesis
 	GenesisFilePath string
@@ -43,30 +43,44 @@ type SubnetParams struct {
 	// Do not set CustomVM value if you are using Subnet-EVM
 	CustomVM *CustomVMParams
 
+	// Name is alias for the Subnet, it is used to derive VM ID, which is required
+	// during for createBlockchainTx
 	Name string
 }
 
 type SubnetEVMParams struct {
-	// Enable Avalanche Warp Messaging (AWM) when deploying a VM
-
+	// EnableWarp sets whether to enable Avalanche Warp Messaging (AWM) when deploying a VM
+	//
 	// See https://docs.avax.network/build/cross-chain/awm/overview for
 	// information on Avalanche Warp Messaging
 	EnableWarp bool
 
-	// Enable Teleporter when deploying a VM
-	// Warp is required to be enabled when enabling Teleporter
+	// ChainID identifies the current chain and is used for replay protection
+	ChainID *big.Int
 
-	// See https://docs.avax.network/build/cross-chain/teleporter/overview for
-	// information on Teleporter
-	EnableTeleporter bool
+	// FeeConfig sets the configuration for the dynamic fee algorithm
+	FeeConfig commontype.FeeConfig
 
-	// Enable AWM Relayer when deploying a VM
+	// Allocation specifies the initial state that is part of the genesis block.
+	Allocation core.GenesisAlloc
 
-	// See https://docs.avax.network/build/cross-chain/awm/relayer for
-	// information on AWM Relayer
-	EnableRelayer bool
+	// Ethereum uses Precompiles to efficiently implement cryptographic primitives within the EVM
+	// instead of re-implementing the same primitives in Solidity.
+	//
+	// Precompiles are a shortcut to execute a function implemented by the EVM itself,
+	// rather than an actual contract. A precompile is associated with a fixed address defined in
+	// the EVM. There is no byte code associated with that address.
+	//
+	// For more information regarding Precompiles, head to https://docs.avax.network/build/vm/evm/intro.
+	Precompiles params.Precompiles
 
-	GenesisParams *EVMGenesisParams
+	// TeleporterInfo contains all the necessary information to dpeloy Teleporter into a Subnet
+	//
+	// If TeleporterInfo is not empty:
+	// - Allocation will automatically be configured to add the provided Teleporter Address
+	//   and Balance
+	// - Precompiles tx allow list will include the provided Teleporter info
+	TeleporterInfo *teleporter.Info
 }
 
 type CustomVMParams struct {
@@ -87,17 +101,24 @@ type CustomVMParams struct {
 }
 
 type Subnet struct {
+	// Name is alias for the Subnet
 	Name string
 
+	// Genesis is the initial state of a blockchain when it is first created. Each Virtual Machine
+	// defines the format and semantics of its genesis data.
+	//
+	// For more information regarding Genesis, head to https://docs.avax.network/build/subnet/upgrade/customize-a-subnet#genesis
 	Genesis []byte
 
+	// SubnetID is the transaction ID from an issued CreateSubnetTX and is used to identify
+	// the target Subnet for CreateChainTx and AddValidatorTx
 	SubnetID ids.ID
 
+	// VMID specifies the vm that the new chain will run when CreateChainTx is called
 	VMID ids.ID
 
+	// DeployInfo contains all the necessary information for createSubnetTx
 	DeployInfo DeployParams
-
-	RPCVersion int
 }
 
 func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.ShortID, threshold uint32) {
@@ -109,46 +130,80 @@ func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.Shor
 }
 
 type DeployParams struct {
+	// ControlKeys is a list of P-Chain addresses that are authorized to create new chains and add
+	// new validators to the Subnet
 	ControlKeys []string
 
+	// SubnetAuthKeys is a list of P-Chain addresses that will be used to sign transactions that
+	// will modify the Subnet.
+	//
+	// SubnetAuthKeys has to be a subset of ControlKeys
 	SubnetAuthKeys []ids.ShortID
 
-	TransferSubnetOwnershipTxID ids.ID
-
+	// Threshold is the minimum number of signatures needed before a transaction can be issued
+	// Number of addresses in SubnetAuthKeys has to be more than or equal to Threshold number
 	Threshold uint32
 }
 
 type EVMGenesisParams struct {
-	// Chain ID to use in Subnet-EVM
-	ChainID        *big.Int
-	FeeConfig      commontype.FeeConfig
-	Allocation     core.GenesisAlloc
-	Precompiles    params.Precompiles
+	// ChainID identifies the current chain and is used for replay protection
+	ChainID *big.Int
+
+	// FeeConfig sets the configuration for the dynamic fee algorithm
+	FeeConfig commontype.FeeConfig
+
+	// Allocation specifies the initial state that is part of the genesis block.
+	Allocation core.GenesisAlloc
+
+	// Ethereum uses Precompiles to efficiently implement cryptographic primitives within the EVM
+	// instead of re-implementing the same primitives in Solidity.
+	//
+	// Precompiles are a shortcut to execute a function implemented by the EVM itself,
+	// rather than an actual contract. A precompile is associated with a fixed address defined in
+	// the EVM. There is no byte code associated with that address.
+	//
+	// For more information regarding Precompiles, head to https://docs.avax.network/build/vm/evm/intro.
+	Precompiles params.Precompiles
+
+	// TeleporterInfo contains all the necessary information to dpeloy Teleporter into a Subnet
+	//
+	// If TeleporterInfo is not empty:
+	// - Allocation will automatically be configured to add the provided Teleporter Address
+	//   and Balance
+	// - Precompiles tx allow list will include the provided Teleporter info
 	TeleporterInfo *teleporter.Info
 }
 
+// New takes SubnetParams as input and creates Subnet as an output
+//
+// The created Subnet object can be used to :
+//   - Create the Subnet on a specified network (Fuji / Mainnet)
+//   - Create Blockchain(s) in the Subnet
+//   - Add Validator(s) into the Subnet
 func New(subnetParams *SubnetParams) (*Subnet, error) {
 	if subnetParams.GenesisFilePath != "" && (subnetParams.CustomVM != nil || subnetParams.SubnetEVM != nil) {
 		return nil, fmt.Errorf("genesis file path cannot be non-empty if either CustomVM params or SubnetEVM params is not empty")
 	}
-	if subnetParams.SubnetEVM == nil && subnetParams.CustomVM != nil {
+
+	if subnetParams.GenesisFilePath == "" && subnetParams.SubnetEVM == nil && subnetParams.CustomVM == nil {
+		return nil, fmt.Errorf("genesis file path, SubnetEVM params and CustomVM params cannot all be empty")
+	}
+
+	if subnetParams.SubnetEVM != nil && subnetParams.CustomVM != nil {
 		return nil, fmt.Errorf("SubnetEVM params and CustomVM params cannot both be non-empty")
 	}
-	if subnetParams.SubnetEVM != nil {
-		if subnetParams.SubnetEVM.GenesisParams == nil {
-			return nil, fmt.Errorf("SubnetEVM Genesis params cannot be empty")
-		}
+
+	if subnetParams.Name == "" {
+		return nil, fmt.Errorf("SubnetEVM name cannot be empty")
 	}
+
 	var genesisBytes []byte
 	var err error
 	switch {
 	case subnetParams.GenesisFilePath != "":
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
-		genesisBytes, err = createEvmGenesis(
-			subnetParams.SubnetEVM.GenesisParams,
-			subnetParams.SubnetEVM.EnableWarp,
-		)
+		genesisBytes, err = createEvmGenesis(subnetParams.SubnetEVM)
 	case subnetParams.CustomVM != nil:
 		genesisBytes, err = createCustomVMGenesis()
 	default:
@@ -156,6 +211,7 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	vmID, err := vmID(subnetParams.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create VM ID from %s: %w", subnetParams.Name, err)
@@ -169,8 +225,7 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 }
 
 func createEvmGenesis(
-	genesisParams *EVMGenesisParams,
-	useWarp bool,
+	subnetEVMParams *SubnetEVMParams,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
 	genesis.Timestamp = *utils.TimeToNewUint64(time.Now())
@@ -180,39 +235,39 @@ func createEvmGenesis(
 
 	var err error
 
-	if genesisParams.ChainID == nil {
+	if subnetEVMParams.ChainID == nil {
 		return nil, fmt.Errorf("genesis params chain ID cannot be empty")
 	}
 
-	if genesisParams.FeeConfig == commontype.EmptyFeeConfig {
+	if subnetEVMParams.FeeConfig == commontype.EmptyFeeConfig {
 		return nil, fmt.Errorf("genesis params fee config cannot be empty")
 	}
 
-	if genesisParams.Allocation == nil {
+	if subnetEVMParams.Allocation == nil {
 		return nil, fmt.Errorf("genesis params allocation cannot be empty")
 	}
-	allocation := genesisParams.Allocation
-	if genesisParams.TeleporterInfo != nil {
+	allocation := subnetEVMParams.Allocation
+	if subnetEVMParams.TeleporterInfo != nil {
 		allocation = addTeleporterAddressToAllocations(
 			allocation,
-			genesisParams.TeleporterInfo.FundedAddress,
-			genesisParams.TeleporterInfo.FundedBalance,
+			subnetEVMParams.TeleporterInfo.FundedAddress,
+			subnetEVMParams.TeleporterInfo.FundedBalance,
 		)
 	}
 
-	if genesisParams.Precompiles == nil {
+	if subnetEVMParams.Precompiles == nil {
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
 	}
-	if useWarp {
+	if subnetEVMParams.EnableWarp {
 		warpConfig := vm.ConfigureWarp(&genesis.Timestamp)
 		conf.GenesisPrecompiles[warp.ConfigKey] = &warpConfig
 	}
-	if genesisParams.TeleporterInfo != nil {
+	if subnetEVMParams.TeleporterInfo != nil {
 		*conf = vm.AddTeleporterAddressesToAllowLists(
 			*conf,
-			genesisParams.TeleporterInfo.FundedAddress,
-			genesisParams.TeleporterInfo.MessengerDeployerAddress,
-			genesisParams.TeleporterInfo.RelayerAddress,
+			subnetEVMParams.TeleporterInfo.FundedAddress,
+			subnetEVMParams.TeleporterInfo.MessengerDeployerAddress,
+			subnetEVMParams.TeleporterInfo.RelayerAddress,
 		)
 	}
 
@@ -232,7 +287,7 @@ func createEvmGenesis(
 		}
 	}
 
-	conf.ChainID = genesisParams.ChainID
+	conf.ChainID = subnetEVMParams.ChainID
 
 	genesis.Alloc = allocation
 	genesis.Config = conf

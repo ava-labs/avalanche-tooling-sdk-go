@@ -16,13 +16,11 @@ import (
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 )
 
-// CreateSubnetTx creates uncommitted createSubnet transaction
+// CreateSubnetTx creates uncommitted CreateSubnetTx
+// TODO: add which key is paying -> wallet.keychain?
 func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
 	if c.DeployInfo.ControlKeys == nil {
 		return nil, fmt.Errorf("control keys are not provided")
-	}
-	if c.DeployInfo.SubnetAuthKeys == nil {
-		return nil, fmt.Errorf("subnet authkeys are not provided")
 	}
 	if c.DeployInfo.Threshold == 0 {
 		return nil, fmt.Errorf("threshold is not provided")
@@ -49,7 +47,7 @@ func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error
 	return multisig.New(&tx), nil
 }
 
-// CreateBlockchainTx creates uncommitted createBlockchain transaction
+// CreateBlockchainTx creates uncommitted CreateChainTx
 func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
 	if c.SubnetID == ids.Empty {
 		return nil, fmt.Errorf("subnet ID is not provided")
