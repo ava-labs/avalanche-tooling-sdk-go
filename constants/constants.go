@@ -10,12 +10,12 @@ const (
 	BuildEnvGolangVersion = "1.22.1"
 
 	// clouds
-
 	CloudOperationTimeout  = 2 * time.Minute
 	CloudServerStorageSize = 1000
 
 	AWSCloudServerRunningState = "running"
 	AWSDefaultInstanceType     = "c5.2xlarge"
+	AWSNodeIDPrefix            = "aws_node"
 
 	GCPDefaultImageProvider = "avalabs-experimental"
 	GCPDefaultInstanceType  = "e2-standard-8"
@@ -24,6 +24,7 @@ const (
 	GCPDefaultAuthKeyPath   = "~/.config/gcloud/application_default_credentials.json"
 	GCPStaticIPPrefix       = "static-ip"
 	GCPErrReleasingStaticIP = "failed to release gcp static ip"
+	GCPNodeIDPrefix         = "gcp_node"
 
 	// ports
 	SSHTCPPort                    = 22
