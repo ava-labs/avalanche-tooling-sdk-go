@@ -16,7 +16,8 @@ import (
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 )
 
-// CreateSubnetTx creates uncommitted CreateSubnetTx
+// CreateSubnetTx creates unsigned and uncommitted CreateSubnetTx
+// It returns a Multisig object
 // TODO: add which key is paying -> wallet.keychain?
 func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
 	if c.DeployInfo.ControlKeys == nil {
