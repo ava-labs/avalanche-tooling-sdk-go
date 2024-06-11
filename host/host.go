@@ -102,10 +102,10 @@ func NewHostConnection(h *Host, port uint) (*goph.Client, error) {
 // GetCloudID returns the cloudID for the host if it is a cloud node
 func (h *Host) GetCloudID() string {
 	switch {
-	case strings.HasPrefix(h.NodeID, constants.AWSNodeIDPrefix):
-		return strings.TrimPrefix(h.NodeID, constants.AWSNodeIDPrefix)
-	case strings.HasPrefix(h.NodeID, constants.GCPNodeIDPrefix):
-		return strings.TrimPrefix(h.NodeID, constants.GCPNodeIDPrefix)
+	case strings.HasPrefix(h.NodeID, constants.AWSNodeIDPrefix+"_"):
+		return strings.TrimPrefix(h.NodeID, constants.AWSNodeIDPrefix+"_")
+	case strings.HasPrefix(h.NodeID, constants.GCPNodeIDPrefix+"_"):
+		return strings.TrimPrefix(h.NodeID, constants.GCPNodeIDPrefix+"_")
 	default:
 		return h.NodeID
 	}
