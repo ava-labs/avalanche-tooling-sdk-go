@@ -21,9 +21,7 @@ func TestAddValidatorDeploy(_ *testing.T) {
 	// like logging, metrics preferences, etc
 	subnetParams := SubnetParams{
 		SubnetEVM: &SubnetEVMParams{
-			EnableWarp:       true,
-			EnableTeleporter: true,
-			EnableRelayer:    true,
+			EnableWarp: true,
 		},
 	}
 	newSubnet, _ := New(&subnetParams)
