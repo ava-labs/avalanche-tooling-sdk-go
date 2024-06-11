@@ -99,9 +99,16 @@ func NewHostConnection(h *Host, port uint) (*goph.Client, error) {
 	return cl, nil
 }
 
-// GetCloudID returns the node ID of the host.
+// GetCloudID returns the cloudID for the host if it is a cloud node
 func (h *Host) GetCloudID() string {
-	return h.NodeID // TODO fix this
+	switch {
+	case strings.HasPrefix(h.NodeID, constants.AWSNodeIDPrefix):
+		return strings.TrimPrefix(h.NodeID, constants.AWSNodeIDPrefix)
+	case strings.HasPrefix(h.NodeID, constants.GCPNodeIDPrefix):
+		return strings.TrimPrefix(h.NodeID, constants.GCPNodeIDPrefix)
+	default:
+		return h.NodeID
+	}
 }
 
 // Connect starts a new SSH connection with the provided private key.
