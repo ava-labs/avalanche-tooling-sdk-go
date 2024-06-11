@@ -39,10 +39,6 @@ type SubnetParams struct {
 	// Do not set SubnetEVM value if you are using Custom VM
 	SubnetEVM *SubnetEVMParams
 
-	// Custom VM parameters to use
-	// Do not set CustomVM value if you are using Subnet-EVM
-	CustomVM *CustomVMParams
-
 	// Name is alias for the Subnet, it is used to derive VM ID, which is required
 	// during for createBlockchainTx
 	Name string
@@ -181,16 +177,12 @@ type EVMGenesisParams struct {
 //   - Create Blockchain(s) in the Subnet
 //   - Add Validator(s) into the Subnet
 func New(subnetParams *SubnetParams) (*Subnet, error) {
-	if subnetParams.GenesisFilePath != "" && (subnetParams.CustomVM != nil || subnetParams.SubnetEVM != nil) {
-		return nil, fmt.Errorf("genesis file path cannot be non-empty if either CustomVM params or SubnetEVM params is not empty")
+	if subnetParams.GenesisFilePath != "" && subnetParams.SubnetEVM != nil {
+		return nil, fmt.Errorf("genesis file path cannot be non-empty if SubnetEVM params is not empty")
 	}
 
-	if subnetParams.GenesisFilePath == "" && subnetParams.SubnetEVM == nil && subnetParams.CustomVM == nil {
-		return nil, fmt.Errorf("genesis file path, SubnetEVM params and CustomVM params cannot all be empty")
-	}
-
-	if subnetParams.SubnetEVM != nil && subnetParams.CustomVM != nil {
-		return nil, fmt.Errorf("SubnetEVM params and CustomVM params cannot both be non-empty")
+	if subnetParams.GenesisFilePath == "" && subnetParams.SubnetEVM == nil {
+		return nil, fmt.Errorf("genesis file path and SubnetEVM params params cannot all be empty")
 	}
 
 	if subnetParams.Name == "" {
@@ -204,8 +196,6 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
 		genesisBytes, err = createEvmGenesis(subnetParams.SubnetEVM)
-	case subnetParams.CustomVM != nil:
-		genesisBytes, err = createCustomVMGenesis()
 	default:
 	}
 	if err != nil {
@@ -341,11 +331,6 @@ func addTeleporterAddressToAllocations(
 		addAllocation(alloc, teleporterKeyAddress, teleporterKeyBalance)
 	}
 	return alloc
-}
-
-// TODO: implement createCustomVMGenesis
-func createCustomVMGenesis() ([]byte, error) {
-	return nil, nil
 }
 
 func vmID(vmName string) (ids.ID, error) {
