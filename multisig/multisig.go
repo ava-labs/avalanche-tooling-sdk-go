@@ -127,7 +127,7 @@ func (ms *Multisig) IsReadyToCommit() (bool, error) {
 	return len(remainingSigners) == 0, nil
 }
 
-// GetRemainingAuthSigners gets subnet auth addresses that did not yet signed a given tx
+// GetRemainingAuthSigners gets subnet auth addresses that have not signed a given tx
 //   - get the string slice of auth signers for the tx (GetAuthSigners)
 //   - verifies that all creds in tx.Creds, except the last one, are fully signed
 //     (a cred is fully signed if all the signatures in cred.Sigs are non-empty)
