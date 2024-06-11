@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	config "github.com/ava-labs/avalanche-tooling-sdk-go/host/config"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -24,7 +23,7 @@ func (h *Host) ValidateComposeFile(composeFile string, timeout time.Duration) er
 }
 
 // ComposeSSHSetupNode sets up an AvalancheGo node and dependencies on a remote host over SSH.
-func (h *Host) ComposeSSHSetupNode(network avalanche.Network, avalancheGoVersion string, withMonitoring bool) error {
+func (h *Host) ComposeSSHSetupNode(networkID string, avalancheGoVersion string, withMonitoring bool) error {
 	startTime := time.Now()
 	folderStructure := config.RemoteFoldersToCreateAvalanchego()
 	for _, dir := range folderStructure {
@@ -33,12 +32,6 @@ func (h *Host) ComposeSSHSetupNode(network avalanche.Network, avalancheGoVersion
 		}
 	}
 	h.Logger.Infof("avalancheCLI folder structure created on remote host %s after %s", folderStructure, time.Since(startTime))
-	// configs
-	networkID := network.HRP()
-	if network.Kind == avalanche.Local || network.Kind == avalanche.Devnet {
-		networkID = fmt.Sprintf("%d", network.ID)
-	}
-
 	avagoDockerImage := fmt.Sprintf("%s:%s", constants.AvalancheGoDockerImage, avalancheGoVersion)
 	h.Logger.Infof("Preparing AvalancheGo Docker image %s on %s[%s]", avagoDockerImage, h.NodeID, h.IP)
 	if err := h.PrepareDockerImageWithRepo(avagoDockerImage, constants.AvalancheGoGitRepo, avalancheGoVersion); err != nil {
