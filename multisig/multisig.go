@@ -319,7 +319,7 @@ func (ms *Multisig) GetBlockchainID() (ids.ID, error) {
 	return blockchainID, nil
 }
 
-// get subnet id associated to tx
+// GetSubnetID gets subnet id associated to tx
 func (ms *Multisig) GetSubnetID() (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, ErrUndefinedTx
