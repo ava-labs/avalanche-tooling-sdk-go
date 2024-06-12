@@ -6,6 +6,8 @@ package subnet
 import (
 	"context"
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/subnet-evm/core"
@@ -13,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
@@ -46,12 +49,13 @@ func TestSubnetDeploy(_ *testing.T) {
 		},
 	}
 	newSubnet, _ := New(&subnetParams)
-	ctx := context.Background()
+	network := avalanche.FujiNetwork()
+	keychain, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk")
 	wallet, _ := wallet.New(
-		ctx,
+		context.Background(),
 		&primary.WalletConfig{
-			URI:              "",
-			AVAXKeychain:     nil,
+			URI:              network.Endpoint,
+			AVAXKeychain:     keychain.Keychain,
 			EthKeychain:      secp256k1fx.NewKeychain(),
 			PChainTxsToFetch: nil,
 		},
@@ -59,4 +63,9 @@ func TestSubnetDeploy(_ *testing.T) {
 	// deploy Subnet returns multisig and error
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
 	fmt.Printf("deploySubnetTx %s", deploySubnetTx)
+	subnetID, _ := deploySubnetTx.GetWrappedPChainTx()
+	time.Sleep(2 * time.Second)
+	subnetID, err := d.CommitSDK(subnetID, true)
+	newSubnet.SubnetID = subnetID
+
 }

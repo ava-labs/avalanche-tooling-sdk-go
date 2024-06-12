@@ -60,11 +60,11 @@ func (n Network) HRP() string {
 func NetworkFromNetworkID(networkID uint32) Network {
 	switch networkID {
 	case constants.MainnetID:
-		return NewMainnetNetwork()
+		return MainnetNetwork()
 	case constants.FujiID:
-		return NewFujiNetwork()
+		return FujiNetwork()
 	case LocalNetworkID:
-		return NewLocalNetwork()
+		return LocalNetwork()
 	}
 	return UndefinedNetwork
 }
@@ -77,14 +77,14 @@ func NewNetwork(kind NetworkKind, id uint32, endpoint string) Network {
 	}
 }
 
-func NewLocalNetwork() Network {
+func LocalNetwork() Network {
 	return NewNetwork(Local, LocalNetworkID, LocalAPIEndpoint)
 }
 
-func NewFujiNetwork() Network {
+func FujiNetwork() Network {
 	return NewNetwork(Fuji, constants.FujiID, FujiAPIEndpoint)
 }
 
-func NewMainnetNetwork() Network {
+func MainnetNetwork() Network {
 	return NewNetwork(Mainnet, constants.MainnetID, MainnetAPIEndpoint)
 }
