@@ -68,6 +68,7 @@ func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
 }
 
 func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {
+	// Sets UTXO owner
 	w.SecureWalletIsChangeOwner()
 	w.SetAuthKeys(authKeys)
 }

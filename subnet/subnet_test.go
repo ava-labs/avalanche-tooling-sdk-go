@@ -10,14 +10,12 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"testing"
-	"time"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -49,12 +47,13 @@ func TestSubnetDeploy(_ *testing.T) {
 		},
 	}
 	newSubnet, _ := New(&subnetParams)
-	controlKeys := []string{}
-	subnetAuthKeys := []string{}
-	threshold := 1
-	newSubnet.SetDeployParams()
 	network := avalanche.FujiNetwork()
 	keychain, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk")
+	//kcKeys, _ := keychain.P()
+	controlKeys := keychain.Addresses().List()
+	subnetAuthKeys := keychain.Addresses().List()
+	threshold := 1
+	newSubnet.SetDeployParams(controlKeys, subnetAuthKeys, uint32(threshold))
 	wallet, _ := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
@@ -68,11 +67,13 @@ func TestSubnetDeploy(_ *testing.T) {
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
 	fmt.Printf("deploySubnetTx %s", deploySubnetTx)
 	//subnetID, _ := deploySubnetTx.GetWrappedPChainTx()
-	time.Sleep(2 * time.Second)
+	//time.Sleep(2 * time.Second)
 	subnetID, _ := wallet.Commit(*deploySubnetTx, true)
 	newSubnet.SubnetID = subnetID
 	fmt.Printf("subnetID %s", subnetID.String())
 
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	fmt.Printf("deployChainTx %s", deployChainTx)
+	blockchainID, _ := wallet.Commit(*deploySubnetTx, true)
+	fmt.Printf("blockchainID %s", blockchainID.String())
 }

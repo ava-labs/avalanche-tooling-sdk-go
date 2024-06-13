@@ -117,7 +117,7 @@ type Subnet struct {
 	DeployInfo DeployParams
 }
 
-func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.ShortID, threshold uint32) {
+func (c *Subnet) SetDeployParams(controlKeys []ids.ShortID, subnetAuthKeys []ids.ShortID, threshold uint32) {
 	c.DeployInfo = DeployParams{
 		ControlKeys:    controlKeys,
 		SubnetAuthKeys: subnetAuthKeys,
@@ -128,7 +128,7 @@ func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.Shor
 type DeployParams struct {
 	// ControlKeys is a list of P-Chain addresses that are authorized to create new chains and add
 	// new validators to the Subnet
-	ControlKeys []string
+	ControlKeys []ids.ShortID
 
 	// SubnetAuthKeys is a list of P-Chain addresses that will be used to sign transactions that
 	// will modify the Subnet.
