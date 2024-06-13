@@ -14,6 +14,8 @@ type Keychain struct {
 	network avalanche.Network
 }
 
+// NewKeychain will generate a new key pair in the provided keyPath if no .pk file currently
+// exists in the provided keyPath
 func NewKeychain(
 	network avalanche.Network,
 	keyPath string,
@@ -29,6 +31,7 @@ func NewKeychain(
 	return &kc, nil
 }
 
+// P returns string formatted addresses in the keychain
 func (kc *Keychain) P() ([]string, error) {
 	return utils.P(kc.network.HRP(), kc.Addresses().List())
 }

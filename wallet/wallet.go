@@ -68,7 +68,6 @@ func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
 }
 
 func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {
-	// Sets UTXO owner
 	w.SecureWalletIsChangeOwner()
 	w.SetAuthKeys(authKeys)
 }
@@ -76,34 +75,6 @@ func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {
 func (w *Wallet) Addresses() []ids.ShortID {
 	return w.Keychain.Addresses().List()
 }
-
-//func (w *Wallet) loadSDKWallet(network avalanche.Network, keychain keychain, preloadTxs ...ids.ID) error {
-//	ctx := context.Background()
-//	// filter out ids.Empty txs
-//	filteredTxs := utils.Filter(preloadTxs, func(e ids.ID) bool { return e != ids.Empty })
-//	newWallet, err := New(
-//		context.Background(),
-//		&primary.WalletConfig{
-//			URI:              network.Endpoint,
-//			AVAXKeychain:     keychain.Keychain,
-//			EthKeychain:      secp256k1fx.NewKeychain(),
-//			PChainTxsToFetch: nil,
-//		},
-//	)
-//	if err != nil {
-//		return
-//	}
-//	w.Wallet = newWallet
-//	return wallet.New(
-//		ctx,
-//		&primary.WalletConfig{
-//			URI:              d.network.Endpoint,
-//			AVAXKeychain:     d.kc.Keychain,
-//			EthKeychain:      secp256k1fx.NewKeychain(),
-//			PChainTxsToFetch: set.Of(filteredTxs...),
-//		},
-//	)
-//}
 
 func (w *Wallet) Commit(ms multisig.Multisig, waitForTxAcceptance bool) (ids.ID, error) {
 	if ms.Undefined() {
@@ -125,7 +96,6 @@ func (w *Wallet) Commit(ms multisig.Multisig, waitForTxAcceptance bool) (ids.ID,
 		sleepBetweenRepeats = 2 * time.Second
 	)
 	var issueTxErr error
-	//wallet, err := loadCacheSDKWallet()
 	if err != nil {
 		return ids.Empty, err
 	}
