@@ -141,35 +141,6 @@ type DeployParams struct {
 	Threshold uint32
 }
 
-type EVMGenesisParams struct {
-	// ChainID identifies the current chain and is used for replay protection
-	ChainID *big.Int
-
-	// FeeConfig sets the configuration for the dynamic fee algorithm
-	FeeConfig commontype.FeeConfig
-
-	// Allocation specifies the initial state that is part of the genesis block.
-	Allocation core.GenesisAlloc
-
-	// Ethereum uses Precompiles to efficiently implement cryptographic primitives within the EVM
-	// instead of re-implementing the same primitives in Solidity.
-	//
-	// Precompiles are a shortcut to execute a function implemented by the EVM itself,
-	// rather than an actual contract. A precompile is associated with a fixed address defined in
-	// the EVM. There is no byte code associated with that address.
-	//
-	// For more information regarding Precompiles, head to https://docs.avax.network/build/vm/evm/intro.
-	Precompiles params.Precompiles
-
-	// TeleporterInfo contains all the necessary information to dpeloy Teleporter into a Subnet
-	//
-	// If TeleporterInfo is not empty:
-	// - Allocation will automatically be configured to add the provided Teleporter Address
-	//   and Balance
-	// - Precompiles tx allow list will include the provided Teleporter info
-	TeleporterInfo *teleporter.Info
-}
-
 // New takes SubnetParams as input and creates Subnet as an output
 //
 // The created Subnet object can be used to :
