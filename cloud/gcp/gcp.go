@@ -430,8 +430,8 @@ func (c *GcpCloud) DestroyGCPNode(nodeRegion string, nodeID string) error {
 }
 
 // ReleaseStaticIP releases static IP in GCP
-func (c *GcpCloud) ReleaseStaticIP(projectID, region, staticIPName string) error {
-	addressReleaseCall := c.gcpClient.Addresses.Delete(projectID, region, staticIPName)
+func (c *GcpCloud) ReleaseStaticIP(region, staticIPName string) error {
+	addressReleaseCall := c.gcpClient.Addresses.Delete(c.projectID, region, staticIPName)
 	if _, err := addressReleaseCall.Do(); err != nil {
 		return fmt.Errorf("%s, %w", constants.GCPErrReleasingStaticIP, err)
 	}
