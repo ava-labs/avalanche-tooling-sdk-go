@@ -240,7 +240,7 @@ func (c *GcpCloud) SetupInstances(
 	}
 	instances := make([]*compute.Instance, numNodes)
 	instancesChan := make(chan *compute.Instance, numNodes)
-	sshKey := fmt.Sprintf("ubuntu:%s", strings.TrimSuffix(sshPublicKey, "\n"))
+	sshKey := fmt.Sprintf("%s:%s", constants.AnsibleSSHUser, strings.TrimSuffix(sshPublicKey, "\n"))
 	automaticRestart := true
 
 	eg := &errgroup.Group{}
