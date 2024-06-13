@@ -120,6 +120,12 @@ func (ms *Multisig) IsReadyToCommit() (bool, error) {
 	if ms.Undefined() {
 		return false, ErrUndefinedTx
 	}
+	unsignedTx := ms.pChainTx.Unsigned
+	switch unsignedTx.(type) {
+	case *txs.CreateSubnetTx:
+		return true, nil
+	default:
+	}
 	_, remainingSigners, err := ms.GetRemainingAuthSigners()
 	if err != nil {
 		return false, err

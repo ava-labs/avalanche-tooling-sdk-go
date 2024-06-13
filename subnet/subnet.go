@@ -118,6 +118,9 @@ type Subnet struct {
 }
 
 func (c *Subnet) SetDeployParams(controlKeys []ids.ShortID, subnetAuthKeys []ids.ShortID, threshold uint32) {
+	if c == nil {
+		fmt.Printf("we have empty subnet here")
+	}
 	c.DeployInfo = DeployParams{
 		ControlKeys:    controlKeys,
 		SubnetAuthKeys: subnetAuthKeys,
