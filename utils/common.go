@@ -10,3 +10,13 @@ func Belongs[T comparable](input []T, elem T) bool {
 	}
 	return false
 }
+
+func Filter[T any](input []T, f func(T) bool) []T {
+	output := make([]T, 0, len(input))
+	for _, e := range input {
+		if f(e) {
+			output = append(output, e)
+		}
+	}
+	return output
+}

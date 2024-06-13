@@ -49,6 +49,10 @@ func TestSubnetDeploy(_ *testing.T) {
 		},
 	}
 	newSubnet, _ := New(&subnetParams)
+	controlKeys := []string{}
+	subnetAuthKeys := []string{}
+	threshold := 1
+	newSubnet.SetDeployParams()
 	network := avalanche.FujiNetwork()
 	keychain, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk")
 	wallet, _ := wallet.New(
@@ -63,9 +67,12 @@ func TestSubnetDeploy(_ *testing.T) {
 	// deploy Subnet returns multisig and error
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
 	fmt.Printf("deploySubnetTx %s", deploySubnetTx)
-	subnetID, _ := deploySubnetTx.GetWrappedPChainTx()
+	//subnetID, _ := deploySubnetTx.GetWrappedPChainTx()
 	time.Sleep(2 * time.Second)
-	subnetID, err := d.CommitSDK(subnetID, true)
+	subnetID, _ := wallet.Commit(*deploySubnetTx, true)
 	newSubnet.SubnetID = subnetID
+	fmt.Printf("subnetID %s", subnetID.String())
 
+	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
+	fmt.Printf("deployChainTx %s", deployChainTx)
 }
