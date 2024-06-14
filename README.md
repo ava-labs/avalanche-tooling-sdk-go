@@ -1,4 +1,4 @@
-# avalanche-tooling-sdk-go
+# Avalanche Tooling Go SDK
 
 The official Avalanche Tooling Go SDK library.
 
