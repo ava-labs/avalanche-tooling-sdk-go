@@ -62,15 +62,18 @@ func DeploySubnet() {
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key
 
-	// control keys are a list of keys that are permitted to make changes to a Subnet
+	// Control keys are a list of keys that are permitted to make changes to a Subnet
 	// such as creating a blockchain in the Subnet and adding validators to the Subnet
 	controlKeys := keychain.Addresses().List()
 
-	// subnet auth keys are a subset of control keys
+	// Subnet auth keys are a subset of control keys that will be used to sign transactions that 
+	// modify a Subnet (such as creating a blockchain in the Subnet and adding validators to the
+	// Subnet)
 	//
-	// they are the keys that will be used to sign transactions that modify a Subnet
-	// number of keys in subnetAuthKeys has to be more than or equal to threshold
-	// all keys in subnetAuthKeys have to sign the transaction before the transaction
+	// Number of keys in subnetAuthKeys has to be equal to the threshold value provided during 
+	// CreateSubnetTx.
+	//
+	// All keys in subnetAuthKeys have to sign the transaction before the transaction
 	// can be committed on chain
 	subnetAuthKeys := controlKeys
 	threshold := 1
