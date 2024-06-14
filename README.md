@@ -6,11 +6,13 @@ The official Avalanche Tooling Go SDK library.
 in between releases ***
 
 Current version (v0.1.0) currently only supports Creating Subnet and Creating Blockchain in a 
-Subnet in Fuji / Mainnet. Currently, only stored keys are supported for transaction building 
-and signing, ledger support is coming soon.
+Subnet in Fuji / Mainnet. 
+
+Currently, only stored keys are supported for transaction building and signing, ledger support is 
+coming soon.
 
 Future SDK releases will contain the following features: 
-- Additional Subnet SDK features (Adding Validators to a Subnet, Exporting Subnets)
+- Additional Subnet SDK features (i.e. Adding Validators to a Subnet, Custom Subnets, Exporting Subnets)
 - Ledger Support 
 - Teleporter Support
 - Nodes SDK (Creating and setting up Avalanche Validator Nodes and API Nodes )
@@ -90,7 +92,7 @@ func DeploySubnet() {
 	// can be committed on chain
 	subnetAuthKeys := controlKeys
 	threshold := 1
-	newSubnet.SetDeployParams(controlKeys, subnetAuthKeys, uint32(threshold))
+	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
 
 	wallet, _ := wallet.New(
 		context.Background(),
@@ -103,17 +105,17 @@ func DeploySubnet() {
 	)
 
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
-	subnetID, _ := wallet.Commit(*deploySubnetTx, true)
+	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
 	fmt.Printf("subnetID %s \n", subnetID.String())
-	newSubnet.SubnetID = subnetID
 
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
-
+	
+	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	// since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
-	blockchainID, _ := wallet.Commit(*deployChainTx, true)
+	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
 
@@ -123,21 +125,12 @@ func getDefaultSubnetEVMGenesis() subnet.SubnetParams {
 	allocation[common.HexToAddress("INITIAL_ALLOCATION_ADDRESS")] = core.GenesisAccount{
 		Balance: defaultAmount,
 	}
-	teleporterInfo := &teleporter.Info{
-		Version:                  "v1.0.0",
-		FundedAddress:            "0x6e76EEf73Bcb65BCCd16d628Eb0B696552c53E4e",
-		FundedBalance:            big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(600)),
-		MessengerDeployerAddress: "0x618FEdD9A45a8C456812ecAAE70C671c6249DfaC",
-		RelayerAddress:           "0x2A20d1623ce3e90Ec5854c84E508B8af065C059d",
-	}
 	return subnet.SubnetParams{
 		SubnetEVM: &subnet.SubnetEVMParams{
-			EnableWarp:     true,
-			ChainID:        big.NewInt(123456),
-			FeeConfig:      vm.StarterFeeConfig,
-			Allocation:     allocation,
-			Precompiles:    params.Precompiles{},
-			TeleporterInfo: teleporterInfo,
+			ChainID:     big.NewInt(123456),
+			FeeConfig:   vm.StarterFeeConfig,
+			Allocation:  allocation,
+			Precompiles: params.Precompiles{},
 		},
 		Name: "TestSubnet",
 	}
