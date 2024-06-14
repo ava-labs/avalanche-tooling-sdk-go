@@ -36,7 +36,7 @@ This example shows how to create a Subnet Genesis, deploy the Subnet into Fuji N
 a blockchain in the Subnet. 
 
 This examples also shows how to create a key pair to pay for transactions, how to create a Wallet
-object that will be used to create CreateSubnetTx and CreateChainTx and how to commit these 
+object that will be used to build and sign CreateSubnetTx and CreateChainTx and how to commit these 
 transactions on chain.
 
 ```go
