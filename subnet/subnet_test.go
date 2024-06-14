@@ -23,7 +23,7 @@ import (
 func getDefaultSubnetEVMGenesis() SubnetParams {
 	allocation := core.GenesisAlloc{}
 	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
-	allocation[common.HexToAddress("0x5a60e45535fbe925591cefb3e46f1052bbfcc67b")] = core.GenesisAccount{
+	allocation[common.HexToAddress("INITIAL_ALLOCATION_ADDRESS")] = core.GenesisAccount{
 		Balance: defaultAmount,
 	}
 	return SubnetParams{
@@ -41,7 +41,7 @@ func TestSubnetDeploy(_ *testing.T) {
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, _ := New(&subnetParams)
 	network := avalanche.FujiNetwork()
-	keychain, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk")
+	keychain, _ := keychain.NewKeychain(network, "KEY_PATH")
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1

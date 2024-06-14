@@ -8,13 +8,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
+	"os"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	utilsSDK "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
-	"math/big"
-	"os"
-	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 
