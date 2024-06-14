@@ -2,6 +2,19 @@
 
 The official Avalanche Tooling Go SDK library.
 
+*** Please note that this SDK is in experimental mode, major changes to the SDK are to be expected
+in between releases ***
+
+Current version (v0.1.0) currently only supports Creating Subnet and Creating Blockchain in a 
+Subnet in Fuji / Mainnet. Currently, only stored keys are supported for transaction building 
+and signing, ledger support is coming soon.
+
+Future SDK releases will contain the following features: 
+- Additional Subnet SDK features (Adding Validators to a Subnet, Exporting Subnets)
+- Ledger Support 
+- Teleporter Support
+- Nodes SDK (Creating and setting up Avalanche Validator Nodes and API Nodes )
+
 ## Getting Started
 
 ### Installing
