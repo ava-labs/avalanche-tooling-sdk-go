@@ -9,7 +9,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/subnet"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
@@ -27,21 +26,12 @@ func getDefaultSubnetEVMGenesis() subnet.SubnetParams {
 	allocation[common.HexToAddress("INITIAL_ALLOCATION_ADDRESS")] = core.GenesisAccount{
 		Balance: defaultAmount,
 	}
-	teleporterInfo := &teleporter.Info{
-		Version:                  "v1.0.0",
-		FundedAddress:            "0x6e76EEf73Bcb65BCCd16d628Eb0B696552c53E4e",
-		FundedBalance:            big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(600)),
-		MessengerDeployerAddress: "0x618FEdD9A45a8C456812ecAAE70C671c6249DfaC",
-		RelayerAddress:           "0x2A20d1623ce3e90Ec5854c84E508B8af065C059d",
-	}
 	return subnet.SubnetParams{
 		SubnetEVM: &subnet.SubnetEVMParams{
-			EnableWarp:     true,
-			ChainID:        big.NewInt(123456),
-			FeeConfig:      vm.StarterFeeConfig,
-			Allocation:     allocation,
-			Precompiles:    params.Precompiles{},
-			TeleporterInfo: teleporterInfo,
+			ChainID:     big.NewInt(123456),
+			FeeConfig:   vm.StarterFeeConfig,
+			Allocation:  allocation,
+			Precompiles: params.Precompiles{},
 		},
 		Name: "TestSubnet",
 	}
@@ -87,9 +77,8 @@ func DeploySubnet() {
 	)
 
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
-	subnetID, _ := wallet.Commit(*deploySubnetTx, true)
+	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
 	fmt.Printf("subnetID %s \n", subnetID.String())
-	newSubnet.SubnetID = subnetID
 
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
@@ -97,6 +86,6 @@ func DeploySubnet() {
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	// since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
-	blockchainID, _ := wallet.Commit(*deployChainTx, true)
+	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }

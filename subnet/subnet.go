@@ -8,16 +8,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	utilsSDK "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"math/big"
 	"os"
 	"time"
 
-	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 
 	"github.com/ava-labs/avalanchego/ids"
+	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 	"github.com/ava-labs/coreth/utils"
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/core"
@@ -45,12 +47,6 @@ type SubnetParams struct {
 }
 
 type SubnetEVMParams struct {
-	// EnableWarp sets whether to enable Avalanche Warp Messaging (AWM) when deploying a VM
-	//
-	// See https://docs.avax.network/build/cross-chain/awm/overview for
-	// information on Avalanche Warp Messaging
-	EnableWarp bool
-
 	// ChainID identifies the current chain and is used for replay protection
 	ChainID *big.Int
 
@@ -69,14 +65,6 @@ type SubnetEVMParams struct {
 	//
 	// For more information regarding Precompiles, head to https://docs.avax.network/build/vm/evm/intro.
 	Precompiles params.Precompiles
-
-	// TeleporterInfo contains all the necessary information to dpeloy Teleporter into a Subnet
-	//
-	// If TeleporterInfo is not empty:
-	// - Allocation will automatically be configured to add the provided Teleporter Address
-	//   and Balance
-	// - Precompiles tx allow list will include the provided Teleporter info
-	TeleporterInfo *teleporter.Info
 }
 
 type CustomVMParams struct {
@@ -208,28 +196,9 @@ func createEvmGenesis(
 		return nil, fmt.Errorf("genesis params allocation cannot be empty")
 	}
 	allocation := subnetEVMParams.Allocation
-	if subnetEVMParams.TeleporterInfo != nil {
-		allocation = addTeleporterAddressToAllocations(
-			allocation,
-			subnetEVMParams.TeleporterInfo.FundedAddress,
-			subnetEVMParams.TeleporterInfo.FundedBalance,
-		)
-	}
 
 	if subnetEVMParams.Precompiles == nil {
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
-	}
-	if subnetEVMParams.EnableWarp {
-		warpConfig := vm.ConfigureWarp(&genesis.Timestamp)
-		conf.GenesisPrecompiles[warp.ConfigKey] = &warpConfig
-	}
-	if subnetEVMParams.TeleporterInfo != nil {
-		*conf = vm.AddTeleporterAddressesToAllowLists(
-			*conf,
-			subnetEVMParams.TeleporterInfo.FundedAddress,
-			subnetEVMParams.TeleporterInfo.MessengerDeployerAddress,
-			subnetEVMParams.TeleporterInfo.RelayerAddress,
-		)
 	}
 
 	if conf != nil && conf.GenesisPrecompiles[txallowlist.ConfigKey] != nil {
@@ -287,23 +256,6 @@ func ensureAdminsHaveBalance(admins []common.Address, alloc core.GenesisAlloc) e
 	)
 }
 
-func addAllocation(alloc core.GenesisAlloc, address string, amount *big.Int) {
-	alloc[common.HexToAddress(address)] = core.GenesisAccount{
-		Balance: amount,
-	}
-}
-
-func addTeleporterAddressToAllocations(
-	alloc core.GenesisAlloc,
-	teleporterKeyAddress string,
-	teleporterKeyBalance *big.Int,
-) core.GenesisAlloc {
-	if alloc != nil {
-		addAllocation(alloc, teleporterKeyAddress, teleporterKeyBalance)
-	}
-	return alloc
-}
-
 func vmID(vmName string) (ids.ID, error) {
 	if len(vmName) > 32 {
 		return ids.Empty, fmt.Errorf("VM name must be <= 32 bytes, found %d", len(vmName))
@@ -311,4 +263,57 @@ func vmID(vmName string) (ids.ID, error) {
 	b := make([]byte, 32)
 	copy(b, []byte(vmName))
 	return ids.ToID(b)
+}
+
+func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
+	if ms.Undefined() {
+		return ids.Empty, multisig.ErrUndefinedTx
+	}
+	isReady, err := ms.IsReadyToCommit()
+	if err != nil {
+		return ids.Empty, err
+	}
+	if !isReady {
+		return ids.Empty, errors.New("tx is not fully signed so can't be committed")
+	}
+	tx, err := ms.GetWrappedPChainTx()
+	if err != nil {
+		return ids.Empty, err
+	}
+	const (
+		repeats             = 3
+		sleepBetweenRepeats = 2 * time.Second
+	)
+	var issueTxErr error
+	if err != nil {
+		return ids.Empty, err
+	}
+	for i := 0; i < repeats; i++ {
+		ctx, cancel := utilsSDK.GetAPILargeContext()
+		defer cancel()
+		options := []commonAvago.Option{commonAvago.WithContext(ctx)}
+		if !waitForTxAcceptance {
+			options = append(options, commonAvago.WithAssumeDecided())
+		}
+		// TODO: split error checking and recovery between issuing and waiting for status
+		issueTxErr = wallet.P().IssueTx(tx, options...)
+		if issueTxErr == nil {
+			break
+		}
+		if ctx.Err() != nil {
+			issueTxErr = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", tx.ID(), issueTxErr)
+		} else {
+			issueTxErr = fmt.Errorf("error issuing tx with ID %s: %w", tx.ID(), issueTxErr)
+		}
+		time.Sleep(sleepBetweenRepeats)
+	}
+	if issueTxErr != nil {
+		return ids.Empty, fmt.Errorf("issue tx error %s", issueTxErr)
+	}
+	unsignedTx := ms.PChainTx.Unsigned
+	switch unsignedTx.(type) {
+	case *txs.CreateSubnetTx:
+		c.SubnetID = tx.ID()
+	}
+	return tx.ID(), issueTxErr
 }

@@ -34,34 +34,34 @@ const (
 )
 
 type Multisig struct {
-	pChainTx    *txs.Tx
+	PChainTx    *txs.Tx
 	controlKeys []ids.ShortID
 	threshold   uint32
 }
 
 func New(pChainTx *txs.Tx) *Multisig {
 	ms := Multisig{
-		pChainTx: pChainTx,
+		PChainTx: pChainTx,
 	}
 	return &ms
 }
 
 func (ms *Multisig) String() string {
-	if ms.pChainTx != nil {
-		return ms.pChainTx.ID().String()
+	if ms.PChainTx != nil {
+		return ms.PChainTx.ID().String()
 	}
 	return ""
 }
 
 func (ms *Multisig) Undefined() bool {
-	return ms.pChainTx == nil
+	return ms.PChainTx == nil
 }
 
 func (ms *Multisig) ToBytes() ([]byte, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}
-	txBytes, err := txs.Codec.Marshal(txs.CodecVersion, ms.pChainTx)
+	txBytes, err := txs.Codec.Marshal(txs.CodecVersion, ms.PChainTx)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't marshal signed tx: %w", err)
 	}
@@ -100,7 +100,7 @@ func (ms *Multisig) FromBytes(txBytes []byte) error {
 	if err := tx.Initialize(txs.Codec); err != nil {
 		return fmt.Errorf("error initializing signed tx: %w", err)
 	}
-	ms.pChainTx = &tx
+	ms.PChainTx = &tx
 	return nil
 }
 
@@ -120,7 +120,7 @@ func (ms *Multisig) IsReadyToCommit() (bool, error) {
 	if ms.Undefined() {
 		return false, ErrUndefinedTx
 	}
-	unsignedTx := ms.pChainTx.Unsigned
+	unsignedTx := ms.PChainTx.Unsigned
 	switch unsignedTx.(type) {
 	case *txs.CreateSubnetTx:
 		return true, nil
@@ -151,16 +151,16 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 		return nil, nil, err
 	}
 	emptySig := [secp256k1.SignatureLen]byte{}
-	numCreds := len(ms.pChainTx.Creds)
+	numCreds := len(ms.PChainTx.Creds)
 	// we should have at least 1 cred for output owners and 1 cred for subnet auth
 	if numCreds < 2 {
 		return nil, nil, fmt.Errorf("expected tx.Creds of len 2, got %d. doesn't seem to be a multisig tx with subnet auth requirements", numCreds)
 	}
 	// signatures for output owners should be filled (all creds except last one)
-	for credIndex := range ms.pChainTx.Creds[:numCreds-1] {
-		cred, ok := ms.pChainTx.Creds[credIndex].(*secp256k1fx.Credential)
+	for credIndex := range ms.PChainTx.Creds[:numCreds-1] {
+		cred, ok := ms.PChainTx.Creds[credIndex].(*secp256k1fx.Credential)
 		if !ok {
-			return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.pChainTx.Creds[credIndex])
+			return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.PChainTx.Creds[credIndex])
 		}
 		for i, sig := range cred.Sigs {
 			if sig == emptySig {
@@ -169,9 +169,9 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 		}
 	}
 	// signatures for subnet auth (last cred)
-	cred, ok := ms.pChainTx.Creds[numCreds-1].(*secp256k1fx.Credential)
+	cred, ok := ms.PChainTx.Creds[numCreds-1].(*secp256k1fx.Credential)
 	if !ok {
-		return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.pChainTx.Creds[1])
+		return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.PChainTx.Creds[1])
 	}
 	if len(cred.Sigs) != len(authSigners) {
 		return nil, nil, fmt.Errorf("expected number of cred's signatures %d to equal number of auth signers %d",
@@ -201,7 +201,7 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
 	if err != nil {
 		return nil, err
 	}
-	unsignedTx := ms.pChainTx.Unsigned
+	unsignedTx := ms.PChainTx.Unsigned
 	var subnetAuth verify.Verifiable
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -239,7 +239,7 @@ func (ms *Multisig) GetTxKind() (TxKind, error) {
 	if ms.Undefined() {
 		return Undefined, ErrUndefinedTx
 	}
-	unsignedTx := ms.pChainTx.Unsigned
+	unsignedTx := ms.PChainTx.Unsigned
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
 		return PChainRemoveSubnetValidatorTx, nil
@@ -263,7 +263,7 @@ func (ms *Multisig) GetNetworkID() (uint32, error) {
 	if ms.Undefined() {
 		return 0, ErrUndefinedTx
 	}
-	unsignedTx := ms.pChainTx.Unsigned
+	unsignedTx := ms.PChainTx.Unsigned
 	var networkID uint32
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -304,7 +304,7 @@ func (ms *Multisig) GetBlockchainID() (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, ErrUndefinedTx
 	}
-	unsignedTx := ms.pChainTx.Unsigned
+	unsignedTx := ms.PChainTx.Unsigned
 	var blockchainID ids.ID
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -330,7 +330,7 @@ func (ms *Multisig) GetSubnetID() (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, ErrUndefinedTx
 	}
-	unsignedTx := ms.pChainTx.Unsigned
+	unsignedTx := ms.PChainTx.Unsigned
 	var subnetID ids.ID
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -404,5 +404,5 @@ func (ms *Multisig) GetWrappedPChainTx() (*txs.Tx, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}
-	return ms.pChainTx, nil
+	return ms.PChainTx, nil
 }
