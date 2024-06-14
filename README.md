@@ -40,6 +40,8 @@ object that will be used to build and sign CreateSubnetTx and CreateChainTx and 
 transactions on chain.
 
 ```go
+package main
+
 import (
 	"context"
 	"fmt"
