@@ -240,7 +240,7 @@ func (c *GcpCloud) SetupInstances(
 	}
 	instances := make([]*compute.Instance, numNodes)
 	instancesChan := make(chan *compute.Instance, numNodes)
-	sshKey := fmt.Sprintf("ubuntu:%s", strings.TrimSuffix(sshPublicKey, "\n"))
+	sshKey := fmt.Sprintf("%s:%s", constants.AnsibleSSHUser, strings.TrimSuffix(sshPublicKey, "\n"))
 	automaticRestart := true
 
 	eg := &errgroup.Group{}
@@ -430,8 +430,8 @@ func (c *GcpCloud) DestroyGCPNode(nodeRegion string, nodeID string) error {
 }
 
 // ReleaseStaticIP releases static IP in GCP
-func (c *GcpCloud) ReleaseStaticIP(projectID, region, staticIPName string) error {
-	addressReleaseCall := c.gcpClient.Addresses.Delete(projectID, region, staticIPName)
+func (c *GcpCloud) ReleaseStaticIP(region, staticIPName string) error {
+	addressReleaseCall := c.gcpClient.Addresses.Delete(c.projectID, region, staticIPName)
 	if _, err := addressReleaseCall.Do(); err != nil {
 		return fmt.Errorf("%s, %w", constants.GCPErrReleasingStaticIP, err)
 	}
