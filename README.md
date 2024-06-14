@@ -104,16 +104,20 @@ func DeploySubnet() {
 		},
 	)
 
+	// Build and Sign CreateSubnetTx with our fee paying key
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
+	// Commit our CreateSubnetTx on chain
 	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
-	
+
 	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	// Build and Sign CreateChainTx with our fee paying key (which is also our subnet auth key)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
-	// since we are using the fee paying key as control key too, we can commit the transaction
+	// Commit our CreateChainTx on chain
+	// Since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
 	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
