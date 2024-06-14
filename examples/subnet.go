@@ -64,7 +64,7 @@ func DeploySubnet() {
 	// can be committed on chain
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
-	newSubnet.SetDeployParams(controlKeys, subnetAuthKeys, uint32(threshold))
+	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
 
 	wallet, _ := wallet.New(
 		context.Background(),
@@ -83,6 +83,7 @@ func DeploySubnet() {
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
 
+	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	// since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached

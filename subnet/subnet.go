@@ -106,12 +106,21 @@ type Subnet struct {
 	DeployInfo DeployParams
 }
 
-func (c *Subnet) SetDeployParams(controlKeys []ids.ShortID, subnetAuthKeys []ids.ShortID, threshold uint32) {
+func (c *Subnet) SetParams(controlKeys []ids.ShortID, subnetAuthKeys []ids.ShortID, threshold uint32) {
 	c.DeployInfo = DeployParams{
 		ControlKeys:    controlKeys,
 		SubnetAuthKeys: subnetAuthKeys,
 		Threshold:      threshold,
 	}
+}
+
+func (c *Subnet) SetSubnetCreateParams(controlKeys []ids.ShortID, threshold uint32) {
+	c.DeployInfo.ControlKeys = controlKeys
+	c.DeployInfo.Threshold = threshold
+}
+
+func (c *Subnet) SetBlockchainCreateParams(subnetAuthKeys []ids.ShortID) {
+	c.DeployInfo.SubnetAuthKeys = subnetAuthKeys
 }
 
 type DeployParams struct {

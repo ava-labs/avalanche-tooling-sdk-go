@@ -23,7 +23,7 @@ import (
 func getDefaultSubnetEVMGenesis() SubnetParams {
 	allocation := core.GenesisAlloc{}
 	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
-	allocation[common.HexToAddress("INITIAL_ALLOCATION_ADDRESS")] = core.GenesisAccount{
+	allocation[common.HexToAddress("0x5a60e45535fbe925591cefb3e46f1052bbfcc67b")] = core.GenesisAccount{
 		Balance: defaultAmount,
 	}
 	return SubnetParams{
@@ -41,11 +41,11 @@ func TestSubnetDeploy(_ *testing.T) {
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, _ := New(&subnetParams)
 	network := avalanche.FujiNetwork()
-	keychain, _ := keychain.NewKeychain(network, "KEY_PATH")
+	keychain, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk")
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
-	newSubnet.SetDeployParams(controlKeys, subnetAuthKeys, uint32(threshold))
+	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
 	wallet, _ := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
@@ -59,6 +59,7 @@ func TestSubnetDeploy(_ *testing.T) {
 	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 	time.Sleep(2 * time.Second)
+	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
