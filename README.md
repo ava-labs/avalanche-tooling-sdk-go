@@ -1,11 +1,11 @@
-# avalanche-tooling-sdk-go
+# Avalanche Tooling Go SDK
 
 The official Avalanche Tooling Go SDK library.
 
 *** Please note that this SDK is in experimental mode, major changes to the SDK are to be expected
 in between releases ***
 
-Current version (v0.1.0) currently only supports Creating Subnet and Creating Blockchain in a 
+Current version (v0.1.0) currently only supports Create Subnet and Create Blockchain in a 
 Subnet in Fuji / Mainnet. 
 
 Currently, only stored keys are supported for transaction building and signing, ledger support is 
@@ -36,11 +36,11 @@ This example shows how to create a Subnet Genesis, deploy the Subnet into Fuji N
 a blockchain in the Subnet. 
 
 This examples also shows how to create a key pair to pay for transactions, how to create a Wallet
-object that will be used to create CreateSubnetTx and CreateChainTx and how to commit these 
+object that will be used to build and sign CreateSubnetTx and CreateChainTx and how to commit these 
 transactions on chain.
 
 ```go
-package examples
+package main
 
 import (
 	"context"
@@ -104,16 +104,20 @@ func DeploySubnet() {
 		},
 	)
 
+	// Build and Sign CreateSubnetTx with our fee paying key
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
+	// Commit our CreateSubnetTx on chain
 	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
-	
+
 	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	// Build and Sign CreateChainTx with our fee paying key (which is also our subnet auth key)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
-	// since we are using the fee paying key as control key too, we can commit the transaction
+	// Commit our CreateChainTx on chain
+	// Since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
 	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
