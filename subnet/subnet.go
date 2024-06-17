@@ -12,12 +12,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	utilsSDK "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/teleporter"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 
 	"github.com/ava-labs/avalanchego/ids"
+	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 	"github.com/ava-labs/coreth/utils"
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/core"
@@ -39,22 +42,12 @@ type SubnetParams struct {
 	// Do not set SubnetEVM value if you are using Custom VM
 	SubnetEVM *SubnetEVMParams
 
-	// Custom VM parameters to use
-	// Do not set CustomVM value if you are using Subnet-EVM
-	CustomVM *CustomVMParams
-
 	// Name is alias for the Subnet, it is used to derive VM ID, which is required
 	// during for createBlockchainTx
 	Name string
 }
 
 type SubnetEVMParams struct {
-	// EnableWarp sets whether to enable Avalanche Warp Messaging (AWM) when deploying a VM
-	//
-	// See https://docs.avax.network/build/cross-chain/awm/overview for
-	// information on Avalanche Warp Messaging
-	EnableWarp bool
-
 	// ChainID identifies the current chain and is used for replay protection
 	ChainID *big.Int
 
@@ -73,14 +66,6 @@ type SubnetEVMParams struct {
 	//
 	// For more information regarding Precompiles, head to https://docs.avax.network/build/vm/evm/intro.
 	Precompiles params.Precompiles
-
-	// TeleporterInfo contains all the necessary information to dpeloy Teleporter into a Subnet
-	//
-	// If TeleporterInfo is not empty:
-	// - Allocation will automatically be configured to add the provided Teleporter Address
-	//   and Balance
-	// - Precompiles tx allow list will include the provided Teleporter info
-	TeleporterInfo *teleporter.Info
 }
 
 type CustomVMParams struct {
@@ -121,7 +106,7 @@ type Subnet struct {
 	DeployInfo DeployParams
 }
 
-func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.ShortID, threshold uint32) {
+func (c *Subnet) SetParams(controlKeys []ids.ShortID, subnetAuthKeys []ids.ShortID, threshold uint32) {
 	c.DeployInfo = DeployParams{
 		ControlKeys:    controlKeys,
 		SubnetAuthKeys: subnetAuthKeys,
@@ -129,10 +114,19 @@ func (c *Subnet) SetDeployParams(controlKeys []string, subnetAuthKeys []ids.Shor
 	}
 }
 
+func (c *Subnet) SetSubnetCreateParams(controlKeys []ids.ShortID, threshold uint32) {
+	c.DeployInfo.ControlKeys = controlKeys
+	c.DeployInfo.Threshold = threshold
+}
+
+func (c *Subnet) SetBlockchainCreateParams(subnetAuthKeys []ids.ShortID) {
+	c.DeployInfo.SubnetAuthKeys = subnetAuthKeys
+}
+
 type DeployParams struct {
 	// ControlKeys is a list of P-Chain addresses that are authorized to create new chains and add
 	// new validators to the Subnet
-	ControlKeys []string
+	ControlKeys []ids.ShortID
 
 	// SubnetAuthKeys is a list of P-Chain addresses that will be used to sign transactions that
 	// will modify the Subnet.
@@ -145,35 +139,6 @@ type DeployParams struct {
 	Threshold uint32
 }
 
-type EVMGenesisParams struct {
-	// ChainID identifies the current chain and is used for replay protection
-	ChainID *big.Int
-
-	// FeeConfig sets the configuration for the dynamic fee algorithm
-	FeeConfig commontype.FeeConfig
-
-	// Allocation specifies the initial state that is part of the genesis block.
-	Allocation core.GenesisAlloc
-
-	// Ethereum uses Precompiles to efficiently implement cryptographic primitives within the EVM
-	// instead of re-implementing the same primitives in Solidity.
-	//
-	// Precompiles are a shortcut to execute a function implemented by the EVM itself,
-	// rather than an actual contract. A precompile is associated with a fixed address defined in
-	// the EVM. There is no byte code associated with that address.
-	//
-	// For more information regarding Precompiles, head to https://docs.avax.network/build/vm/evm/intro.
-	Precompiles params.Precompiles
-
-	// TeleporterInfo contains all the necessary information to dpeloy Teleporter into a Subnet
-	//
-	// If TeleporterInfo is not empty:
-	// - Allocation will automatically be configured to add the provided Teleporter Address
-	//   and Balance
-	// - Precompiles tx allow list will include the provided Teleporter info
-	TeleporterInfo *teleporter.Info
-}
-
 // New takes SubnetParams as input and creates Subnet as an output
 //
 // The created Subnet object can be used to :
@@ -181,16 +146,12 @@ type EVMGenesisParams struct {
 //   - Create Blockchain(s) in the Subnet
 //   - Add Validator(s) into the Subnet
 func New(subnetParams *SubnetParams) (*Subnet, error) {
-	if subnetParams.GenesisFilePath != "" && (subnetParams.CustomVM != nil || subnetParams.SubnetEVM != nil) {
-		return nil, fmt.Errorf("genesis file path cannot be non-empty if either CustomVM params or SubnetEVM params is not empty")
+	if subnetParams.GenesisFilePath != "" && subnetParams.SubnetEVM != nil {
+		return nil, fmt.Errorf("genesis file path cannot be non-empty if SubnetEVM params is not empty")
 	}
 
-	if subnetParams.GenesisFilePath == "" && subnetParams.SubnetEVM == nil && subnetParams.CustomVM == nil {
-		return nil, fmt.Errorf("genesis file path, SubnetEVM params and CustomVM params cannot all be empty")
-	}
-
-	if subnetParams.SubnetEVM != nil && subnetParams.CustomVM != nil {
-		return nil, fmt.Errorf("SubnetEVM params and CustomVM params cannot both be non-empty")
+	if subnetParams.GenesisFilePath == "" && subnetParams.SubnetEVM == nil {
+		return nil, fmt.Errorf("genesis file path and SubnetEVM params params cannot all be empty")
 	}
 
 	if subnetParams.Name == "" {
@@ -204,8 +165,6 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
 		genesisBytes, err = createEvmGenesis(subnetParams.SubnetEVM)
-	case subnetParams.CustomVM != nil:
-		genesisBytes, err = createCustomVMGenesis()
 	default:
 	}
 	if err != nil {
@@ -247,28 +206,9 @@ func createEvmGenesis(
 		return nil, fmt.Errorf("genesis params allocation cannot be empty")
 	}
 	allocation := subnetEVMParams.Allocation
-	if subnetEVMParams.TeleporterInfo != nil {
-		allocation = addTeleporterAddressToAllocations(
-			allocation,
-			subnetEVMParams.TeleporterInfo.FundedAddress,
-			subnetEVMParams.TeleporterInfo.FundedBalance,
-		)
-	}
 
 	if subnetEVMParams.Precompiles == nil {
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
-	}
-	if subnetEVMParams.EnableWarp {
-		warpConfig := vm.ConfigureWarp(&genesis.Timestamp)
-		conf.GenesisPrecompiles[warp.ConfigKey] = &warpConfig
-	}
-	if subnetEVMParams.TeleporterInfo != nil {
-		*conf = vm.AddTeleporterAddressesToAllowLists(
-			*conf,
-			subnetEVMParams.TeleporterInfo.FundedAddress,
-			subnetEVMParams.TeleporterInfo.MessengerDeployerAddress,
-			subnetEVMParams.TeleporterInfo.RelayerAddress,
-		)
 	}
 
 	if conf != nil && conf.GenesisPrecompiles[txallowlist.ConfigKey] != nil {
@@ -326,28 +266,6 @@ func ensureAdminsHaveBalance(admins []common.Address, alloc core.GenesisAlloc) e
 	)
 }
 
-func addAllocation(alloc core.GenesisAlloc, address string, amount *big.Int) {
-	alloc[common.HexToAddress(address)] = core.GenesisAccount{
-		Balance: amount,
-	}
-}
-
-func addTeleporterAddressToAllocations(
-	alloc core.GenesisAlloc,
-	teleporterKeyAddress string,
-	teleporterKeyBalance *big.Int,
-) core.GenesisAlloc {
-	if alloc != nil {
-		addAllocation(alloc, teleporterKeyAddress, teleporterKeyBalance)
-	}
-	return alloc
-}
-
-// TODO: implement createCustomVMGenesis
-func createCustomVMGenesis() ([]byte, error) {
-	return nil, nil
-}
-
 func vmID(vmName string) (ids.ID, error) {
 	if len(vmName) > 32 {
 		return ids.Empty, fmt.Errorf("VM name must be <= 32 bytes, found %d", len(vmName))
@@ -355,4 +273,57 @@ func vmID(vmName string) (ids.ID, error) {
 	b := make([]byte, 32)
 	copy(b, []byte(vmName))
 	return ids.ToID(b)
+}
+
+func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
+	if ms.Undefined() {
+		return ids.Empty, multisig.ErrUndefinedTx
+	}
+	isReady, err := ms.IsReadyToCommit()
+	if err != nil {
+		return ids.Empty, err
+	}
+	if !isReady {
+		return ids.Empty, errors.New("tx is not fully signed so can't be committed")
+	}
+	tx, err := ms.GetWrappedPChainTx()
+	if err != nil {
+		return ids.Empty, err
+	}
+	const (
+		repeats             = 3
+		sleepBetweenRepeats = 2 * time.Second
+	)
+	var issueTxErr error
+	if err != nil {
+		return ids.Empty, err
+	}
+	for i := 0; i < repeats; i++ {
+		ctx, cancel := utilsSDK.GetAPILargeContext()
+		defer cancel()
+		options := []commonAvago.Option{commonAvago.WithContext(ctx)}
+		if !waitForTxAcceptance {
+			options = append(options, commonAvago.WithAssumeDecided())
+		}
+		// TODO: split error checking and recovery between issuing and waiting for status
+		issueTxErr = wallet.P().IssueTx(tx, options...)
+		if issueTxErr == nil {
+			break
+		}
+		if ctx.Err() != nil {
+			issueTxErr = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", tx.ID(), issueTxErr)
+		} else {
+			issueTxErr = fmt.Errorf("error issuing tx with ID %s: %w", tx.ID(), issueTxErr)
+		}
+		time.Sleep(sleepBetweenRepeats)
+	}
+	if issueTxErr != nil {
+		return ids.Empty, fmt.Errorf("issue tx error %s", issueTxErr)
+	}
+	unsignedTx := ms.PChainTx.Unsigned
+	switch unsignedTx.(type) {
+	case *txs.CreateSubnetTx:
+		c.SubnetID = tx.ID()
+	}
+	return tx.ID(), issueTxErr
 }
