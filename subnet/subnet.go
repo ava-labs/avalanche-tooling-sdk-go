@@ -318,11 +318,9 @@ func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcc
 		time.Sleep(sleepBetweenRepeats)
 	}
 	if issueTxErr != nil {
-		return ids.Empty, fmt.Errorf("issue tx error %s", issueTxErr)
+		return ids.Empty, fmt.Errorf("issue tx error %w", issueTxErr)
 	}
-	unsignedTx := ms.PChainTx.Unsigned
-	switch unsignedTx.(type) {
-	case *txs.CreateSubnetTx:
+	if _, ok := ms.PChainTx.Unsigned.(*txs.CreateSubnetTx); ok {
 		c.SubnetID = tx.ID()
 	}
 	return tx.ID(), issueTxErr
