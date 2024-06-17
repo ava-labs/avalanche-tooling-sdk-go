@@ -6,6 +6,10 @@ package subnet
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
@@ -15,9 +19,6 @@ import (
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
-	"testing"
-	"time"
 )
 
 func getDefaultSubnetEVMGenesis() SubnetParams {
