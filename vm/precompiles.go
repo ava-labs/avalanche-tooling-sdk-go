@@ -14,8 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type Precompile string
-
 func ConfigureWarp(timestamp *uint64) warp.Config {
 	config := warp.Config{
 		QuorumNumerator: warp.WarpDefaultQuorumNumerator,
@@ -26,8 +24,8 @@ func ConfigureWarp(timestamp *uint64) warp.Config {
 	return config
 }
 
-// adds teleporter-related addresses (main funded key, messenger deploy key, relayer key)
-// to the allow list of relevant enabled precompiles
+// AddTeleporterAddressesToAllowLists adds teleporter-related addresses (main funded key, messenger
+// deploy key, relayer key) to the allow list of relevant enabled precompiles
 func AddTeleporterAddressesToAllowLists(
 	config params.ChainConfig,
 	teleporterAddress string,

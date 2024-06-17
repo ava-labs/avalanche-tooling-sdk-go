@@ -60,4 +60,5 @@ const (
 	LocalAPIEndpoint       = "http://127.0.0.1:9650"
 	AvalancheGoDockerImage = "avaplatform/avalanchego"
 	AvalancheGoGitRepo     = "https://github.com/ava-labs/avalanchego"
+	SubnetEVMRepoName      = "subnet-evm"
 )

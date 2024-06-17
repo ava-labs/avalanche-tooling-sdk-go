@@ -3,6 +3,8 @@
 
 package avalanche
 
+import "github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+
 type VMType string
 
 const (
@@ -10,19 +12,10 @@ const (
 	CustomVM  = "Custom"
 )
 
-func VMTypeFromString(s string) VMType {
-	switch s {
-	case SubnetEvm:
-		return SubnetEvm
-	default:
-		return CustomVM
-	}
-}
-
 func (v VMType) RepoName() string {
 	switch v {
 	case SubnetEvm:
-		return SubnetEVMRepoName
+		return constants.SubnetEVMRepoName
 	default:
 		return "unknown"
 	}

@@ -11,13 +11,12 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 )
 
 // CreateSubnetTx creates uncommitted CreateSubnetTx
-// TODO: add which key is paying -> wallet.keychain?
+// keychain in wallet will be used to build, sign and pay for the transaction
 func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
 	if c.DeployInfo.ControlKeys == nil {
 		return nil, fmt.Errorf("control keys are not provided")
@@ -25,10 +24,7 @@ func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error
 	if c.DeployInfo.Threshold == 0 {
 		return nil, fmt.Errorf("threshold is not provided")
 	}
-	addrs, err := address.ParseToIDs(c.DeployInfo.ControlKeys)
-	if err != nil {
-		return nil, fmt.Errorf("failure parsing control keys: %w", err)
-	}
+	addrs := c.DeployInfo.ControlKeys
 	owners := &secp256k1fx.OutputOwners{
 		Addrs:     addrs,
 		Threshold: c.DeployInfo.Threshold,
@@ -48,6 +44,7 @@ func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error
 }
 
 // CreateBlockchainTx creates uncommitted CreateChainTx
+// keychain in wallet will be used to build, sign and pay for the transaction
 func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
 	if c.SubnetID == ids.Empty {
 		return nil, fmt.Errorf("subnet ID is not provided")
