@@ -34,7 +34,7 @@ func New(
 		URI:              network.Endpoint,
 		AVAXKeychain:     keychain.Keychain,
 		EthKeychain:      secp256k1fx.NewKeychain(),
-		PChainTxsToFetch: nil,
+		PChainTxsToFetch: set.Set[ids.ID]{},
 	}
 	w := Wallet{
 		Keychain: keychain,
@@ -93,9 +93,11 @@ func (w *Wallet) Addresses() []ids.ShortID {
 
 func (w *Wallet) Sign(ctx context.Context, ms *multisig.Multisig) error {
 	if subnetID, err := ms.GetSubnetID(); err == nil {
-		w.config.PChainTxsToFetch = set.Of(subnetID)
-		if err := w.reset(ctx); err != nil {
-			return err
+		if !w.config.PChainTxsToFetch.Contains(subnetID) {
+			w.config.PChainTxsToFetch.Add(subnetID)
+			if err := w.reset(ctx); err != nil {
+				return err
+			}
 		}
 	} else if err != multisig.ErrUndefinedTx {
 		return err
