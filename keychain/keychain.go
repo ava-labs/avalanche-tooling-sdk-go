@@ -11,13 +11,11 @@ import (
 
 type Keychain struct {
 	keychain.Keychain
-	network avalanche.Network
 }
 
 // NewKeychain will generate a new key pair in the provided keyPath if no .pk file currently
 // exists in the provided keyPath
 func NewKeychain(
-	network avalanche.Network,
 	keyPath string,
 ) (*Keychain, error) {
 	sf, err := key.LoadSoftOrCreate(utils.ExpandHome(keyPath))
@@ -26,7 +24,6 @@ func NewKeychain(
 	}
 	kc := Keychain{
 		Keychain: sf.KeyChain(),
-		network:  network,
 	}
 	return &kc, nil
 }
@@ -37,12 +34,11 @@ func KeychainFromKey(
 ) *Keychain {
 	kc := Keychain{
 		Keychain: sf.KeyChain(),
-		network:  network,
 	}
 	return &kc
 }
 
 // P returns string formatted addresses in the keychain
-func (kc *Keychain) P() ([]string, error) {
-	return utils.P(kc.network.HRP(), kc.Addresses().List())
+func (kc *Keychain) P(network avalanche.Network) ([]string, error) {
+	return utils.P(network.HRP(), kc.Addresses().List())
 }

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/set"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
@@ -19,8 +18,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
-	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ethereum/go-ethereum/common"
@@ -48,27 +45,23 @@ func TestSubnetDeploy(_ *testing.T) {
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, _ := New(&subnetParams)
 	network := avalanche.FujiNetwork()
-	keychain, _ := keychain.NewKeychain(network, "KEY_PATH")
+	keychain, _ := keychain.NewKeychain("KEY_PATH")
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
 	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
 	wallet, _ := wallet.New(
 		context.Background(),
-		&primary.WalletConfig{
-			URI:              network.Endpoint,
-			AVAXKeychain:     keychain.Keychain,
-			EthKeychain:      secp256k1fx.NewKeychain(),
-			PChainTxsToFetch: nil,
-		},
+		network,
+		keychain,
 	)
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
-	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
+	subnetID, _ := newSubnet.Commit(deploySubnetTx, wallet, true)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 	time.Sleep(2 * time.Second)
 	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
-	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
+	blockchainID, _ := newSubnet.Commit(deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
 
@@ -120,19 +113,15 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	defer cancel()
 	walletA, err := wallet.New(
 		ctx,
-		&primary.WalletConfig{
-			URI:              network.Endpoint,
-			AVAXKeychain:     keychainA.Keychain,
-			EthKeychain:      secp256k1fx.NewKeychain(),
-			PChainTxsToFetch: nil,
-		},
+		network,
+		keychainA,
 	)
 	require.NoError(err)
 
 	deploySubnetTx, err := newSubnet.CreateSubnetTx(walletA)
 	require.NoError(err)
 
-	subnetID, err := newSubnet.Commit(*deploySubnetTx, walletA, true)
+	subnetID, err := newSubnet.Commit(deploySubnetTx, walletA, true)
 	require.NoError(err)
 
 	fmt.Printf("subnetID %s \n", subnetID.String())
@@ -141,12 +130,8 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	defer cancel()
 	walletB, err := wallet.New(
 		ctx,
-		&primary.WalletConfig{
-			URI:              network.Endpoint,
-			AVAXKeychain:     keychainB.Keychain,
-			EthKeychain:      secp256k1fx.NewKeychain(),
-			PChainTxsToFetch: set.Of(subnetID),
-		},
+		network,
+		keychainB,
 	)
 	require.NoError(err)
 
@@ -165,7 +150,7 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	fmt.Printf("signing with wallet B \n")
 	ctx, cancel = utils.GetAPIContext()
 	defer cancel()
-	err = walletB.P().Signer().Sign(ctx, deployChainTx.PChainTx)
+	err = walletB.Sign(ctx, deployChainTx)
 	require.NoError(err)
 
 	_, remainingSigners, err = deployChainTx.GetRemainingAuthSigners()
@@ -176,7 +161,7 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 
 	// since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
-	blockchainID, err := newSubnet.Commit(*deployChainTx, walletA, true)
+	blockchainID, err := newSubnet.Commit(deployChainTx, walletA, true)
 	require.NoError(err)
 	fmt.Printf("blockchainID %s\n", blockchainID.String())
 }

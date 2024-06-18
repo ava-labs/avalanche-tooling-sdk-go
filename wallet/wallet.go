@@ -6,7 +6,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
@@ -18,26 +20,41 @@ var ErrNotReadyToCommit = errors.New("tx is not fully signed so can't be committ
 
 type Wallet struct {
 	primary.Wallet
-	Keychain keychain.Keychain
+	Keychain *keychain.Keychain
 	options  []common.Option
 	config   *primary.WalletConfig
 }
 
 func New(
 	ctx context.Context,
-	config *primary.WalletConfig,
-) (Wallet, error) {
-	wallet, err := primary.MakeWallet(
+	network avalanche.Network,
+	keychain *keychain.Keychain,
+) (*Wallet, error) {
+	config := &primary.WalletConfig{
+		URI:              network.Endpoint,
+		AVAXKeychain:     keychain.Keychain,
+		EthKeychain:      secp256k1fx.NewKeychain(),
+		PChainTxsToFetch: nil,
+	}
+	w := Wallet{
+		Keychain: keychain,
+		config:   config,
+	}
+	return &w, w.reset(ctx)
+}
+
+func (w *Wallet) reset(
+	ctx context.Context,
+) error {
+	if wallet, err := primary.MakeWallet(
 		ctx,
-		config,
-	)
-	return Wallet{
-		Wallet: wallet,
-		Keychain: keychain.Keychain{
-			Keychain: config.AVAXKeychain,
-		},
-		config: config,
-	}, err
+		w.config,
+	); err != nil {
+		return err
+	} else {
+		w.Wallet = wallet
+		return nil
+	}
 }
 
 // SecureWalletIsChangeOwner ensures that a fee paying address (wallet's keychain) will receive
@@ -72,4 +89,16 @@ func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {
 
 func (w *Wallet) Addresses() []ids.ShortID {
 	return w.Keychain.Addresses().List()
+}
+
+func (w *Wallet) Sign(ctx context.Context, ms *multisig.Multisig) error {
+	if subnetID, err := ms.GetSubnetID(); err == nil {
+		w.config.PChainTxsToFetch = set.Of(subnetID)
+		if err := w.reset(ctx); err != nil {
+			return err
+		}
+	} else if err != multisig.ErrUndefinedTx {
+		return err
+	}
+	return w.P().Signer().Sign(ctx, ms.PChainTx)
 }

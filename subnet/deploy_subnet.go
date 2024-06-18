@@ -17,7 +17,7 @@ import (
 
 // CreateSubnetTx creates uncommitted CreateSubnetTx
 // keychain in wallet will be used to build, sign and pay for the transaction
-func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateSubnetTx(wallet *wallet.Wallet) (*multisig.Multisig, error) {
 	if c.DeployInfo.ControlKeys == nil {
 		return nil, fmt.Errorf("control keys are not provided")
 	}
@@ -45,7 +45,7 @@ func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error
 
 // CreateBlockchainTx creates uncommitted CreateChainTx
 // keychain in wallet will be used to build, sign and pay for the transaction
-func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateBlockchainTx(wallet *wallet.Wallet) (*multisig.Multisig, error) {
 	if c.SubnetID == ids.Empty {
 		return nil, fmt.Errorf("subnet ID is not provided")
 	}
