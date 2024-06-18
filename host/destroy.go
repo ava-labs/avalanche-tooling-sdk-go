@@ -17,8 +17,8 @@ func (h *Host) Destroy(ctx context.Context) error {
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
-			h.CloudConfig.(CloudParams).AWSProfile,
-			h.CloudConfig.(CloudParams).Region,
+			h.CloudConfig.AWSProfile,
+			h.CloudConfig.Region,
 		)
 		if err != nil {
 			return err
@@ -27,13 +27,13 @@ func (h *Host) Destroy(ctx context.Context) error {
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
-			h.CloudConfig.(CloudParams).GCPProject,
-			h.CloudConfig.(CloudParams).GCPCredentials,
+			h.CloudConfig.GCPProject,
+			h.CloudConfig.GCPCredentials,
 		)
 		if err != nil {
 			return err
 		}
-		return gcpSvc.DestroyGCPNode(h.CloudConfig.(CloudParams).Region, h.NodeID)
+		return gcpSvc.DestroyGCPNode(h.CloudConfig.Region, h.NodeID)
 	default:
 		return fmt.Errorf("unsupported cloud type: %s", h.Cloud.String())
 	}

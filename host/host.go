@@ -54,7 +54,7 @@ type Host struct {
 	Cloud SupportedCloud
 
 	// CloudConfig is the cloud specific configuration for the host
-	CloudConfig interface{}
+	CloudConfig CloudParams
 
 	// Connection to the host
 	Connection *goph.Client
