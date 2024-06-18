@@ -23,7 +23,10 @@ type Wallet struct {
 	config   *primary.WalletConfig
 }
 
-func New(ctx context.Context, config *primary.WalletConfig) (Wallet, error) {
+func New(
+	ctx context.Context,
+	config *primary.WalletConfig,
+) (Wallet, error) {
 	wallet, err := primary.MakeWallet(
 		ctx,
 		config,

@@ -20,7 +20,7 @@ func NewKeychain(
 	network avalanche.Network,
 	keyPath string,
 ) (*Keychain, error) {
-	sf, err := key.LoadSoftOrCreate(keyPath)
+	sf, err := key.LoadSoftOrCreate(utils.ExpandHome(keyPath))
 	if err != nil {
 		return nil, err
 	}
@@ -29,6 +29,17 @@ func NewKeychain(
 		network:  network,
 	}
 	return &kc, nil
+}
+
+func KeychainFromKey(
+	network avalanche.Network,
+	sf *key.SoftKey,
+) *Keychain {
+	kc := Keychain{
+		Keychain: sf.KeyChain(),
+		network:  network,
+	}
+	return &kc
 }
 
 // P returns string formatted addresses in the keychain
