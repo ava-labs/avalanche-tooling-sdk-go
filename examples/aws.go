@@ -15,8 +15,6 @@ func main() {
 	ctx := context.Background()
 	// Get the default cloud parameters for AWS
 	cp, err := host.GetDefaultCloudParams(ctx, host.AWSCloud)
-	// Show the default cloud parameters for AWS to sdtout
-	fmt.Println(cp)
 	// Set the cloud parameters for AWS non provided by the default
 	// Please set your own values for the following fields
 	cp.AWSProfile = "default"
@@ -30,7 +28,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(hosts)
 
 	const (
 		sshTimeout        = 120 * time.Second
@@ -50,5 +47,4 @@ func main() {
 			fmt.Println(string(output))
 		}
 	}
-
 }
