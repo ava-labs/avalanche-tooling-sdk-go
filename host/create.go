@@ -9,6 +9,7 @@ import (
 
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 // preCreateCheck checks if the cloud parameters are valid.
@@ -57,10 +58,17 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 		if len(instanceIds) != count {
 			return nil, fmt.Errorf("failed to create all instances. Expected %d, got %d", count, len(instanceIds))
 		}
+		if err := ec2Svc.WaitForEC2Instances(instanceIds, types.InstanceStateNameRunning); err != nil {
+			return nil, err
+		}
+		instanceEIPMap, err := ec2Svc.GetInstancePublicIPs(instanceIds)
+		if err != nil {
+			return nil, err
+		}
 		for _, instanceID := range instanceIds {
 			hosts = append(hosts, Host{
 				NodeID:      instanceID,
-				IP:          "",
+				IP:          instanceEIPMap[instanceID],
 				Cloud:       cp.Cloud(),
 				CloudConfig: cp,
 				Roles:       nil,
