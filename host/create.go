@@ -9,6 +9,7 @@ import (
 
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
@@ -71,7 +72,10 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 				IP:          instanceEIPMap[instanceID],
 				Cloud:       cp.Cloud(),
 				CloudConfig: cp,
-				Roles:       nil,
+				SSHConfig: SSHConfig{
+					User: constants.AnsibleSSHUser,
+				},
+				Roles: nil,
 			})
 		}
 		return hosts, nil
@@ -108,7 +112,10 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 				IP:          computeInstance.NetworkInterfaces[0].NetworkIP,
 				Cloud:       cp.Cloud(),
 				CloudConfig: cp,
-				Roles:       nil,
+				SSHConfig: SSHConfig{
+					User: constants.AnsibleSSHUser,
+				},
+				Roles: nil,
 			})
 		}
 	default:
