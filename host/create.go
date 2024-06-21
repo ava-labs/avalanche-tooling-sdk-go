@@ -51,8 +51,11 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 			cp.AWSVolumeType,
 			cp.AWSVolumeSize,
 		)
-		if err != nil || len(instanceIds) != count {
+		if err != nil {
 			return nil, err
+		}
+		if len(instanceIds) != count {
+			return nil, fmt.Errorf("failed to create all instances. Expected %d, got %d", count, len(instanceIds))
 		}
 		for _, instanceID := range instanceIds {
 			hosts = append(hosts, Host{
@@ -85,8 +88,11 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 			1,
 			cp.GCPVolumeSize,
 		)
-		if err != nil || len(computeInstances) != count {
+		if err != nil {
 			return nil, err
+		}
+		if len(computeInstances) != count {
+			return nil, fmt.Errorf("failed to create all instances. Expected %d, got %d", count, len(computeInstances))
 		}
 		for _, computeInstance := range computeInstances {
 			hosts = append(hosts, Host{
