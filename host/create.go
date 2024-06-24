@@ -6,6 +6,7 @@ package host
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
@@ -26,7 +27,7 @@ func preCreateCheck(cp CloudParams, count int) error {
 
 // Create creates a new node.
 // If wait is true, this function will block until the node is ready.
-func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host, error) {
+func createInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host, error) {
 	if err := preCreateCheck(cp, count); err != nil {
 		return nil, err
 	}
@@ -122,4 +123,73 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 		return nil, fmt.Errorf("unsupported cloud")
 	}
 	return hosts, nil
+}
+
+// CreateInstanceList creates a list of nodes.
+func CreateInstanceList(ctx context.Context, cp CloudParams, count int, roles []SupportedRole, networkID string, avalancheGoVersion string, withMonitoring bool) ([]Host, error) {
+	hosts, err := createInstanceList(ctx, cp, count)
+	if err != nil {
+		return nil, err
+	}
+	wg := sync.WaitGroup{}
+	wgResults := HostResults{}
+	// wait for all hosts to be ready and provision based on the role list
+	for _, host := range hosts {
+		wg.Add(1)
+		go func(hostResults *HostResults, host Host) {
+			defer wg.Done()
+			if err := host.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
+				hostResults.AddResult(host.NodeID, nil, err)
+				return
+			}
+			if err := provisionHost(host, roles, networkID, avalancheGoVersion, withMonitoring); err != nil {
+				hostResults.AddResult(host.NodeID, nil, err)
+				return
+			}
+		}(&wgResults, host)
+		host.Roles = roles
+	}
+	wg.Wait()
+	if wgResults.HasErrors() {
+		// if there are errors, collect and return them with nodeIds
+		hostErrorMap := wgResults.GetErrorHostMap()
+		errStr := ""
+		for nodeID, err := range hostErrorMap {
+			errStr += fmt.Sprintf("NodeID: %s, Error: %s\n", nodeID, err)
+		}
+		return nil, fmt.Errorf("failed to provision all hosts: %s", errStr)
+
+	}
+
+	return hosts, nil
+}
+
+// provisionHost provisions a host with the given roles.
+func provisionHost(host Host, roles []SupportedRole, networkID string, avalancheGoVersion string, withMonitoring bool) error {
+	if err := CheckRoles(roles); err != nil {
+		return err
+	}
+	if err := host.Connect(constants.SSHTCPPort); err != nil {
+		return err
+	}
+	for _, role := range roles {
+		switch role {
+		case Validator:
+		case API:
+			if err := provisionAvagoHost(host, networkID, avalancheGoVersion, withMonitoring); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unsupported role %s", role)
+		}
+		return nil
+	}
+}
+
+func provisionAvagoHost(host Host, networkID string, avalancheGoVersion string, withMonitoring bool) error {
+	if err := host.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
+		return err
+	}
+
+	return nil
 }

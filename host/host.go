@@ -40,6 +40,7 @@ type SSHConfig struct {
 	Params map[string]string // additional parameters to pass to the ssh command
 }
 
+// Host represents a cloud host that can be connected to over SSH
 type Host struct {
 	// ID of the host
 	NodeID string
