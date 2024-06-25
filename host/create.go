@@ -13,6 +13,7 @@ import (
 
 // Create creates a new node.
 // If wait is true, this function will block until the node is ready.
+// TODO: add more here
 func CreateInstance(ctx context.Context, cp CloudParams) (Host, error) {
 	if err := cp.Validate(); err != nil {
 		return Host{}, err

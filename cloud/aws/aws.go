@@ -34,7 +34,7 @@ type AwsCloud struct {
 	ctx       context.Context
 }
 
-// NewAwsCloud creates an AWS cloud
+// NewAwsCloud creates an AWS cloud api client instance
 func NewAwsCloud(ctx context.Context, awsProfile, region string) (*AwsCloud, error) {
 	var (
 		cfg aws.Config

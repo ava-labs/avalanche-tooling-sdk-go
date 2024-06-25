@@ -14,6 +14,7 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
+// TODO: split aws and gcp structs
 type CloudParams struct {
 	// Name of the node
 	Name string
