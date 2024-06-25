@@ -18,8 +18,8 @@ type CloudParams struct {
 	// Region to use for the node
 	Region string
 
-	// ImageID is Machine ImageID ID to use for the node
-	// For example Machine ImageID ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
+	// ImageID is Machine Image ID to use for the node
+	// For example Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
 	// us-west-2 region is ami-0cf2b4e024cdb6960 at the time of this writing
 	ImageID string
 
