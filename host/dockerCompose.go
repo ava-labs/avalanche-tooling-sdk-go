@@ -123,7 +123,7 @@ func (h *Host) MergeComposeFiles(currentComposeFile string, newComposeFile strin
 
 func (h *Host) StartDockerCompose(timeout time.Duration) error {
 	// we provide systemd service unit for docker compose if the host has systemd
-	if h.IsSystemD() {
+	if h.HasSystemDAvailable() {
 		if output, err := h.Command(nil, timeout, "sudo systemctl start avalanche-cli-docker"); err != nil {
 			return fmt.Errorf("%w: %s", err, string(output))
 		}
@@ -138,7 +138,7 @@ func (h *Host) StartDockerCompose(timeout time.Duration) error {
 }
 
 func (h *Host) StopDockerCompose(timeout time.Duration) error {
-	if h.IsSystemD() {
+	if h.HasSystemDAvailable() {
 		if output, err := h.Command(nil, timeout, "sudo systemctl stop avalanche-cli-docker"); err != nil {
 			return fmt.Errorf("%w: %s", err, string(output))
 		}
@@ -153,7 +153,7 @@ func (h *Host) StopDockerCompose(timeout time.Duration) error {
 }
 
 func (h *Host) RestartDockerCompose(timeout time.Duration) error {
-	if h.IsSystemD() {
+	if h.HasSystemDAvailable() {
 		if output, err := h.Command(nil, timeout, "sudo systemctl restart avalanche-cli-docker"); err != nil {
 			return fmt.Errorf("%w: %s", err, string(output))
 		}

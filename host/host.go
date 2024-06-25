@@ -25,21 +25,12 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
-// SSHConfig contains the configuration for connecting to a host over SSH
-type SSHConfig struct {
-	// Username to use when connecting to the host
-	User string
-
-	// Path to the private key to use when connecting to the host
-	// If this is empty, the SSH agent will be used
-	PrivateKeyPath string
-
-	// Parameters to pass to the ssh command.
-	// See man ssh_config(5) for more information
-	// By defalult it's StrictHostKeyChecking=no
-	Params map[string]string // additional parameters to pass to the ssh command
-}
-
+// TODO: clarify nodeID -> Avalanche Node ID
+// Roles -> what are the roles?
+// Need to expand on connection
+// IP -> only if static ip is used
+// Whats connection?
+// Logger -> are we better off returning error? Otherwise use avalanche go logger
 type Host struct {
 	// ID of the host
 	NodeID string
@@ -64,6 +55,21 @@ type Host struct {
 
 	// Logger for host
 	Logger avalanche.LeveledLogger
+}
+
+// SSHConfig contains the configuration for connecting to a host over SSH
+type SSHConfig struct {
+	// Username to use when connecting to the host
+	User string
+
+	// Path to the private key to use when connecting to the host
+	// If this is empty, the SSH agent will be used
+	PrivateKeyPath string
+
+	// Parameters to pass to the ssh command.
+	// See man ssh_config(5) for more information
+	// By defalult it's StrictHostKeyChecking=no
+	Params map[string]string // additional parameters to pass to the ssh command
 }
 
 // NewHostConnection creates a new SSH connection to the host
@@ -527,8 +533,8 @@ func consumeOutput(ctx context.Context, output io.Reader) error {
 	return scanner.Err()
 }
 
-// HasSystemDAvaliable checks if systemd is available on a remote host.
-func (h *Host) IsSystemD() bool {
+// HasSystemDAvailable checks if systemd is available on a remote host.
+func (h *Host) HasSystemDAvailable() bool {
 	// check for the folder
 	if _, err := h.FileExists("/run/systemd/system"); err != nil {
 		return false
