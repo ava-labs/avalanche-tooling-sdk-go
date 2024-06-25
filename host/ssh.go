@@ -154,6 +154,51 @@ func (h *Host) RunSSHUpgradeSubnetEVM(subnetEVMBinaryPath string) error {
 	)
 }
 
+func (h *Host) RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, loadTestPorts []string) error {
+	for _, folder := range remoteconfig.PrometheusFoldersToCreate() {
+		if err := h.MkdirAll(folder, constants.SSHFileOpsTimeout); err != nil {
+			return err
+		}
+	}
+	cloudNodePrometheusConfigTemp := utils.GetRemoteComposeServicePath("prometheus", "prometheus.yml")
+	promConfig, err := os.CreateTemp("", "prometheus")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(promConfig.Name())
+	if err := monitoring.WritePrometheusConfig(promConfig.Name(), avalancheGoPorts, machinePorts, loadTestPorts); err != nil {
+		return err
+	}
+
+	return h.Upload(
+		promConfig.Name(),
+		cloudNodePrometheusConfigTemp,
+		constants.SSHFileOpsTimeout,
+	)
+}
+
+func (h *Host) RunSSHSetupLokiConfig(port int) error {
+	for _, folder := range remoteconfig.LokiFoldersToCreate() {
+		if err := h.MkdirAll(folder, constants.SSHFileOpsTimeout); err != nil {
+			return err
+		}
+	}
+	cloudNodeLokiConfigTemp := utils.GetRemoteComposeServicePath("loki", "loki.yml")
+	lokiConfig, err := os.CreateTemp("", "loki")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(lokiConfig.Name())
+	if err := monitoring.WriteLokiConfig(lokiConfig.Name(), strconv.Itoa(port)); err != nil {
+		return err
+	}
+	return h.Upload(
+		lokiConfig.Name(),
+		cloudNodeLokiConfigTemp,
+		constants.SSHFileOpsTimeout,
+	)
+}
+
 func (h *Host) RunSSHSetupPromtailConfig(lokiIP string, lokiPort int, cloudID string, nodeID string, chainID string) error {
 	for _, folder := range remoteconfig.PromtailFoldersToCreate() {
 		if err := h.MkdirAll(folder, constants.SSHFileOpsTimeout); err != nil {
