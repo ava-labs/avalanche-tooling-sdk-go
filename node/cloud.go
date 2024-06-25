@@ -92,7 +92,6 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 			},
 			Region:       "us-east-1",
 			InstanceType: constants.AWSDefaultInstanceType,
-			StaticIP:     "",
 		}
 		awsSvc, err := awsAPI.NewAwsCloud(ctx, cp.AWSConfig.AWSProfile, cp.Region)
 		if err != nil {
@@ -128,7 +127,6 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 			},
 			Region:       "us-east1",
 			InstanceType: constants.GCPDefaultInstanceType,
-			StaticIP:     "",
 		}
 		gcpSvc, err := gcpAPI.NewGcpCloud(ctx, cp.GCPConfig.GCPProject, cp.GCPConfig.GCPCredentials)
 		if err != nil {
