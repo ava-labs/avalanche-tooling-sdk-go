@@ -1,9 +1,9 @@
-package host
+package node
 
 import "sync"
 
-// HostResult is a struct that holds the result of a async command executed on a host
-type HostResult struct {
+// NodeResult is a struct that holds the result of a async command executed on a host
+type NodeResult struct {
 	// ID of the host
 	NodeID string
 
@@ -14,32 +14,32 @@ type HostResult struct {
 	Err error
 }
 
-// HostResults is a struct that holds the results of multiple async commands executed on multiple hosts
-type HostResults struct {
-	Results []HostResult
+// NodeResults is a struct that holds the results of multiple async commands executed on multiple hosts
+type NodeResults struct {
+	Results []NodeResult
 	Lock    sync.Mutex
 }
 
-// AddResult adds a result to the HostResults
-func (nr *HostResults) AddResult(nodeID string, value interface{}, err error) {
+// AddResult adds a result to the NodeResults
+func (nr *NodeResults) AddResult(nodeID string, value interface{}, err error) {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
-	nr.Results = append(nr.Results, HostResult{
+	nr.Results = append(nr.Results, NodeResult{
 		NodeID: nodeID,
 		Value:  value,
 		Err:    err,
 	})
 }
 
-// GetResults returns the results of the HostResults
-func (nr *HostResults) GetResults() []HostResult {
+// GetResults returns the results of the NodeResults
+func (nr *NodeResults) GetResults() []NodeResult {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	return nr.Results
 }
 
-// GetResultMap returns a map of the results of the HostResults with the nodeID as the key
-func (nr *HostResults) GetResultMap() map[string]interface{} {
+// GetResultMap returns a map of the results of the NodeResults with the nodeID as the key
+func (nr *NodeResults) GetResultMap() map[string]interface{} {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	result := map[string]interface{}{}
@@ -49,15 +49,15 @@ func (nr *HostResults) GetResultMap() map[string]interface{} {
 	return result
 }
 
-// GetErrorMap returns a map of the errors of the HostResults with the nodeID as the key
-func (nr *HostResults) Len() int {
+// GetErrorMap returns a map of the errors of the NodeResults with the nodeID as the key
+func (nr *NodeResults) Len() int {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	return len(nr.Results)
 }
 
-// GetNodeList returns a list of the nodeIDs of the HostResults
-func (nr *HostResults) GetNodeList() []string {
+// GetNodeList returns a list of the nodeIDs of the NodeResults
+func (nr *NodeResults) GetNodeList() []string {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	nodes := []string{}
@@ -67,8 +67,8 @@ func (nr *HostResults) GetNodeList() []string {
 	return nodes
 }
 
-// GetErrorMap returns a map of the errors of the HostResults with the nodeID as the key
-func (nr *HostResults) GetErrorHostMap() map[string]error {
+// GetErrorMap returns a map of the errors of the NodeResults with the nodeID as the key
+func (nr *NodeResults) GetErrorHostMap() map[string]error {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	hostErrors := make(map[string]error)
@@ -81,7 +81,7 @@ func (nr *HostResults) GetErrorHostMap() map[string]error {
 }
 
 // HasNodeIDWithError checks if a node with the given nodeID has an error
-func (nr *HostResults) HasNodeIDWithError(nodeID string) bool {
+func (nr *NodeResults) HasNodeIDWithError(nodeID string) bool {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	for _, node := range nr.Results {
@@ -92,13 +92,13 @@ func (nr *HostResults) HasNodeIDWithError(nodeID string) bool {
 	return false
 }
 
-// HasErrors returns true if the HostResults has any errors
-func (nr *HostResults) HasErrors() bool {
+// HasErrors returns true if the NodeResults has any errors
+func (nr *NodeResults) HasErrors() bool {
 	return len(nr.GetErrorHostMap()) > 0
 }
 
-// GetErrorHosts returns a list of the nodeIDs of the HostResults that have errors
-func (nr *HostResults) GetErrorHosts() []string {
+// GetErrorHosts returns a list of the nodeIDs of the NodeResults that have errors
+func (nr *NodeResults) GetErrorHosts() []string {
 	var nodes []string
 	for _, node := range nr.Results {
 		if node.Err != nil {

@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"context"
@@ -142,18 +142,18 @@ func CreateInstanceList(
 		return nil, err
 	}
 	wg := sync.WaitGroup{}
-	wgResults := HostResults{}
+	wgResults := NodeResults{}
 	// wait for all hosts to be ready and provision based on the role list
 	for _, host := range hosts {
 		wg.Add(1)
-		go func(hostResults *HostResults, host Host) {
+		go func(NodeResults *NodeResults, host Host) {
 			defer wg.Done()
 			if err := host.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
-				hostResults.AddResult(host.NodeID, nil, err)
+				NodeResults.AddResult(host.NodeID, nil, err)
 				return
 			}
 			if err := provisionHost(host, roles, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
-				hostResults.AddResult(host.NodeID, nil, err)
+				NodeResults.AddResult(host.NodeID, nil, err)
 				return
 			}
 		}(&wgResults, host)
