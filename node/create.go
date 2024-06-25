@@ -42,7 +42,6 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Node, error)
 			return nil, err
 		}
 		instanceIds, err := ec2Svc.CreateEC2Instances(
-			cp.Name,
 			count,
 			cp.Image,
 			cp.InstanceType,
@@ -89,14 +88,12 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Node, error)
 			return nil, err
 		}
 		computeInstances, err := gcpSvc.SetupInstances(
-			cp.Name,
 			cp.GCPConfig.GCPZone,
 			cp.GCPConfig.GCPNetwork,
 			cp.GCPConfig.GCPSSHKey,
 			cp.Image,
-			cp.Name,
 			cp.InstanceType,
-			[]string{cp.StaticIP},
+			[]string{},
 			1,
 			cp.GCPConfig.GCPVolumeSize,
 		)

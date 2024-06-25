@@ -15,15 +15,15 @@ import (
 )
 
 type CloudParams struct {
-	// Name of the node
-	Name string
-
 	// Region to use for the node
 	Region string
 
 	// Image is Machine Image ID to use for the node
-	// For example Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS
-	// ami-0cf2b4e024cdb6960 at the time of this writing
+	// For example Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
+	// us-west-2 region is ami-0cf2b4e024cdb6960 at the time of this writing
+	//
+	// We have published our own Machine Image on
+	// To look for
 	// https://cloud-images.ubuntu.com/locator/ec2/
 	// TODO: need to find for gcp
 	//
@@ -31,9 +31,6 @@ type CloudParams struct {
 
 	// Instance type of the node
 	InstanceType string
-
-	// Static IP of the node
-	StaticIP string
 
 	// AWS specific configuration
 	AWSConfig *AWSConfig
@@ -91,7 +88,6 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 	switch cloud {
 	case AWSCloud:
 		cp := &CloudParams{
-			Name: "avalanche-tooling-sdk-go",
 			AWSConfig: &AWSConfig{
 				AWSProfile:          "default",
 				AWSKeyPair:          "default",
@@ -128,7 +124,6 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 			return nil, err
 		}
 		cp := &CloudParams{
-			Name: "avalanche-tooling-sdk-go",
 			GCPConfig: &GCPConfig{
 				GCPProject:     projectName,
 				GCPCredentials: utils.ExpandHome(constants.GCPDefaultAuthKeyPath),
@@ -159,9 +154,6 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 // Validate checks that the CloudParams are valid for deployment
 func (cp *CloudParams) Validate() error {
 	// common checks
-	if cp.Name == "" {
-		return fmt.Errorf("name is required")
-	}
 	if cp.Region == "" {
 		return fmt.Errorf("region is required")
 	}

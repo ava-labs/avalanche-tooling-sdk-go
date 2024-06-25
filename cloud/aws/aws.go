@@ -193,7 +193,7 @@ func (c *AwsCloud) DeleteSecurityGroupRule(groupID, direction, protocol, ip stri
 }
 
 // CreateEC2Instances creates EC2 instances
-func (c *AwsCloud) CreateEC2Instances(name string, count int, amiID, instanceType, keyName, securityGroupID string, iops, throughput int, volumeTypeString string, volumeSize int) ([]string, error) {
+func (c *AwsCloud) CreateEC2Instances(count int, amiID, instanceType, keyName, securityGroupID string, iops, throughput int, volumeTypeString string, volumeSize int) ([]string, error) {
 	volumeType := types.VolumeType(volumeTypeString)
 	ebsValue := &types.EbsBlockDevice{
 		VolumeSize:          aws.Int32(int32(volumeSize)),
@@ -224,10 +224,6 @@ func (c *AwsCloud) CreateEC2Instances(name string, count int, amiID, instanceTyp
 			{
 				ResourceType: types.ResourceTypeInstance,
 				Tags: []types.Tag{
-					{
-						Key:   aws.String("Name"),
-						Value: aws.String(name),
-					},
 					{
 						Key:   aws.String("Managed-By"),
 						Value: aws.String("avalanche-cli"),
