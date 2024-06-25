@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/host"
 	"net"
 	"os"
 	"slices"
@@ -193,25 +194,25 @@ func (c *AwsCloud) DeleteSecurityGroupRule(groupID, direction, protocol, ip stri
 }
 
 // CreateEC2Instances creates EC2 instances
-func (c *AwsCloud) CreateEC2Instances(name string, count int, amiID, instanceType, keyName, securityGroupID string, iops, throughput int, volumeTypeString string, volumeSize int) ([]string, error) {
-	volumeType := types.VolumeType(volumeTypeString)
+func (c *AwsCloud) CreateEC2Instances(name string, count int, amiID, instanceType string, awsConfig *host.AWSConfig) ([]string, error) {
+	volumeType := types.VolumeType(awsConfig.AWSVolumeType)
 	ebsValue := &types.EbsBlockDevice{
-		VolumeSize:          aws.Int32(int32(volumeSize)),
+		VolumeSize:          aws.Int32(int32(awsConfig.AWSVolumeSize)),
 		VolumeType:          volumeType,
 		DeleteOnTermination: aws.Bool(true),
 	}
-	if volumeType == types.VolumeTypeGp3 && throughput > 0 {
-		ebsValue.Throughput = aws.Int32(int32(throughput))
+	if volumeType == types.VolumeTypeGp3 && awsConfig.AWSVolumeThroughput > 0 {
+		ebsValue.Throughput = aws.Int32(int32(awsConfig.AWSVolumeThroughput))
 	}
-	if iops > 0 {
-		ebsValue.Iops = aws.Int32(int32(iops))
+	if awsConfig.AWSVolumeIOPS > 0 {
+		ebsValue.Iops = aws.Int32(int32(awsConfig.AWSVolumeIOPS))
 	}
 
 	runResult, err := c.ec2Client.RunInstances(c.ctx, &ec2.RunInstancesInput{
 		ImageId:          aws.String(amiID),
 		InstanceType:     types.InstanceType(instanceType),
-		KeyName:          aws.String(keyName),
-		SecurityGroupIds: []string{securityGroupID},
+		KeyName:          aws.String(awsConfig.AWSKeyPair),
+		SecurityGroupIds: []string{awsConfig.AWSSecurityGroupID},
 		MinCount:         aws.Int32(int32(count)),
 		MaxCount:         aws.Int32(int32(count)),
 		BlockDeviceMappings: []types.BlockDeviceMapping{

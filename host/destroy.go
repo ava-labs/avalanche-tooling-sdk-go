@@ -17,7 +17,7 @@ func (h *Host) Destroy(ctx context.Context) error {
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
-			h.CloudConfig.AWSProfile,
+			h.CloudConfig.AWSConfig.AWSProfile,
 			h.CloudConfig.Region,
 		)
 		if err != nil {
@@ -27,8 +27,8 @@ func (h *Host) Destroy(ctx context.Context) error {
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
-			h.CloudConfig.GCPProject,
-			h.CloudConfig.GCPCredentials,
+			h.CloudConfig.GCPConfig.GCPProject,
+			h.CloudConfig.GCPConfig.GCPCredentials,
 		)
 		if err != nil {
 			return err

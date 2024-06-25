@@ -24,9 +24,9 @@ func preCreateCheck(cp CloudParams, count int) error {
 	return nil
 }
 
-// Create creates a new node.
-// If wait is true, this function will block until the node is ready.
-func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host, error) {
+// CreateNodes launches the specified number of instances on the selected cloud platform.
+
+func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error) {
 	if err := preCreateCheck(cp, count); err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
-			cp.AWSProfile,
+			cp.AWSConfig.AWSProfile,
 			cp.Region,
 		)
 		if err != nil {
@@ -46,12 +46,7 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 			count,
 			cp.Image,
 			cp.InstanceType,
-			cp.AWSKeyPair,
-			cp.AWSSecurityGroupID,
-			cp.AWSVolumeIOPS,
-			cp.AWSVolumeThroughput,
-			cp.AWSVolumeType,
-			cp.AWSVolumeSize,
+			cp.AWSConfig,
 		)
 		if err != nil {
 			return nil, err
@@ -82,23 +77,20 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
-			cp.GCPProject,
-			cp.GCPCredentials,
+			cp.GCPConfig.GCPProject,
+			cp.GCPConfig.GCPCredentials,
 		)
 		if err != nil {
 			return nil, err
 		}
 		computeInstances, err := gcpSvc.SetupInstances(
 			cp.Name,
-			cp.GCPZone,
-			cp.GCPNetwork,
-			cp.GCPSSHKey,
 			cp.Image,
 			cp.Name,
 			cp.InstanceType,
 			[]string{cp.StaticIP},
 			1,
-			cp.GCPVolumeSize,
+			cp.GCPConfig,
 		)
 		if err != nil {
 			return nil, err
