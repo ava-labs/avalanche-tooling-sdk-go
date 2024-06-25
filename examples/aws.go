@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/host"
@@ -63,5 +64,14 @@ func main() {
 		} else {
 			fmt.Println(string(output))
 		}
+
+		//generate and provide staking certificate and key
+		keyPath := os.TempDir()
+		defer os.RemoveAll(keyPath)
+		if err := h.ProvideStakingCertAndKey(keyPath); err != nil {
+			panic(err)
+		}
+		// show content of the local keyPath folder
+
 	}
 }

@@ -7,9 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/staking"
 )
@@ -18,7 +17,7 @@ func (h *Host) ProvideStakingCertAndKey(keyPath string) error {
 	if nodeID, err := h.GenerateNodeCertAndKeys(keyPath); err != nil {
 		return err
 	} else {
-		h.Logger.Infof("Generated Staking Cert and Key for NodeID: %s in folder %s", nodeID.PrefixedString(), keyPath)
+		h.Logger.Infof("Generated Staking Cert and Key for NodeID: %s in folder %s", nodeID.String(), keyPath)
 	}
 	return h.RunSSHUploadStakingFiles(keyPath)
 }
