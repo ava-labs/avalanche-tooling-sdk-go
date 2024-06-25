@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"strings"
@@ -9,15 +9,15 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
-// PullDockerImage pulls a docker image on a remote host.
-func (h *Host) PullDockerImage(image string) error {
+// PullDockerImage pulls a docker image on a remote node.
+func (h *Node) PullDockerImage(image string) error {
 	h.Logger.Infof("Pulling docker image %s on %s", image, h.NodeID)
 	_, err := h.Commandf(nil, constants.SSHLongRunningScriptTimeout, "docker pull %s", image)
 	return err
 }
 
-// DockerLocalImageExists checks if a docker image exists on a remote host.
-func (h *Host) DockerLocalImageExists(image string) (bool, error) {
+// DockerLocalImageExists checks if a docker image exists on a remote node.
+func (h *Node) DockerLocalImageExists(image string) (bool, error) {
 	output, err := h.Command(nil, constants.SSHLongRunningScriptTimeout, "docker images --format '{{.Repository}}:{{.Tag}}'")
 	if err != nil {
 		return false, err
@@ -35,14 +35,14 @@ func parseDockerImageListOutput(output []byte) []string {
 	return strings.Split(string(output), "\n")
 }
 
-// BuildDockerImage builds a docker image on a remote host.
-func (h *Host) BuildDockerImage(image string, path string, dockerfile string) error {
+// BuildDockerImage builds a docker image on a remote node.
+func (h *Node) BuildDockerImage(image string, path string, dockerfile string) error {
 	_, err := h.Commandf(nil, constants.SSHLongRunningScriptTimeout, "cd %s && docker build -q --build-arg GO_VERSION=%s -t %s -f %s .", path, constants.BuildEnvGolangVersion, image, dockerfile)
 	return err
 }
 
-// BuildDockerImageFromGitRepo builds a docker image from a git repo on a remote host.
-func (h *Host) BuildDockerImageFromGitRepo(image string, gitRepo string, commit string) error {
+// BuildDockerImageFromGitRepo builds a docker image from a git repo on a remote node.
+func (h *Node) BuildDockerImageFromGitRepo(image string, gitRepo string, commit string) error {
 	if commit == "" {
 		commit = "HEAD"
 	}
@@ -67,8 +67,8 @@ func (h *Host) BuildDockerImageFromGitRepo(image string, gitRepo string, commit 
 	return nil
 }
 
-// PrepareDockerImageWithRepo prepares a docker image on a remote host.
-func (h *Host) PrepareDockerImageWithRepo(image string, gitRepo string, commit string) error {
+// PrepareDockerImageWithRepo prepares a docker image on a remote node.
+func (h *Node) PrepareDockerImageWithRepo(image string, gitRepo string, commit string) error {
 	localImageExists, _ := h.DockerLocalImageExists(image)
 	if localImageExists {
 		h.Logger.Infof("Docker image %s is FOUND on %s", image, h.NodeID)

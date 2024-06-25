@@ -56,8 +56,8 @@ services:
     container_name: node-exporter
     restart: unless-stopped
     volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
+      - /proc:/node/proc:ro
+      - /sys:/node/sys:ro
       - /:/rootfs:ro
     ports:
       - "9100:9100"

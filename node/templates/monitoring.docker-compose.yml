@@ -57,8 +57,8 @@ services:
     networks:
       - monitoring_net
     volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
+      - /proc:/node/proc:ro
+      - /sys:/node/sys:ro
       - /:/rootfs:ro
 
 networks:

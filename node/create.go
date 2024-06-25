@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"context"
@@ -26,11 +26,11 @@ func preCreateCheck(cp CloudParams, count int) error {
 
 // CreateNodes launches the specified number of instances on the selected cloud platform.
 
-func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error) {
+func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Node, error) {
 	if err := preCreateCheck(cp, count); err != nil {
 		return nil, err
 	}
-	hosts := make([]Host, 0, count)
+	nodes := make([]Node, 0, count)
 	switch cp.Cloud() {
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
@@ -67,7 +67,7 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error)
 			return nil, err
 		}
 		for _, instanceID := range instanceIds {
-			hosts = append(hosts, Host{
+			nodes = append(nodes, Node{
 				NodeID:      instanceID,
 				IP:          instanceEIPMap[instanceID],
 				Cloud:       cp.Cloud(),
@@ -78,7 +78,7 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error)
 				Roles: nil,
 			})
 		}
-		return hosts, nil
+		return nodes, nil
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
@@ -107,7 +107,7 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error)
 			return nil, fmt.Errorf("failed to create all instances. Expected %d, got %d", count, len(computeInstances))
 		}
 		for _, computeInstance := range computeInstances {
-			hosts = append(hosts, Host{
+			nodes = append(nodes, Node{
 				NodeID:      computeInstance.Name,
 				IP:          computeInstance.NetworkInterfaces[0].NetworkIP,
 				Cloud:       cp.Cloud(),
@@ -121,5 +121,5 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error)
 	default:
 		return nil, fmt.Errorf("unsupported cloud")
 	}
-	return hosts, nil
+	return nodes, nil
 }

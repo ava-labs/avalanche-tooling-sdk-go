@@ -1,16 +1,16 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"os"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	config "github.com/ava-labs/avalanche-tooling-sdk-go/host/config"
+	config "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 )
 
-func (h *Host) prepareAvalanchegoConfig(networkID string) (string, string, error) {
+func (h *Node) prepareAvalanchegoConfig(networkID string) (string, string, error) {
 	avagoConf := config.DefaultCliAvalancheConfig(h.IP, networkID)
 	nodeConf, err := config.RenderAvalancheNodeConfig(avagoConf)
 	if err != nil {

@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"context"
@@ -21,7 +21,12 @@ type CloudParams struct {
 	// Region to use for the node
 	Region string
 
-	// Image to use for the node
+	// Image is Machine Image ID to use for the node
+	// For example Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS
+	// ami-0cf2b4e024cdb6960 at the time of this writing
+	// https://cloud-images.ubuntu.com/locator/ec2/
+	// TODO: need to find for gcp
+	//
 	Image string
 
 	// Instance type of the node

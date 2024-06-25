@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"bufio"
@@ -25,12 +25,12 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
-// SSHConfig contains the configuration for connecting to a host over SSH
+// SSHConfig contains the configuration for connecting to a node over SSH
 type SSHConfig struct {
-	// Username to use when connecting to the host
+	// Username to use when connecting to the node
 	User string
 
-	// Path to the private key to use when connecting to the host
+	// Path to the private key to use when connecting to the node
 	// If this is empty, the SSH agent will be used
 	PrivateKeyPath string
 
@@ -40,34 +40,44 @@ type SSHConfig struct {
 	Params map[string]string // additional parameters to pass to the ssh command
 }
 
-type Host struct {
-	// ID of the host
+type Node struct {
+	// NodeID is Avalanche Node ID of the node
 	NodeID string
 
-	// IP address of the host
+	// IP address of the node
 	IP string
 
-	// SSH configuration for the host
+	// SSH configuration for the node
 	SSHConfig SSHConfig
 
-	// Cloud configuration for the host
+	// Cloud is the cloud service that the node is on
+	// Full list of cloud service:
+	// - AWS
+	// - GCP
+	// - Docker
 	Cloud SupportedCloud
 
-	// CloudConfig is the cloud specific configuration for the host
+	// CloudConfig is the cloud specific configuration for the node
 	CloudConfig CloudParams
 
-	// Connection to the host
-	Connection *goph.Client
+	// connection to the node
+	connection *goph.Client
 
-	// Roles of the host
+	// Roles of the node
+	// Full list of node roles:
+	// - Validator
+	// - API
+	// - AWM Relayer
+	// - Load Test
+	// - Monitoring
 	Roles []SupportedRole
 
-	// Logger for host
+	// Logger for node
 	Logger avalanche.LeveledLogger
 }
 
-// NewHostConnection creates a new SSH connection to the host
-func NewHostConnection(h *Host, port uint) (*goph.Client, error) {
+// NewNodeConnection creates a new SSH connection to the node
+func NewNodeConnection(h *Node, port uint) (*goph.Client, error) {
 	if port == 0 {
 		port = constants.SSHTCPPort
 	}
@@ -91,7 +101,7 @@ func NewHostConnection(h *Host, port uint) (*goph.Client, error) {
 		Auth:    auth,
 		Timeout: sshConnectionTimeout,
 		// #nosec G106
-		Callback: ssh.InsecureIgnoreHostKey(), // we don't verify host key ( similar to ansible)
+		Callback: ssh.InsecureIgnoreHostKey(), // we don't verify node key ( similar to ansible)
 	})
 	if err != nil {
 		return nil, err
@@ -99,8 +109,8 @@ func NewHostConnection(h *Host, port uint) (*goph.Client, error) {
 	return cl, nil
 }
 
-// GetCloudID returns the cloudID for the host if it is a cloud node
-func (h *Host) GetCloudID() string {
+// GetCloudID returns the cloudID for the node if it is a cloud node
+func (h *Node) GetCloudID() string {
 	switch {
 	case strings.HasPrefix(h.NodeID, constants.AWSNodeIDPrefix+"_"):
 		return strings.TrimPrefix(h.NodeID, constants.AWSNodeIDPrefix+"_")
@@ -112,37 +122,37 @@ func (h *Host) GetCloudID() string {
 }
 
 // Connect starts a new SSH connection with the provided private key.
-func (h *Host) Connect(port uint) error {
+func (h *Node) Connect(port uint) error {
 	if port == 0 {
 		port = constants.SSHTCPPort
 	}
-	if h.Connection != nil {
+	if h.connection != nil {
 		return nil
 	}
 	var err error
-	for i := 0; h.Connection == nil && i < sshConnectionRetries; i++ {
-		h.Connection, err = NewHostConnection(h, port)
+	for i := 0; h.connection == nil && i < sshConnectionRetries; i++ {
+		h.connection, err = NewNodeConnection(h, port)
 	}
 	if err != nil {
-		return fmt.Errorf("failed to connect to host %s: %w", h.IP, err)
+		return fmt.Errorf("failed to connect to node %s: %w", h.IP, err)
 	}
 	return nil
 }
 
-func (h *Host) Connected() bool {
-	return h.Connection != nil
+func (h *Node) Connected() bool {
+	return h.connection != nil
 }
 
-func (h *Host) Disconnect() error {
-	if h.Connection == nil {
+func (h *Node) Disconnect() error {
+	if h.connection == nil {
 		return nil
 	}
-	err := h.Connection.Close()
+	err := h.connection.Close()
 	return err
 }
 
-// Upload uploads a local file to a remote file on the host.
-func (h *Host) Upload(localFile string, remoteFile string, timeout time.Duration) error {
+// Upload uploads a local file to a remote file on the node.
+func (h *Node) Upload(localFile string, remoteFile string, timeout time.Duration) error {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return err
@@ -150,19 +160,19 @@ func (h *Host) Upload(localFile string, remoteFile string, timeout time.Duration
 	}
 	_, err := utils.TimedFunction(
 		func() (interface{}, error) {
-			return nil, h.Connection.Upload(localFile, remoteFile)
+			return nil, h.connection.Upload(localFile, remoteFile)
 		},
 		"upload",
 		timeout,
 	)
 	if err != nil {
-		err = fmt.Errorf("%w for host %s", err, h.IP)
+		err = fmt.Errorf("%w for node %s", err, h.IP)
 	}
 	return err
 }
 
 // Download downloads a file from the remote server to the local machine.
-func (h *Host) Download(remoteFile string, localFile string, timeout time.Duration) error {
+func (h *Node) Download(remoteFile string, localFile string, timeout time.Duration) error {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return err
@@ -173,19 +183,19 @@ func (h *Host) Download(remoteFile string, localFile string, timeout time.Durati
 	}
 	_, err := utils.TimedFunction(
 		func() (interface{}, error) {
-			return nil, h.Connection.Download(remoteFile, localFile)
+			return nil, h.connection.Download(remoteFile, localFile)
 		},
 		"download",
 		timeout,
 	)
 	if err != nil {
-		err = fmt.Errorf("%w for host %s", err, h.IP)
+		err = fmt.Errorf("%w for node %s", err, h.IP)
 	}
 	return err
 }
 
 // ExpandHome expands the ~ symbol to the home directory.
-func (h *Host) ExpandHome(path string) string {
+func (h *Node) ExpandHome(path string) string {
 	userHome := filepath.Join("/home", h.SSHConfig.User)
 	if path == "" {
 		return userHome
@@ -197,7 +207,7 @@ func (h *Host) ExpandHome(path string) string {
 }
 
 // MkdirAll creates a folder on the remote server.
-func (h *Host) MkdirAll(remoteDir string, timeout time.Duration) error {
+func (h *Node) MkdirAll(remoteDir string, timeout time.Duration) error {
 	remoteDir = h.ExpandHome(remoteDir)
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
@@ -212,20 +222,20 @@ func (h *Host) MkdirAll(remoteDir string, timeout time.Duration) error {
 		timeout,
 	)
 	if err != nil {
-		err = fmt.Errorf("%w for host %s", err, h.IP)
+		err = fmt.Errorf("%w for node %s", err, h.IP)
 	}
 	return err
 }
 
 // UntimedMkdirAll creates a folder on the remote server.
 // Does not support timeouts on the operation.
-func (h *Host) UntimedMkdirAll(remoteDir string) error {
+func (h *Node) UntimedMkdirAll(remoteDir string) error {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return err
 		}
 	}
-	sftp, err := h.Connection.NewSftp()
+	sftp, err := h.connection.NewSftp()
 	if err != nil {
 		return err
 	}
@@ -233,18 +243,18 @@ func (h *Host) UntimedMkdirAll(remoteDir string) error {
 	return sftp.MkdirAll(remoteDir)
 }
 
-// Cmd returns a new command to be executed on the remote host.
-func (h *Host) Cmd(ctx context.Context, name string, script string) (*goph.Cmd, error) {
+// Cmd returns a new command to be executed on the remote node.
+func (h *Node) Cmd(ctx context.Context, name string, script string) (*goph.Cmd, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return nil, err
 		}
 	}
-	return h.Connection.CommandContext(ctx, name, script)
+	return h.connection.CommandContext(ctx, name, script)
 }
 
-// Command executes a shell command on a remote host.
-func (h *Host) Command(env []string, timeout time.Duration, script string) ([]byte, error) {
+// Command executes a shell command on a remote node.
+func (h *Node) Command(env []string, timeout time.Duration, script string) ([]byte, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return nil, err
@@ -252,7 +262,7 @@ func (h *Host) Command(env []string, timeout time.Duration, script string) ([]by
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	cmd, err := h.Connection.CommandContext(ctx, "", script)
+	cmd, err := h.connection.CommandContext(ctx, "", script)
 	if err != nil {
 		return nil, err
 	}
@@ -264,12 +274,12 @@ func (h *Host) Command(env []string, timeout time.Duration, script string) ([]by
 }
 
 // Commandf is a shorthand for Command with a formatted script.
-func (h *Host) Commandf(env []string, timeout time.Duration, format string, args ...interface{}) ([]byte, error) {
+func (h *Node) Commandf(env []string, timeout time.Duration, format string, args ...interface{}) ([]byte, error) {
 	return h.Command(env, timeout, fmt.Sprintf(format, args...))
 }
 
 // Forward forwards the TCP connection to a remote address.
-func (h *Host) Forward(httpRequest string, timeout time.Duration) ([]byte, error) {
+func (h *Node) Forward(httpRequest string, timeout time.Duration) ([]byte, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return nil, err
@@ -285,7 +295,7 @@ func (h *Host) Forward(httpRequest string, timeout time.Duration) ([]byte, error
 		2*time.Second,
 	)
 	if err != nil {
-		err = fmt.Errorf("%w for host %s", err, h.IP)
+		err = fmt.Errorf("%w for node %s", err, h.IP)
 	}
 	ret := []byte(nil)
 	if retI != nil {
@@ -296,7 +306,7 @@ func (h *Host) Forward(httpRequest string, timeout time.Duration) ([]byte, error
 
 // UntimedForward forwards the TCP connection to a remote address.
 // Does not support timeouts on the operation.
-func (h *Host) UntimedForward(httpRequest string) ([]byte, error) {
+func (h *Node) UntimedForward(httpRequest string) ([]byte, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return nil, err
@@ -315,9 +325,9 @@ func (h *Host) UntimedForward(httpRequest string) ([]byte, error) {
 			return nil, fmt.Errorf("unable to port forward E2E to %s", avalancheGoEndpoint)
 		}
 	} else {
-		proxy, err = h.Connection.DialTCP("tcp", nil, avalancheGoAddr)
+		proxy, err = h.connection.DialTCP("tcp", nil, avalancheGoAddr)
 		if err != nil {
-			return nil, fmt.Errorf("unable to port forward to %s via %s", h.Connection.RemoteAddr(), "ssh")
+			return nil, fmt.Errorf("unable to port forward to %s via %s", h.connection.RemoteAddr(), "ssh")
 		}
 	}
 
@@ -345,14 +355,14 @@ func (h *Host) UntimedForward(httpRequest string) ([]byte, error) {
 }
 
 // FileExists checks if a file exists on the remote server.
-func (h *Host) FileExists(path string) (bool, error) {
+func (h *Node) FileExists(path string) (bool, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return false, err
 		}
 	}
 
-	sftp, err := h.Connection.NewSftp()
+	sftp, err := h.connection.NewSftp()
 	if err != nil {
 		return false, nil
 	}
@@ -365,13 +375,13 @@ func (h *Host) FileExists(path string) (bool, error) {
 }
 
 // CreateTemp creates a temporary file on the remote server.
-func (h *Host) CreateTempFile() (string, error) {
+func (h *Node) CreateTempFile() (string, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return "", err
 		}
 	}
-	sftp, err := h.Connection.NewSftp()
+	sftp, err := h.connection.NewSftp()
 	if err != nil {
 		return "", err
 	}
@@ -385,13 +395,13 @@ func (h *Host) CreateTempFile() (string, error) {
 }
 
 // CreateTempDir creates a temporary directory on the remote server.
-func (h *Host) CreateTempDir() (string, error) {
+func (h *Node) CreateTempDir() (string, error) {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return "", err
 		}
 	}
-	sftp, err := h.Connection.NewSftp()
+	sftp, err := h.connection.NewSftp()
 	if err != nil {
 		return "", err
 	}
@@ -405,13 +415,13 @@ func (h *Host) CreateTempDir() (string, error) {
 }
 
 // Remove removes a file on the remote server.
-func (h *Host) Remove(path string, recursive bool) error {
+func (h *Node) Remove(path string, recursive bool) error {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return err
 		}
 	}
-	sftp, err := h.Connection.NewSftp()
+	sftp, err := h.connection.NewSftp()
 	if err != nil {
 		return err
 	}
@@ -425,10 +435,10 @@ func (h *Host) Remove(path string, recursive bool) error {
 	}
 }
 
-// WaitForSSHShell waits for the SSH shell to be available on the host within the specified timeout.
-func (h *Host) WaitForSSHShell(timeout time.Duration) error {
+// WaitForSSHShell waits for the SSH shell to be available on the node within the specified timeout.
+func (h *Node) WaitForSSHShell(timeout time.Duration) error {
 	if h.IP == "" {
-		return fmt.Errorf("host IP is empty")
+		return fmt.Errorf("node IP is empty")
 	}
 	start := time.Now()
 	if err := h.WaitForPort(constants.SSHTCPPort, timeout); err != nil {
@@ -438,7 +448,7 @@ func (h *Host) WaitForSSHShell(timeout time.Duration) error {
 	deadline := start.Add(timeout)
 	for {
 		if time.Now().After(deadline) {
-			return fmt.Errorf("timeout: SSH shell on host %s is not available after %ds", h.IP, int(timeout.Seconds()))
+			return fmt.Errorf("timeout: SSH shell on node %s is not available after %ds", h.IP, int(timeout.Seconds()))
 		}
 		if err := h.Connect(0); err != nil {
 			time.Sleep(constants.SSHSleepBetweenChecks)
@@ -454,8 +464,8 @@ func (h *Host) WaitForSSHShell(timeout time.Duration) error {
 	}
 }
 
-// StreamSSHCommand streams the execution of an SSH command on the host.
-func (h *Host) StreamSSHCommand(command string, env []string, timeout time.Duration) error {
+// StreamSSHCommand streams the execution of an SSH command on the node.
+func (h *Node) StreamSSHCommand(command string, env []string, timeout time.Duration) error {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return err
@@ -465,7 +475,7 @@ func (h *Host) StreamSSHCommand(command string, env []string, timeout time.Durat
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	session, err := h.Connection.NewSession()
+	session, err := h.connection.NewSession()
 	if err != nil {
 		return err
 	}
@@ -527,8 +537,8 @@ func consumeOutput(ctx context.Context, output io.Reader) error {
 	return scanner.Err()
 }
 
-// HasSystemDAvaliable checks if systemd is available on a remote host.
-func (h *Host) IsSystemD() bool {
+// HasSystemDAvaliable checks if systemd is available on a remote node.
+func (h *Node) IsSystemD() bool {
 	// check for the folder
 	if _, err := h.FileExists("/run/systemd/system"); err != nil {
 		return false

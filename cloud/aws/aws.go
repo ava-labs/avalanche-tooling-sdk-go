@@ -537,6 +537,8 @@ func (c *AwsCloud) CheckKeyPairExists(kpName string) (bool, error) {
 }
 
 // GetUbuntuAMIID returns the ID of the latest Ubuntu Amazon Machine Image (AMI).
+// TODO: add what ami contains
+// Docker, docker images of avalanche go, promtail, grafana, node exporter, loki
 func (c *AwsCloud) GetUbuntuAMIID(arch string, ubuntuVerLTS string) (string, error) {
 	if !utils.ArchSupported(arch) {
 		return "", fmt.Errorf("unsupported architecture: %s", arch)
