@@ -46,7 +46,12 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error)
 			count,
 			cp.Image,
 			cp.InstanceType,
-			cp.AWSConfig,
+			cp.AWSConfig.AWSKeyPair,
+			cp.AWSConfig.AWSSecurityGroupID,
+			cp.AWSConfig.AWSVolumeIOPS,
+			cp.AWSConfig.AWSVolumeThroughput,
+			cp.AWSConfig.AWSVolumeType,
+			cp.AWSConfig.AWSVolumeSize,
 		)
 		if err != nil {
 			return nil, err
@@ -85,12 +90,15 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Host, error)
 		}
 		computeInstances, err := gcpSvc.SetupInstances(
 			cp.Name,
+			cp.GCPConfig.GCPZone,
+			cp.GCPConfig.GCPNetwork,
+			cp.GCPConfig.GCPSSHKey,
 			cp.Image,
 			cp.Name,
 			cp.InstanceType,
 			[]string{cp.StaticIP},
 			1,
-			cp.GCPConfig,
+			cp.GCPConfig.GCPVolumeSize,
 		)
 		if err != nil {
 			return nil, err

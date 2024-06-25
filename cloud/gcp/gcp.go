@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/host"
 	"os"
 	"strconv"
 	"strings"
@@ -225,12 +224,15 @@ func (c *GcpCloud) SetPublicIP(zone, nodeName string, numNodes int) ([]string, e
 // SetupInstances creates GCP instances
 func (c *GcpCloud) SetupInstances(
 	cliDefaultName,
+	zone,
+	networkName,
+	sshPublicKey,
 	ami,
 	instancePrefix,
 	instanceType string,
 	staticIP []string,
 	numNodes int,
-	gcpConfig *host.GCPConfig,
+	cloudDiskSize int,
 ) ([]*compute.Instance, error) {
 	parallelism := 8
 	if len(staticIP) > 0 && len(staticIP) != numNodes {
@@ -238,7 +240,7 @@ func (c *GcpCloud) SetupInstances(
 	}
 	instances := make([]*compute.Instance, numNodes)
 	instancesChan := make(chan *compute.Instance, numNodes)
-	sshKey := fmt.Sprintf("%s:%s", constants.AnsibleSSHUser, strings.TrimSuffix(gcpConfig.GCPSSHKey, "\n"))
+	sshKey := fmt.Sprintf("%s:%s", constants.AnsibleSSHUser, strings.TrimSuffix(sshPublicKey, "\n"))
 	automaticRestart := true
 
 	eg := &errgroup.Group{}
@@ -249,7 +251,7 @@ func (c *GcpCloud) SetupInstances(
 			instanceName := fmt.Sprintf("%s-%d", instancePrefix, currentIndex)
 			instance := &compute.Instance{
 				Name:        instanceName,
-				MachineType: fmt.Sprintf("projects/%s/zones/%s/machineTypes/%s", c.projectID, gcpConfig.GCPZone, instanceType),
+				MachineType: fmt.Sprintf("projects/%s/zones/%s/machineTypes/%s", c.projectID, zone, instanceType),
 				Metadata: &compute.Metadata{
 					Items: []*compute.MetadataItems{
 						{Key: "ssh-keys", Value: &sshKey},
@@ -257,7 +259,7 @@ func (c *GcpCloud) SetupInstances(
 				},
 				NetworkInterfaces: []*compute.NetworkInterface{
 					{
-						Network: fmt.Sprintf("projects/%s/global/networks/%s", c.projectID, gcpConfig.GCPNetwork),
+						Network: fmt.Sprintf("projects/%s/global/networks/%s", c.projectID, networkName),
 						AccessConfigs: []*compute.AccessConfig{
 							{
 								Name: "External NAT",
@@ -268,7 +270,7 @@ func (c *GcpCloud) SetupInstances(
 				Disks: []*compute.AttachedDisk{
 					{
 						InitializeParams: &compute.AttachedDiskInitializeParams{
-							DiskSizeGb:  int64(gcpConfig.GCPVolumeSize),
+							DiskSizeGb:  int64(cloudDiskSize),
 							SourceImage: fmt.Sprintf("projects/%s/global/images/%s", constants.GCPDefaultImageProvider, ami),
 						},
 						Boot:       true, // Set this if it's the boot disk
@@ -286,7 +288,7 @@ func (c *GcpCloud) SetupInstances(
 			if staticIP != nil {
 				instance.NetworkInterfaces[0].AccessConfigs[0].NatIP = staticIP[currentIndex]
 			}
-			insertOp, err := c.gcpClient.Instances.Insert(c.projectID, gcpConfig.GCPZone, instance).Do()
+			insertOp, err := c.gcpClient.Instances.Insert(c.projectID, zone, instance).Do()
 			if err != nil {
 				if isIPLimitExceededError(err) {
 					return fmt.Errorf("ip address limit exceeded when creating instance %s: %w", instanceName, err)
@@ -301,7 +303,7 @@ func (c *GcpCloud) SetupInstances(
 					return fmt.Errorf("error waiting for operation: %w", err)
 				}
 			}
-			inst, err := c.gcpClient.Instances.Get(c.projectID, gcpConfig.GCPZone, instanceName).Do()
+			inst, err := c.gcpClient.Instances.Get(c.projectID, zone, instanceName).Do()
 			if err != nil {
 				return fmt.Errorf("error retrieving created instance %s: %w", instanceName, err)
 			}
