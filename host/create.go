@@ -11,6 +11,7 @@ import (
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
@@ -179,17 +180,55 @@ func provisionHost(host Host, roles []SupportedRole, networkID string, avalanche
 			if err := provisionAvagoHost(host, networkID, avalancheGoVersion, withMonitoring); err != nil {
 				return err
 			}
+		case Loadtest:
+			if err := provisionLoadTestHost(host); err != nil {
+				return err
+			}
+		case Monitor:
+			if err := provisionMonitoringHost(host); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("unsupported role %s", role)
 		}
 		return nil
 	}
+	return nil
 }
 
 func provisionAvagoHost(host Host, networkID string, avalancheGoVersion string, withMonitoring bool) error {
 	if err := host.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}
-
+	if err := host.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+		return err
+	}
 	return nil
+}
+
+func provisionLoadTestHost(host Host) error {
+	if err := host.ComposeSSHSetupLoadTest(); err != nil {
+		return err
+	}
+	if err := host.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+		return err
+	}
+	return nil
+}
+
+func provisionMonitoringHost(host Host) error {
+	if err := host.ComposeSSHSetupMonitoring(); err != nil {
+		return err
+	}
+	if err := host.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+		return err
+	}
+	return nil
+}
+
+func provisionAWMRelayerHost(host Host) error {
+	if err := host.ComposeSSHSetupAWMRelayer(); err != nil {
+		return err
+	}
+	return host.StartDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
 }

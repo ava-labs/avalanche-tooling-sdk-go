@@ -49,6 +49,8 @@ const (
 	CloudNodeSubnetEvmBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
 	CloudNodeStakingPath         = "/home/ubuntu/.avalanchego/staking/"
 	CloudNodeConfigPath          = "/home/ubuntu/.avalanchego/configs/"
+	ServicesDir                  = "services"
+	DashboardsDir                = "dashboards"
 
 	// misc
 	DefaultPerms755        = 0o755
@@ -61,4 +63,7 @@ const (
 	AvalancheGoDockerImage = "avaplatform/avalanchego"
 	AvalancheGoGitRepo     = "https://github.com/ava-labs/avalanchego"
 	SubnetEVMRepoName      = "subnet-evm"
+
+	AWMRelayerInstallDir     = "awm-relayer"
+	AWMRelayerConfigFilename = "awm-relayer-config.json"
 )

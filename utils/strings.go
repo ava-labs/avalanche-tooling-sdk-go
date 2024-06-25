@@ -33,3 +33,22 @@ func ExtractPlaceholderValue(pattern, text string) (string, error) {
 		return "", fmt.Errorf("no match found")
 	}
 }
+
+// AddSingleQuotes adds single quotes to each string in the given slice.
+func AddSingleQuotes(s []string) []string {
+	return Map(s, func(item string) string {
+		if item == "" {
+			return "''"
+		}
+		if !strings.HasPrefix(item, "'") {
+			item = fmt.Sprintf("'%s", item)
+		}
+		if !strings.HasSuffix(item, "'") {
+			item = fmt.Sprintf("%s'", item)
+		}
+		if !strings.HasPrefix(item, "'") && !strings.HasSuffix(item, "'") {
+			item = fmt.Sprintf("'%s'", item)
+		}
+		return item
+	})
+}
