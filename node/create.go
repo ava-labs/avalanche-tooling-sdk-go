@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"context"
@@ -24,34 +24,33 @@ func preCreateCheck(cp CloudParams, count int) error {
 	return nil
 }
 
-// Create creates a new node.
-// If wait is true, this function will block until the node is ready.
-func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host, error) {
+// CreateNodes launches the specified number of instances on the selected cloud platform.
+
+func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Node, error) {
 	if err := preCreateCheck(cp, count); err != nil {
 		return nil, err
 	}
-	hosts := make([]Host, 0, count)
+	nodes := make([]Node, 0, count)
 	switch cp.Cloud() {
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
-			cp.AWSProfile,
+			cp.AWSConfig.AWSProfile,
 			cp.Region,
 		)
 		if err != nil {
 			return nil, err
 		}
 		instanceIds, err := ec2Svc.CreateEC2Instances(
-			cp.Name,
 			count,
-			cp.Image,
+			cp.ImageID,
 			cp.InstanceType,
-			cp.AWSKeyPair,
-			cp.AWSSecurityGroupID,
-			cp.AWSVolumeIOPS,
-			cp.AWSVolumeThroughput,
-			cp.AWSVolumeType,
-			cp.AWSVolumeSize,
+			cp.AWSConfig.AWSKeyPair,
+			cp.AWSConfig.AWSSecurityGroupID,
+			cp.AWSConfig.AWSVolumeIOPS,
+			cp.AWSConfig.AWSVolumeThroughput,
+			cp.AWSConfig.AWSVolumeType,
+			cp.AWSConfig.AWSVolumeSize,
 		)
 		if err != nil {
 			return nil, err
@@ -67,7 +66,7 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 			return nil, err
 		}
 		for _, instanceID := range instanceIds {
-			hosts = append(hosts, Host{
+			nodes = append(nodes, Node{
 				NodeID:      instanceID,
 				IP:          instanceEIPMap[instanceID],
 				Cloud:       cp.Cloud(),
@@ -78,27 +77,25 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 				Roles: nil,
 			})
 		}
-		return hosts, nil
+		return nodes, nil
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
-			cp.GCPProject,
-			cp.GCPCredentials,
+			cp.GCPConfig.GCPProject,
+			cp.GCPConfig.GCPCredentials,
 		)
 		if err != nil {
 			return nil, err
 		}
 		computeInstances, err := gcpSvc.SetupInstances(
-			cp.Name,
-			cp.GCPZone,
-			cp.GCPNetwork,
-			cp.GCPSSHKey,
-			cp.Image,
-			cp.Name,
+			cp.GCPConfig.GCPZone,
+			cp.GCPConfig.GCPNetwork,
+			cp.GCPConfig.GCPSSHKey,
+			cp.ImageID,
 			cp.InstanceType,
-			[]string{cp.StaticIP},
+			[]string{},
 			1,
-			cp.GCPVolumeSize,
+			cp.GCPConfig.GCPVolumeSize,
 		)
 		if err != nil {
 			return nil, err
@@ -107,7 +104,7 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 			return nil, fmt.Errorf("failed to create all instances. Expected %d, got %d", count, len(computeInstances))
 		}
 		for _, computeInstance := range computeInstances {
-			hosts = append(hosts, Host{
+			nodes = append(nodes, Node{
 				NodeID:      computeInstance.Name,
 				IP:          computeInstance.NetworkInterfaces[0].NetworkIP,
 				Cloud:       cp.Cloud(),
@@ -121,5 +118,5 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 	default:
 		return nil, fmt.Errorf("unsupported cloud")
 	}
-	return hosts, nil
+	return nodes, nil
 }

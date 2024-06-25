@@ -23,7 +23,7 @@ func GetSCPTargetPath(ip, path string) string {
 	return fmt.Sprintf("%s@%s:%s", constants.AnsibleSSHUser, ip, path)
 }
 
-// SplitSCPPath splits the given path into host and path.
+// SplitSCPPath splits the given path into node and path.
 func SplitSCPPath(path string) (string, string) {
 	if !strings.Contains(path, ":") {
 		return "", path
@@ -32,7 +32,7 @@ func SplitSCPPath(path string) (string, string) {
 	return parts[0], parts[1]
 }
 
-// CombineSCPPath combines the given host and path into a single item for scp.
+// CombineSCPPath combines the given node and path into a single item for scp.
 func CombineSCPPath(host, path string) string {
 	if host != "" {
 		return fmt.Sprintf("%s:%s", host, path)

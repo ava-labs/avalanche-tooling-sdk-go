@@ -223,12 +223,10 @@ func (c *GcpCloud) SetPublicIP(zone, nodeName string, numNodes int) ([]string, e
 
 // SetupInstances creates GCP instances
 func (c *GcpCloud) SetupInstances(
-	cliDefaultName,
 	zone,
 	networkName,
 	sshPublicKey,
 	ami,
-	instancePrefix,
 	instanceType string,
 	staticIP []string,
 	numNodes int,
@@ -243,6 +241,7 @@ func (c *GcpCloud) SetupInstances(
 	sshKey := fmt.Sprintf("%s:%s", constants.AnsibleSSHUser, strings.TrimSuffix(sshPublicKey, "\n"))
 	automaticRestart := true
 
+	instancePrefix := utils.RandomString(5)
 	eg := &errgroup.Group{}
 	eg.SetLimit(parallelism)
 	for i := 0; i < numNodes; i++ {
@@ -281,7 +280,6 @@ func (c *GcpCloud) SetupInstances(
 					AutomaticRestart: &automaticRestart,
 				},
 				Labels: map[string]string{
-					"name":       cliDefaultName,
 					"managed-by": "avalanche-cli",
 				},
 			}

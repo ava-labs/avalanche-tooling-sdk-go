@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package host
+package node
 
 import (
 	"context"
@@ -12,12 +12,12 @@ import (
 )
 
 // Destroy destroys a node.
-func (h *Host) Destroy(ctx context.Context) error {
+func (h *Node) Destroy(ctx context.Context) error {
 	switch h.Cloud {
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
-			h.CloudConfig.AWSProfile,
+			h.CloudConfig.AWSConfig.AWSProfile,
 			h.CloudConfig.Region,
 		)
 		if err != nil {
@@ -27,8 +27,8 @@ func (h *Host) Destroy(ctx context.Context) error {
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
-			h.CloudConfig.GCPProject,
-			h.CloudConfig.GCPCredentials,
+			h.CloudConfig.GCPConfig.GCPProject,
+			h.CloudConfig.GCPConfig.GCPCredentials,
 		)
 		if err != nil {
 			return err
