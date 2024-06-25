@@ -7,10 +7,10 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
 	"strconv"
+	"text/template"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
