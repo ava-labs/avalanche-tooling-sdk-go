@@ -78,7 +78,7 @@ func (h *Host) RunOverSSH(
 }
 
 // RunSSHSetupNode runs script to setup sdk dependencies on a remote host over SSH.
-func (h *Host) RunSSHSetupNode(configPath, cliVersion string) error {
+func (h *Host) RunSSHSetupNode(cliVersion string) error {
 	if err := h.RunOverSSH(
 		"Setup Node",
 		constants.SSHLongRunningScriptTimeout,
@@ -241,5 +241,34 @@ func (h *Host) RunSSHGetNewSubnetEVMRelease(subnetEVMReleaseURL, subnetEVMArchiv
 		constants.SSHScriptTimeout,
 		"shell/getNewSubnetEVMRelease.sh",
 		scriptInputs{SubnetEVMReleaseURL: subnetEVMReleaseURL, SubnetEVMArchive: subnetEVMArchive},
+	)
+}
+
+// RunSSHUploadStakingFiles uploads staking files to a remote host via SSH.
+func (h *Host) RunSSHUploadStakingFiles(keyPath string) error {
+	if err := h.MkdirAll(
+		constants.CloudNodeStakingPath,
+		constants.SSHFileOpsTimeout,
+	); err != nil {
+		return err
+	}
+	if err := h.Upload(
+		filepath.Join(keyPath, constants.StakerCertFileName),
+		filepath.Join(constants.CloudNodeStakingPath, constants.StakerCertFileName),
+		constants.SSHFileOpsTimeout,
+	); err != nil {
+		return err
+	}
+	if err := h.Upload(
+		filepath.Join(keyPath, constants.StakerKeyFileName),
+		filepath.Join(constants.CloudNodeStakingPath, constants.StakerKeyFileName),
+		constants.SSHFileOpsTimeout,
+	); err != nil {
+		return err
+	}
+	return h.Upload(
+		filepath.Join(keyPath, constants.BLSKeyFileName),
+		filepath.Join(constants.CloudNodeStakingPath, constants.BLSKeyFileName),
+		constants.SSHFileOpsTimeout,
 	)
 }

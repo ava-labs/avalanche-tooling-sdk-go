@@ -66,4 +66,8 @@ const (
 
 	AWMRelayerInstallDir     = "awm-relayer"
 	AWMRelayerConfigFilename = "awm-relayer-config.json"
+
+	StakerCertFileName = "staker.crt"
+	StakerKeyFileName  = "staker.key"
+	BLSKeyFileName     = "signer.key"
 )

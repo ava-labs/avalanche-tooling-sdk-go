@@ -19,12 +19,23 @@ func main() {
 	// Please set your own values for the following fields
 	cp.AWSProfile = "default"
 	cp.AWSSecurityGroupID = "sg-0e198c427f8f0616b"
-	cp.AWSKeyPair = "default"
+	cp.AWSKeyPair = "artur-us-east-1-avalanche-cli"
 	if err != nil {
 		panic(err)
 	}
 	// Create a new host instance. Count is 1 so only one host will be created
-	hosts, err := host.CreateInstanceList(ctx, *cp, 1)
+	const (
+		avalanchegoVersion  = "v1.11.8"
+		avalancheCliVersion = "v1.6.2"
+	)
+	hosts, err := host.CreateInstanceList(ctx,
+		*cp,
+		1,
+		[]host.SupportedRole{host.Validator},
+		"fuji",
+		avalanchegoVersion,
+		avalancheCliVersion,
+		false)
 	if err != nil {
 		panic(err)
 	}
@@ -42,6 +53,12 @@ func main() {
 		fmt.Println("SSH shell ready to execute commands")
 		// Run a command on the host
 		if output, err := h.Commandf(nil, sshCommandTimeout, "echo 'Hello, %s!'", "World"); err != nil {
+			panic(err)
+		} else {
+			fmt.Println(string(output))
+		}
+		//check if avalanchego is running
+		if output, err := h.Commandf(nil, sshCommandTimeout, "docker ps"); err != nil {
 			panic(err)
 		} else {
 			fmt.Println(string(output))

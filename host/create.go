@@ -127,7 +127,16 @@ func createInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 }
 
 // CreateInstanceList creates a list of nodes.
-func CreateInstanceList(ctx context.Context, cp CloudParams, count int, roles []SupportedRole, networkID string, avalancheGoVersion string, withMonitoring bool) ([]Host, error) {
+func CreateInstanceList(
+	ctx context.Context,
+	cp CloudParams,
+	count int,
+	roles []SupportedRole,
+	networkID string,
+	avalancheGoVersion string,
+	avalancheCliVersion string,
+	withMonitoring bool,
+) ([]Host, error) {
 	hosts, err := createInstanceList(ctx, cp, count)
 	if err != nil {
 		return nil, err
@@ -143,7 +152,7 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int, roles []
 				hostResults.AddResult(host.NodeID, nil, err)
 				return
 			}
-			if err := provisionHost(host, roles, networkID, avalancheGoVersion, withMonitoring); err != nil {
+			if err := provisionHost(host, roles, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
 				hostResults.AddResult(host.NodeID, nil, err)
 				return
 			}
@@ -166,7 +175,7 @@ func CreateInstanceList(ctx context.Context, cp CloudParams, count int, roles []
 }
 
 // provisionHost provisions a host with the given roles.
-func provisionHost(host Host, roles []SupportedRole, networkID string, avalancheGoVersion string, withMonitoring bool) error {
+func provisionHost(host Host, roles []SupportedRole, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
 	if err := CheckRoles(roles); err != nil {
 		return err
 	}
@@ -176,8 +185,11 @@ func provisionHost(host Host, roles []SupportedRole, networkID string, avalanche
 	for _, role := range roles {
 		switch role {
 		case Validator:
+			if err := provisionAvagoHost(host, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
+				return err
+			}
 		case API:
-			if err := provisionAvagoHost(host, networkID, avalancheGoVersion, withMonitoring); err != nil {
+			if err := provisionAvagoHost(host, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
 				return err
 			}
 		case Loadtest:
@@ -196,17 +208,23 @@ func provisionHost(host Host, roles []SupportedRole, networkID string, avalanche
 	return nil
 }
 
-func provisionAvagoHost(host Host, networkID string, avalancheGoVersion string, withMonitoring bool) error {
+func provisionAvagoHost(host Host, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
+	if err := host.RunSSHSetupNode(avalancheCliVersion); err != nil {
+		return err
+	}
+	if err := host.RunSSHSetupDockerService(); err != nil {
+		return err
+	}
 	if err := host.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}
-	if err := host.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+	if err := host.StartDockerCompose(constants.SSHScriptTimeout); err != nil {
 		return err
 	}
 	return nil
 }
 
-func provisionLoadTestHost(host Host) error {
+func provisionLoadTestHost(host Host) error { //stub
 	if err := host.ComposeSSHSetupLoadTest(); err != nil {
 		return err
 	}
@@ -216,7 +234,7 @@ func provisionLoadTestHost(host Host) error {
 	return nil
 }
 
-func provisionMonitoringHost(host Host) error {
+func provisionMonitoringHost(host Host) error { //stub
 	if err := host.ComposeSSHSetupMonitoring(); err != nil {
 		return err
 	}
@@ -226,7 +244,7 @@ func provisionMonitoringHost(host Host) error {
 	return nil
 }
 
-func provisionAWMRelayerHost(host Host) error {
+func provisionAWMRelayerHost(host Host) error { //stub
 	if err := host.ComposeSSHSetupAWMRelayer(); err != nil {
 		return err
 	}
