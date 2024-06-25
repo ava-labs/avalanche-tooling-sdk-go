@@ -43,7 +43,7 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Node, error)
 		}
 		instanceIds, err := ec2Svc.CreateEC2Instances(
 			count,
-			cp.Image,
+			cp.ImageID,
 			cp.InstanceType,
 			cp.AWSConfig.AWSKeyPair,
 			cp.AWSConfig.AWSSecurityGroupID,
@@ -91,7 +91,7 @@ func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Node, error)
 			cp.GCPConfig.GCPZone,
 			cp.GCPConfig.GCPNetwork,
 			cp.GCPConfig.GCPSSHKey,
-			cp.Image,
+			cp.ImageID,
 			cp.InstanceType,
 			[]string{},
 			1,

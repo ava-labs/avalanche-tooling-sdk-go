@@ -532,7 +532,7 @@ func (c *AwsCloud) CheckKeyPairExists(kpName string) (bool, error) {
 	return true, nil
 }
 
-// GetUbuntuAMIID returns the ID of the latest Ubuntu Amazon Machine Image (AMI).
+// GetUbuntuAMIID returns the ID of the latest Ubuntu Amazon Machine ImageID (AMI).
 func (c *AwsCloud) GetUbuntuAMIID(arch string, ubuntuVerLTS string) (string, error) {
 	if !utils.ArchSupported(arch) {
 		return "", fmt.Errorf("unsupported architecture: %s", arch)

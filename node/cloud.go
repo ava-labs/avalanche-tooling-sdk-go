@@ -18,16 +18,10 @@ type CloudParams struct {
 	// Region to use for the node
 	Region string
 
-	// Image is Machine Image ID to use for the node
-	// For example Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
+	// ImageID is Machine ImageID ID to use for the node
+	// For example Machine ImageID ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
 	// us-west-2 region is ami-0cf2b4e024cdb6960 at the time of this writing
-	//
-	// We have published our own Machine Image on
-	// To look for
-	// https://cloud-images.ubuntu.com/locator/ec2/
-	// TODO: need to find for gcp
-	//
-	Image string
+	ImageID string
 
 	// Instance type of the node
 	InstanceType string
@@ -112,7 +106,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		cp.Image = imageID
+		cp.ImageID = imageID
 		return cp, nil
 	case GCPCloud:
 		projectName, err := getDefaultProjectNameFromGCPCredentials(constants.GCPDefaultAuthKeyPath)
@@ -144,7 +138,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		cp.Image = imageID
+		cp.ImageID = imageID
 		return cp, nil
 	default:
 		return nil, fmt.Errorf("unsupported cloud")
@@ -157,7 +151,7 @@ func (cp *CloudParams) Validate() error {
 	if cp.Region == "" {
 		return fmt.Errorf("region is required")
 	}
-	if cp.Image == "" {
+	if cp.ImageID == "" {
 		return fmt.Errorf("image is required")
 	}
 	if cp.InstanceType == "" {
