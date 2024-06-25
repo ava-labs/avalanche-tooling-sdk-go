@@ -224,7 +224,7 @@ func provisionAvagoHost(host Host, networkID string, avalancheGoVersion string, 
 	return nil
 }
 
-func provisionLoadTestHost(host Host) error { //stub
+func provisionLoadTestHost(host Host) error { // stub
 	if err := host.ComposeSSHSetupLoadTest(); err != nil {
 		return err
 	}
@@ -234,7 +234,7 @@ func provisionLoadTestHost(host Host) error { //stub
 	return nil
 }
 
-func provisionMonitoringHost(host Host) error { //stub
+func provisionMonitoringHost(host Host) error { // stub
 	if err := host.ComposeSSHSetupMonitoring(); err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func provisionMonitoringHost(host Host) error { //stub
 	return nil
 }
 
-func provisionAWMRelayerHost(host Host) error { //stub
+func provisionAWMRelayerHost(host Host) error { // stub
 	if err := host.ComposeSSHSetupAWMRelayer(); err != nil {
 		return err
 	}

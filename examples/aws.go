@@ -59,7 +59,7 @@ func main() {
 		}
 		// sleep for 10 seconds allowing avalancghego container to start
 		time.Sleep(10 * time.Second)
-		//check if avalanchego is running
+		// check if avalanchego is running
 		if output, err := h.Commandf(nil, sshCommandTimeout, "docker ps"); err != nil {
 			panic(err)
 		} else {
