@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/host"
@@ -58,20 +57,13 @@ func main() {
 		} else {
 			fmt.Println(string(output))
 		}
+		// sleep for 10 seconds allowing avalancghego container to start
+		time.Sleep(10 * time.Second)
 		//check if avalanchego is running
 		if output, err := h.Commandf(nil, sshCommandTimeout, "docker ps"); err != nil {
 			panic(err)
 		} else {
 			fmt.Println(string(output))
 		}
-
-		//generate and provide staking certificate and key
-		keyPath := os.TempDir()
-		defer os.RemoveAll(keyPath)
-		if err := h.ProvideStakingCertAndKey(keyPath); err != nil {
-			panic(err)
-		}
-		// show content of the local keyPath folder
-
 	}
 }
