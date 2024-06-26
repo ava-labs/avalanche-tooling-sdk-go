@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/node"
 )
 
@@ -33,7 +34,7 @@ func main() {
 			CloudParams:         cp,
 			Count:               2,
 			Roles:               []node.SupportedRole{node.Validator},
-			NetworkID:           "fuji",
+			Network:             avalanche.FujiNetwork(),
 			AvalancheGoVersion:  avalanchegoVersion,
 			AvalancheCliVersion: avalancheCliVersion,
 			UseStaticIP:         false,
@@ -59,7 +60,7 @@ func main() {
 		} else {
 			fmt.Println(string(output))
 		}
-		// sleep for 10 seconds allowing avalancghego container to start
+		// sleep for 10 seconds allowing AvalancheGo container to start
 		time.Sleep(10 * time.Second)
 		// check if avalanchego is running
 		if output, err := h.Commandf(nil, sshCommandTimeout, "docker ps"); err != nil {
@@ -68,24 +69,19 @@ func main() {
 			fmt.Println(string(output))
 		}
 	}
-	fmt.Println("About to create a monitoring node")
 	// Create a monitoring node
 	monitoringHosts, err := node.CreateNodes(ctx,
 		&node.NodeParams{
-			CloudParams:         cp,
-			Count:               1,
-			Roles:               []node.SupportedRole{node.Monitor},
-			NetworkID:           "",
-			AvalancheGoVersion:  "",
-			AvalancheCliVersion: "",
-			UseStaticIP:         false,
+			CloudParams: cp,
+			Count:       1,
+			Roles:       []node.SupportedRole{node.Monitor},
+			UseStaticIP: false,
 		})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Monitoring host SSH shell ready to execute commands")
 	// Register nodes with monitoring host
-	if err := monitoringHosts[0].RegisterWithMonitoring(hosts, ""); err != nil {
+	if err := monitoringHosts[0].MonitorNodes(hosts, ""); err != nil {
 		panic(err)
 	}
 }

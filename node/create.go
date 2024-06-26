@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	gcpAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/gcp"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
@@ -19,7 +20,7 @@ type NodeParams struct {
 	CloudParams         *CloudParams
 	Count               int
 	Roles               []SupportedRole
-	NetworkID           string
+	Network             avalanche.Network
 	AvalancheGoVersion  string
 	AvalancheCliVersion string
 	UseStaticIP         bool
@@ -235,7 +236,7 @@ func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	if err := node.RunSSHSetupPromtailConfig("127.0.0.1", constants.AvalanchegoLokiPort, node.NodeID, "", ""); err != nil {
 		return err
 	}
-	if err := node.ComposeSSHSetupNode(nodeParams.NetworkID, nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
+	if err := node.ComposeSSHSetupNode(nodeParams.Network.HRP(), nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}
 	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {

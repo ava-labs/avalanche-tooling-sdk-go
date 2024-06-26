@@ -285,7 +285,7 @@ func (h *Node) RunSSHSetupMonitoringFolders() error {
 }
 
 // RegisterWithMonitoring registers the node with the monitoring service
-func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
+func (h *Node) MonitorNodes(targets []Node, chainID string) error {
 	// necessary checks
 	if !isMonitoringNode(*h) {
 		return fmt.Errorf("%s is not a monitoring node", h.NodeID)
@@ -333,7 +333,6 @@ func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
 		return err
 	}
 	if err := h.RunSSHCopyMonitoringDashboards(tmpdir); err != nil {
-
 	}
 	avalancheGoPorts, machinePorts, ltPorts := getPrometheusTargets(targets)
 	h.Logger.Infof("avalancheGoPorts: %v, machinePorts: %v, ltPorts: %v", avalancheGoPorts, machinePorts, ltPorts)
