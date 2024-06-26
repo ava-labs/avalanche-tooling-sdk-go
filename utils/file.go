@@ -18,6 +18,18 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// DirectoryExists checks if a directory exists.
+//
+// dirName: the name of the directory to check.
+// bool: returns true if the directory exists, false otherwise.
+func DirectoryExists(dirName string) bool {
+	info, err := os.Stat(dirName)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return info.IsDir()
+}
+
 // ExpandHome expands ~ symbol to home directory
 func ExpandHome(path string) string {
 	if path == "" {

@@ -320,6 +320,21 @@ func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
 	if wgResults.HasErrors() {
 		return wgResults.Error()
 	}
+	// provide dashboards for targets
+	tmpdir, err := os.MkdirTemp("", constants.ServiceGrafana)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpdir)
+	if err := monitoring.Setup(tmpdir); err != nil {
+		return err
+	}
+	if err := h.RunSSHSetupMonitoringFolders(); err != nil {
+		return err
+	}
+	if err := h.RunSSHCopyMonitoringDashboards(tmpdir); err != nil {
+
+	}
 	avalancheGoPorts, machinePorts, ltPorts := getPrometheusTargets(targets)
 	h.Logger.Infof("avalancheGoPorts: %v, machinePorts: %v, ltPorts: %v", avalancheGoPorts, machinePorts, ltPorts)
 	// reconfigure monitoring instance
@@ -336,5 +351,33 @@ func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (h *Node) RunSSHCopyMonitoringDashboards(monitoringDashboardPath string) error {
+	// TODO: download dashboards from github instead
+	remoteDashboardsPath := utils.GetRemoteComposeServicePath("grafana", "dashboards")
+	if !utils.DirectoryExists(monitoringDashboardPath) {
+		return fmt.Errorf("%s does not exist", monitoringDashboardPath)
+	}
+	if err := h.MkdirAll(remoteDashboardsPath, constants.SSHFileOpsTimeout); err != nil {
+		return err
+	}
+	dashboards, err := os.ReadDir(monitoringDashboardPath)
+	if err != nil {
+		return err
+	}
+	for _, dashboard := range dashboards {
+		if err := h.Upload(
+			filepath.Join(monitoringDashboardPath, dashboard.Name()),
+			filepath.Join(remoteDashboardsPath, dashboard.Name()),
+			constants.SSHFileOpsTimeout,
+		); err != nil {
+			return err
+		}
+	}
+	if composeFileExists, err := h.FileExists(utils.GetRemoteComposeFile()); err == nil && composeFileExists {
+		return h.RestartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceGrafana, constants.SSHScriptTimeout)
+	}
 	return nil
 }
