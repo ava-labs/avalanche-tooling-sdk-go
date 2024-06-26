@@ -215,7 +215,7 @@ func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	if err := node.RunSSHSetupDockerService(); err != nil {
 		return err
 	}
-	if err := node.ComposeSSHSetupNode(nodeParams); err != nil {
+	if err := node.ComposeSSHSetupNode(nodeParams.NetworkID, nodeParams.AvalancheGoVersion, nodeParams.WithMonitoring); err != nil {
 		return err
 	}
 	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {
