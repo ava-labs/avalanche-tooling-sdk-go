@@ -109,6 +109,18 @@ func NewNodeConnection(h *Node, port uint) (*goph.Client, error) {
 	return cl, nil
 }
 
+// GetConnection returns the SSH connection client for the Node.
+//
+// No parameters.
+// Returns a pointer to a goph.Client.
+func (h *Node) GetConnection() *goph.Client {
+	return h.connection
+}
+
+func (h *Node) GetSSHClient() *ssh.Client {
+	return h.connection.Client
+}
+
 // GetCloudID returns the cloudID for the node if it is a cloud node
 func (h *Node) GetCloudID() string {
 	switch {
