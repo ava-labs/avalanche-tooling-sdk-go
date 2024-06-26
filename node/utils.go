@@ -94,8 +94,7 @@ func isLoadTestNode(node Node) bool {
 // - avalancheGoPorts: a slice of strings representing the Prometheus targets for the nodes with the AvalancheGo role.
 // - machinePorts: a slice of strings representing the Prometheus targets for the nodes with the AvalancheGo role.
 // - ltPorts: a slice of strings representing the Prometheus targets for the nodes with the LoadTest role.
-// - error: an error if any occurred during the function execution.
-func getPrometheusTargets(nodes []Node) ([]string, []string, []string, error) {
+func getPrometheusTargets(nodes []Node) ([]string, []string, []string) {
 	avalancheGoPorts := []string{}
 	machinePorts := []string{}
 	ltPorts := []string{}
@@ -107,7 +106,6 @@ func getPrometheusTargets(nodes []Node) ([]string, []string, []string, error) {
 		if isLoadTestNode(host) {
 			ltPorts = append(ltPorts, fmt.Sprintf("'%s:%s'", host.IP, strconv.Itoa(constants.AvalanchegoLoadTestPort)))
 		}
-
 	}
-	return avalancheGoPorts, machinePorts, ltPorts, nil
+	return avalancheGoPorts, machinePorts, ltPorts
 }

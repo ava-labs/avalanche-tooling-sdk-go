@@ -304,27 +304,24 @@ func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
 	wgResults := NodeResults{}
 	for _, target := range targets {
 		wg.Add(1)
-		go func(NodeResults *NodeResults, target *Node) {
+		go func(nodeResults *NodeResults, target Node) {
 			defer wg.Done()
 			if err := target.RunSSHSetupPromtailConfig(h.IP, constants.AvalanchegoLokiPort, h.NodeID, h.NodeID, chainID); err != nil {
-				NodeResults.AddResult(target.NodeID, nil, err)
+				nodeResults.AddResult(target.NodeID, nil, err)
 				return
 			}
 			if err := target.RestartDockerComposeService(remoteComposeFile, constants.ServicePromtail, constants.SSHScriptTimeout); err != nil {
-				NodeResults.AddResult(target.NodeID, nil, err)
+				nodeResults.AddResult(target.NodeID, nil, err)
 				return
 			}
-		}(&wgResults, &target)
+		}(&wgResults, target)
 	}
 	wg.Wait()
 	if wgResults.HasErrors() {
 		return wgResults.Error()
 	}
-	avalancheGoPorts, machinePorts, ltPorts, err := getPrometheusTargets(targets)
+	avalancheGoPorts, machinePorts, ltPorts := getPrometheusTargets(targets)
 	h.Logger.Infof("avalancheGoPorts: %v, machinePorts: %v, ltPorts: %v", avalancheGoPorts, machinePorts, ltPorts)
-	if err != nil {
-		return err
-	}
 	// reconfigure monitoring instance
 	if err := h.RunSSHSetupLokiConfig(constants.AvalanchegoLokiPort); err != nil {
 		return err

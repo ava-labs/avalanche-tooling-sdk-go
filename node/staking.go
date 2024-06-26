@@ -14,7 +14,7 @@ import (
 )
 
 func (h *Node) ProvideStakingCertAndKey(keyPath string) error {
-	if nodeID, err := h.GenerateNodeCertAndKeys(keyPath); err != nil {
+	if nodeID, err := GenerateNodeCertAndKeys(keyPath); err != nil {
 		return err
 	} else {
 		h.Logger.Infof("Generated Staking Cert and Key for NodeID: %s in folder %s", nodeID.String(), keyPath)
@@ -23,7 +23,7 @@ func (h *Node) ProvideStakingCertAndKey(keyPath string) error {
 }
 
 // GenerateNodeCertAndKeys generates a node certificate and keys and return nodeID
-func (h *Node) GenerateNodeCertAndKeys(keyPath string) (ids.NodeID, error) {
+func GenerateNodeCertAndKeys(keyPath string) (ids.NodeID, error) {
 	if err := os.MkdirAll(keyPath, constants.DefaultPerms755); err != nil {
 		return ids.EmptyNodeID, err
 	}

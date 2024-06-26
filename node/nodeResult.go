@@ -169,7 +169,6 @@ func (nr *NodeResults) Error() error {
 			errStr += fmt.Sprintf("NodeID: %s, Error: %s\n", nodeID, err)
 		}
 		return fmt.Errorf(errStr)
-
 	} else {
 		return nil
 	}

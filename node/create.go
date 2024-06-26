@@ -37,20 +37,20 @@ func CreateNodes(
 	wg := sync.WaitGroup{}
 	wgResults := NodeResults{}
 	// wait for all hosts to be ready and provision based on the role list
-	for _, node := range nodes {
+	for i, node := range nodes {
 		wg.Add(1)
-		go func(NodeResults *NodeResults, node Node) {
+		go func(nodeResults *NodeResults, node Node) {
 			defer wg.Done()
 			if err := node.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
-				NodeResults.AddResult(node.NodeID, nil, err)
+				nodeResults.AddResult(node.NodeID, nil, err)
 				return
 			}
 			if err := provisionHost(node, nodeParams); err != nil {
-				NodeResults.AddResult(node.NodeID, nil, err)
+				nodeResults.AddResult(node.NodeID, nil, err)
 				return
 			}
 		}(&wgResults, node)
-		node.Roles = nodeParams.Roles
+		nodes[i].Roles = nodeParams.Roles
 	}
 	wg.Wait()
 	return nodes, wgResults.Error()
