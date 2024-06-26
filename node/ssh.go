@@ -333,6 +333,7 @@ func (h *Node) MonitorNodes(targets []Node, chainID string) error {
 		return err
 	}
 	if err := h.RunSSHCopyMonitoringDashboards(tmpdir); err != nil {
+		return err
 	}
 	avalancheGoPorts, machinePorts, ltPorts := getPrometheusTargets(targets)
 	h.Logger.Infof("avalancheGoPorts: %v, machinePorts: %v, ltPorts: %v", avalancheGoPorts, machinePorts, ltPorts)
