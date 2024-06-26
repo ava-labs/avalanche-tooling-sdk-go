@@ -24,8 +24,20 @@ func preCreateCheck(cp CloudParams, count int) error {
 	return nil
 }
 
-// CreateNodes launches the specified number of instances on the selected cloud platform.
-
+// CreateNodes launches the specified number of nodes on the selected cloud platform.
+// The role of the node (Avalanche Validator / API / monitoring / load test node) is
+// specified through the input CloudParams
+//
+// Prior to calling CreateNodes, the credentials for AWS / GCP will first need to be set up.
+// To set up AWS credentials, more info can be found at https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html#file-format-creds
+// To set up GCP credentials, more info can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-gcp#prerequisites
+//
+// When CreateNodes is used to create Avalanche Validator Nodes, it will:
+//   - Launch the specified number of validator nodes on AWS / GCP
+//   - Install Docker and have required dependencies (Avalanche Go, gcc, go) installed as Docker
+//     images.
+//
+// Note that currently only Ubuntu Machine Images are supported on CreateNodes
 func CreateNodes(ctx context.Context, cp CloudParams, count int) ([]Node, error) {
 	if err := preCreateCheck(cp, count); err != nil {
 		return nil, err
