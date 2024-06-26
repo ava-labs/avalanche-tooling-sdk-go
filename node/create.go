@@ -22,7 +22,7 @@ type NodeParams struct {
 	NetworkID           string
 	AvalancheGoVersion  string
 	AvalancheCliVersion string
-	WithMonitoring      bool
+	UseStaticIP         bool
 }
 
 // CreateNodes creates a list of nodes.
@@ -215,7 +215,7 @@ func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	if err := node.RunSSHSetupDockerService(); err != nil {
 		return err
 	}
-	if err := node.ComposeSSHSetupNode(nodeParams.NetworkID, nodeParams.AvalancheGoVersion, nodeParams.WithMonitoring); err != nil {
+	if err := node.ComposeSSHSetupNode(nodeParams.NetworkID, nodeParams.AvalancheGoVersion, false); err != nil {
 		return err
 	}
 	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {
