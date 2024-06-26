@@ -15,6 +15,58 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
+type NodeParams struct {
+	CloudParams         *CloudParams
+	Count               int
+	Roles               []SupportedRole
+	NetworkID           string
+	AvalancheGoVersion  string
+	AvalancheCliVersion string
+	WithMonitoring      bool
+}
+
+// CreateNodes creates a list of nodes.
+func CreateNodes(
+	ctx context.Context,
+	nodeParams *NodeParams,
+) ([]Node, error) {
+	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count)
+	if err != nil {
+		return nil, err
+	}
+	wg := sync.WaitGroup{}
+	wgResults := NodeResults{}
+	// wait for all hosts to be ready and provision based on the role list
+	for _, node := range nodes {
+		wg.Add(1)
+		go func(NodeResults *NodeResults, node Node) {
+			defer wg.Done()
+			if err := node.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
+				NodeResults.AddResult(node.NodeID, nil, err)
+				return
+			}
+			if err := provisionHost(node, nodeParams); err != nil {
+				NodeResults.AddResult(node.NodeID, nil, err)
+				return
+			}
+		}(&wgResults, node)
+		node.Roles = nodeParams.Roles
+	}
+	wg.Wait()
+	if wgResults.HasErrors() {
+		// if there are errors, collect and return them with nodeIds
+		hostErrorMap := wgResults.GetErrorHostMap()
+		errStr := ""
+		for nodeID, err := range hostErrorMap {
+			errStr += fmt.Sprintf("NodeID: %s, Error: %s\n", nodeID, err)
+		}
+		return nil, fmt.Errorf("failed to provision all hosts: %s", errStr)
+
+	}
+
+	return nodes, nil
+}
+
 // preCreateCheck checks if the cloud parameters are valid.
 func preCreateCheck(cp CloudParams, count int) error {
 	if count < 1 {
@@ -122,70 +174,22 @@ func createCloudInstances(ctx context.Context, cp CloudParams, count int) ([]Nod
 	return nodes, nil
 }
 
-// CreateNodes creates a list of nodes.
-func CreateNodes(
-	ctx context.Context,
-	cp CloudParams,
-	count int,
-	roles []SupportedRole,
-	networkID string,
-	avalancheGoVersion string,
-	avalancheCliVersion string,
-	withMonitoring bool,
-) ([]Node, error) {
-	nodes, err := createCloudInstances(ctx, cp, count)
-	if err != nil {
-		return nil, err
-	}
-	wg := sync.WaitGroup{}
-	wgResults := NodeResults{}
-	// wait for all hosts to be ready and provision based on the role list
-	for _, node := range nodes {
-		wg.Add(1)
-		go func(NodeResults *NodeResults, node Node) {
-			defer wg.Done()
-			if err := node.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
-				NodeResults.AddResult(node.NodeID, nil, err)
-				return
-			}
-			if err := provisionHost(node, roles, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
-				NodeResults.AddResult(node.NodeID, nil, err)
-				return
-			}
-		}(&wgResults, node)
-		node.Roles = roles
-	}
-	wg.Wait()
-	if wgResults.HasErrors() {
-		// if there are errors, collect and return them with nodeIds
-		hostErrorMap := wgResults.GetErrorHostMap()
-		errStr := ""
-		for nodeID, err := range hostErrorMap {
-			errStr += fmt.Sprintf("NodeID: %s, Error: %s\n", nodeID, err)
-		}
-		return nil, fmt.Errorf("failed to provision all hosts: %s", errStr)
-
-	}
-
-	return nodes, nil
-}
-
 // provisionHost provisions a host with the given roles.
-func provisionHost(node Node, roles []SupportedRole, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
-	if err := CheckRoles(roles); err != nil {
+func provisionHost(node Node, nodeParams *NodeParams) error {
+	if err := CheckRoles(nodeParams.Roles); err != nil {
 		return err
 	}
 	if err := node.Connect(constants.SSHTCPPort); err != nil {
 		return err
 	}
-	for _, role := range roles {
+	for _, role := range nodeParams.Roles {
 		switch role {
 		case Validator:
-			if err := provisionAvagoHost(node, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
+			if err := provisionAvagoHost(node, nodeParams); err != nil {
 				return err
 			}
 		case API:
-			if err := provisionAvagoHost(node, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
+			if err := provisionAvagoHost(node, nodeParams); err != nil {
 				return err
 			}
 		case Loadtest:
@@ -204,14 +208,14 @@ func provisionHost(node Node, roles []SupportedRole, networkID string, avalanche
 	return nil
 }
 
-func provisionAvagoHost(node Node, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
-	if err := node.RunSSHSetupNode(avalancheCliVersion); err != nil {
+func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
+	if err := node.RunSSHSetupNode(nodeParams.AvalancheCliVersion); err != nil {
 		return err
 	}
 	if err := node.RunSSHSetupDockerService(); err != nil {
 		return err
 	}
-	if err := node.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
+	if err := node.ComposeSSHSetupNode(nodeParams); err != nil {
 		return err
 	}
 	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {

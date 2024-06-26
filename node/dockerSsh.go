@@ -23,7 +23,7 @@ func (h *Node) ValidateComposeFile(composeFile string, timeout time.Duration) er
 }
 
 // ComposeSSHSetupNode sets up an AvalancheGo node and dependencies on a remote node over SSH.
-func (h *Node) ComposeSSHSetupNode(networkID string, avalancheGoVersion string, withMonitoring bool) error {
+func (h *Node) ComposeSSHSetupNode(nodeParams *NodeParams) error {
 	startTime := time.Now()
 	folderStructure := config.RemoteFoldersToCreateAvalanchego()
 	for _, dir := range folderStructure {
@@ -32,13 +32,13 @@ func (h *Node) ComposeSSHSetupNode(networkID string, avalancheGoVersion string, 
 		}
 	}
 	h.Logger.Infof("avalancheCLI folder structure created on remote node %s after %s", folderStructure, time.Since(startTime))
-	avagoDockerImage := fmt.Sprintf("%s:%s", constants.AvalancheGoDockerImage, avalancheGoVersion)
+	avagoDockerImage := fmt.Sprintf("%s:%s", constants.AvalancheGoDockerImage, nodeParams.AvalancheGoVersion)
 	h.Logger.Infof("Preparing AvalancheGo Docker image %s on %s[%s]", avagoDockerImage, h.NodeID, h.IP)
-	if err := h.PrepareDockerImageWithRepo(avagoDockerImage, constants.AvalancheGoGitRepo, avalancheGoVersion); err != nil {
+	if err := h.PrepareDockerImageWithRepo(avagoDockerImage, constants.AvalancheGoGitRepo, nodeParams.AvalancheGoVersion); err != nil {
 		return err
 	}
 	h.Logger.Infof("AvalancheGo Docker image %s ready on %s[%s] after %s", avagoDockerImage, h.NodeID, h.IP, time.Since(startTime))
-	nodeConfFile, cChainConfFile, err := h.prepareAvalanchegoConfig(networkID)
+	nodeConfFile, cChainConfFile, err := h.prepareAvalanchegoConfig(nodeParams.NetworkID)
 	if err != nil {
 		return err
 	}
@@ -62,8 +62,8 @@ func (h *Node) ComposeSSHSetupNode(networkID string, avalancheGoVersion string, 
 		constants.SSHScriptTimeout,
 		"templates/avalanchego.docker-compose.yml",
 		dockerComposeInputs{
-			AvalanchegoVersion: avalancheGoVersion,
-			WithMonitoring:     withMonitoring,
+			AvalanchegoVersion: nodeParams.AvalancheGoVersion,
+			WithMonitoring:     nodeParams.WithMonitoring,
 			WithAvalanchego:    true,
 			E2E:                utils.IsE2E(),
 			E2EIP:              utils.E2EConvertIP(h.IP),
