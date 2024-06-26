@@ -68,4 +68,27 @@ func main() {
 			fmt.Println(string(output))
 		}
 	}
+	fmt.Println("About to create a monitoring node")
+	// Create a monitoring node
+	monitoringHosts, err := node.CreateNodes(ctx,
+		&node.NodeParams{
+			CloudParams:         cp,
+			Count:               1,
+			Roles:               []node.SupportedRole{node.Monitor},
+			NetworkID:           "",
+			AvalancheGoVersion:  "",
+			AvalancheCliVersion: "",
+			UseStaticIP:         false,
+		})
+	if err != nil {
+		panic(err)
+	}
+	// Wait for the monitoring host to be ready
+	if err := monitoringHosts[0].WaitForSSHShell(sshTimeout); err != nil {
+		panic(err)
+	}
+	// Register nodes with monitoring host
+	if err := monitoringHosts[0].RegisterWithMonitoring(hosts, ""); err != nil {
+		panic(err)
+	}
 }

@@ -96,10 +96,10 @@ func CheckRoles(roles []SupportedRole) error {
 		return fmt.Errorf("cannot have both validator and api roles")
 	}
 	if slices.Contains(roles, Loadtest) && len(roles) > 1 {
-		return fmt.Errorf("%s role cannot be combined with other roles", Loadtest)
+		return fmt.Errorf("%v role cannot be combined with other roles", Loadtest)
 	}
 	if slices.Contains(roles, Monitor) && len(roles) > 1 {
-		return fmt.Errorf("%s role cannot be combined with other roles", Monitor)
+		return fmt.Errorf("%v role cannot be combined with other roles", Monitor)
 	}
 	return nil
 }

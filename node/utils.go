@@ -65,7 +65,7 @@ func GetPublicKeyFromSSHKey(keyPath string) (string, error) {
 // Parameter(s):
 // - node *Node: The node to check.
 // Return type(s): bool
-func isMonitoringNode(node *Node) bool {
+func isMonitoringNode(node Node) bool {
 	return slices.Contains(node.Roles, Monitor)
 }
 
@@ -73,7 +73,7 @@ func isMonitoringNode(node *Node) bool {
 //
 // - node *Node: The node to check.
 // bool
-func isAvalancheGoNode(node *Node) bool {
+func isAvalancheGoNode(node Node) bool {
 	return slices.Contains(node.Roles, API) || slices.Contains(node.Roles, Validator)
 }
 
@@ -81,7 +81,7 @@ func isAvalancheGoNode(node *Node) bool {
 //
 // - node *Node: The node to check.
 // bool
-func isLoadTestNode(node *Node) bool {
+func isLoadTestNode(node Node) bool {
 	return slices.Contains(node.Roles, Loadtest)
 }
 
@@ -95,7 +95,7 @@ func isLoadTestNode(node *Node) bool {
 // - machinePorts: a slice of strings representing the Prometheus targets for the nodes with the AvalancheGo role.
 // - ltPorts: a slice of strings representing the Prometheus targets for the nodes with the LoadTest role.
 // - error: an error if any occurred during the function execution.
-func getPrometheusTargets(nodes []*Node) ([]string, []string, []string, error) {
+func getPrometheusTargets(nodes []Node) ([]string, []string, []string, error) {
 	avalancheGoPorts := []string{}
 	machinePorts := []string{}
 	ltPorts := []string{}

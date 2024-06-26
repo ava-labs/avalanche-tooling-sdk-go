@@ -194,7 +194,7 @@ func provisionHost(node Node, nodeParams *NodeParams) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("unsupported role %s", role)
+			return fmt.Errorf("unsupported role %v", role)
 		}
 	}
 	return nil

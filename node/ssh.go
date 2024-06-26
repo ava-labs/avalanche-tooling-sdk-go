@@ -285,9 +285,9 @@ func (h *Node) RunSSHSetupMonitoringFolders() error {
 }
 
 // RegisterWithMonitoring registers the node with the monitoring service
-func (h *Node) RegisterWithMonitoring(targets []*Node, chainID string) error {
+func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
 	// necessary checks
-	if !isMonitoringNode(h) {
+	if !isMonitoringNode(*h) {
 		return fmt.Errorf("%s is not a monitoring node", h.NodeID)
 	}
 	for _, target := range targets {
@@ -311,7 +311,7 @@ func (h *Node) RegisterWithMonitoring(targets []*Node, chainID string) error {
 				NodeResults.AddResult(target.NodeID, nil, err)
 				return
 			}
-		}(&wgResults, target)
+		}(&wgResults, &target)
 	}
 	wg.Wait()
 	if wgResults.HasErrors() {
