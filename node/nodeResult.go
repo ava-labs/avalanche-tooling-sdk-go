@@ -1,6 +1,9 @@
 package node
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // NodeResult is a struct that holds the result of a async command executed on a host
 type NodeResult struct {
@@ -20,7 +23,12 @@ type NodeResults struct {
 	Lock    sync.Mutex
 }
 
-// AddResult adds a result to the NodeResults
+// AddResult adds a new NodeResult to the NodeResults struct.
+//
+// Parameters:
+// - nodeID: the ID of the host.
+// - value: the result of the command executed on the host.
+// - err: the error that occurred while executing the command on the host.
 func (nr *NodeResults) AddResult(nodeID string, value interface{}, err error) {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
@@ -32,13 +40,24 @@ func (nr *NodeResults) AddResult(nodeID string, value interface{}, err error) {
 }
 
 // GetResults returns the results of the NodeResults
+//
+// No parameters.
+// Returns:
+// - []NodeResult: the results of the NodeResults.
 func (nr *NodeResults) GetResults() []NodeResult {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	return nr.Results
 }
 
-// GetResultMap returns a map of the results of the NodeResults with the nodeID as the key
+// GetResultMap returns a map of the results of the NodeResults with the nodeID as the key.
+//
+// It acquires the lock on the NodeResults and iterates over the Results slice.
+// For each NodeResult, it adds the NodeID as the key and the Value as the value to the result map.
+// Finally, it releases the lock and returns the result map.
+//
+// Returns:
+// - map[string]interface{}: A map with the nodeIDs as keys and the corresponding values as values.
 func (nr *NodeResults) GetResultMap() map[string]interface{} {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
@@ -49,14 +68,23 @@ func (nr *NodeResults) GetResultMap() map[string]interface{} {
 	return result
 }
 
-// GetErrorMap returns a map of the errors of the NodeResults with the nodeID as the key
+// Len returns the number of results in the NodeResults.
+//
+// It acquires the lock on the NodeResults and returns the length of the Results slice.
+// The lock is released before the function returns.
+//
+// Returns:
+// - int: the number of results in the NodeResults.
 func (nr *NodeResults) Len() int {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
 	return len(nr.Results)
 }
 
-// GetNodeList returns a list of the nodeIDs of the NodeResults
+// GetNodeList returns a list of the nodeIDs of the NodeResults.
+//
+// No parameters.
+// Returns a slice of strings.
 func (nr *NodeResults) GetNodeList() []string {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
@@ -67,7 +95,14 @@ func (nr *NodeResults) GetNodeList() []string {
 	return nodes
 }
 
-// GetErrorMap returns a map of the errors of the NodeResults with the nodeID as the key
+// GetErrorHostMap returns a map of the errors of the NodeResults with the nodeID as the key.
+//
+// It acquires the lock on the NodeResults and iterates over the Results slice.
+// For each NodeResult, if the Err field is not nil, it adds the NodeID as the key and the error as the value to the hostErrors map.
+// Finally, it releases the lock and returns the hostErrors map.
+//
+// Returns:
+// - map[string]error: A map with the nodeIDs as keys and the corresponding errors as values.
 func (nr *NodeResults) GetErrorHostMap() map[string]error {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
@@ -80,7 +115,13 @@ func (nr *NodeResults) GetErrorHostMap() map[string]error {
 	return hostErrors
 }
 
-// HasNodeIDWithError checks if a node with the given nodeID has an error
+// HasNodeIDWithError checks if a node with the given nodeID has an error.
+//
+// Parameters:
+// - nodeID: the ID of the node to check.
+//
+// Return:
+// - bool: true if a node with the given nodeID has an error, false otherwise.
 func (nr *NodeResults) HasNodeIDWithError(nodeID string) bool {
 	nr.Lock.Lock()
 	defer nr.Lock.Unlock()
@@ -92,12 +133,20 @@ func (nr *NodeResults) HasNodeIDWithError(nodeID string) bool {
 	return false
 }
 
-// HasErrors returns true if the NodeResults has any errors
+// HasErrors returns true if the NodeResults has any errors.
+//
+// It checks the length of the error host map obtained from the GetErrorHostMap()
+// method of the NodeResults struct. If the length is greater than 0, it means
+// that there are errors present, and the function returns true. Otherwise, it
+// returns false.
 func (nr *NodeResults) HasErrors() bool {
 	return len(nr.GetErrorHostMap()) > 0
 }
 
-// GetErrorHosts returns a list of the nodeIDs of the NodeResults that have errors
+// GetErrorHosts returns a list of the nodeIDs of the NodeResults that have errors.
+//
+// No parameters.
+// Returns a slice of strings.
 func (nr *NodeResults) GetErrorHosts() []string {
 	var nodes []string
 	for _, node := range nr.Results {
@@ -106,4 +155,22 @@ func (nr *NodeResults) GetErrorHosts() []string {
 		}
 	}
 	return nodes
+}
+
+// SumError collects and returns the errors with nodeIds if there are errors in the NodeResults.
+//
+// Returns an error type.
+func (nr *NodeResults) Error() error {
+	if nr.HasErrors() {
+		// if there are errors, collect and return them with nodeIds
+		hostErrorMap := nr.GetErrorHostMap()
+		errStr := ""
+		for nodeID, err := range hostErrorMap {
+			errStr += fmt.Sprintf("NodeID: %s, Error: %s\n", nodeID, err)
+		}
+		return fmt.Errorf(errStr)
+
+	} else {
+		return nil
+	}
 }

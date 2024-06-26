@@ -1,25 +1,25 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package main
+package examples
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/host"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/node"
 )
 
 func main() {
 	ctx := context.Background()
 	// Get the default cloud parameters for AWS
-	cp, err := host.GetDefaultCloudParams(ctx, host.AWSCloud)
+	cp, err := node.GetDefaultCloudParams(ctx, node.AWSCloud)
 	// Set the cloud parameters for AWS non provided by the default
 	// Please set your own values for the following fields
-	cp.AWSProfile = "default"
-	cp.AWSSecurityGroupID = "sg-0e198c427f8f0616b"
-	cp.AWSKeyPair = "artur-us-east-1-avalanche-cli"
+	cp.AWSConfig.AWSProfile = "default"
+	cp.AWSConfig.AWSSecurityGroupID = "sg-0e198c427f8f0616b"
+	cp.AWSConfig.AWSKeyPair = "artur-us-east-1-avalanche-cli"
 	if err != nil {
 		panic(err)
 	}
@@ -28,14 +28,16 @@ func main() {
 		avalanchegoVersion  = "v1.11.8"
 		avalancheCliVersion = "v1.6.2"
 	)
-	hosts, err := host.CreateInstanceList(ctx,
-		*cp,
-		1,
-		[]host.SupportedRole{host.Validator},
-		"fuji",
-		avalanchegoVersion,
-		avalancheCliVersion,
-		false)
+	hosts, err := node.CreateNodes(ctx,
+		&node.NodeParams{
+			CloudParams:         cp,
+			Count:               2,
+			Roles:               []node.SupportedRole{node.Validator},
+			NetworkID:           "fuji",
+			AvalancheGoVersion:  avalanchegoVersion,
+			AvalancheCliVersion: avalancheCliVersion,
+			UseStaticIP:         false,
+		})
 	if err != nil {
 		panic(err)
 	}

@@ -34,6 +34,7 @@ const (
 	AvalanchegoLokiPort           = 23101
 	AvalanchegoMonitoringPort     = 9090
 	AvalanchegoMachineMetricsPort = 9100
+	AvalanchegoLoadTestPort       = 8082
 
 	// ssh
 	SSHSleepBetweenChecks       = 1 * time.Second
@@ -51,6 +52,14 @@ const (
 	CloudNodeConfigPath          = "/home/ubuntu/.avalanchego/configs/"
 	ServicesDir                  = "services"
 	DashboardsDir                = "dashboards"
+
+	// services
+	ServiceAvalanchego = "avalanchego"
+	ServicePromtail    = "promtail"
+	ServiceGrafana     = "grafana"
+	ServicePrometheus  = "prometheus"
+	ServiceLoki        = "loki"
+	ServiceAWMRelayer  = "awm-relayer"
 
 	// misc
 	DefaultPerms755        = 0o755

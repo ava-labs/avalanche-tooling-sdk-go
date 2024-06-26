@@ -83,7 +83,7 @@ func (h *Node) ComposeSSHSetupLoadTest() error {
 
 // WasNodeSetupWithMonitoring checks if an AvalancheGo node was setup with monitoring on a remote node.
 func (h *Node) WasNodeSetupWithMonitoring() (bool, error) {
-	return h.HasRemoteComposeService(utils.GetRemoteComposeFile(), "promtail", constants.SSHScriptTimeout)
+	return h.HasRemoteComposeService(utils.GetRemoteComposeFile(), constants.ServicePromtail, constants.SSHScriptTimeout)
 }
 
 // ComposeSSHSetupMonitoring sets up monitoring using docker-compose.
@@ -107,19 +107,19 @@ func (h *Node) ComposeSSHSetupMonitoring() error {
 		}
 	}()
 
-	grafanaLokiDatasourceRemoteFileName := filepath.Join(utils.GetRemoteComposeServicePath("grafana", "provisioning", "datasources"), "loki.yml")
+	grafanaLokiDatasourceRemoteFileName := filepath.Join(utils.GetRemoteComposeServicePath(constants.ServiceGrafana, "provisioning", "datasources"), "loki.yml")
 	if err := h.Upload(grafanaLokiDatasourceFile, grafanaLokiDatasourceRemoteFileName, constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}
-	grafanaPromDatasourceFileName := filepath.Join(utils.GetRemoteComposeServicePath("grafana", "provisioning", "datasources"), "prometheus.yml")
+	grafanaPromDatasourceFileName := filepath.Join(utils.GetRemoteComposeServicePath(constants.ServiceGrafana, "provisioning", "datasources"), "prometheus.yml")
 	if err := h.Upload(grafanaPromDatasourceFile, grafanaPromDatasourceFileName, constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}
-	grafanaDashboardsRemoteFileName := filepath.Join(utils.GetRemoteComposeServicePath("grafana", "provisioning", "dashboards"), "dashboards.yml")
+	grafanaDashboardsRemoteFileName := filepath.Join(utils.GetRemoteComposeServicePath(constants.ServiceGrafana, "provisioning", "dashboards"), "dashboards.yml")
 	if err := h.Upload(grafanaDashboardsFile, grafanaDashboardsRemoteFileName, constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}
-	grafanaConfigRemoteFileName := filepath.Join(utils.GetRemoteComposeServicePath("grafana"), "grafana.ini")
+	grafanaConfigRemoteFileName := filepath.Join(utils.GetRemoteComposeServicePath(constants.ServiceGrafana), "grafana.ini")
 	if err := h.Upload(grafanaConfigFile, grafanaConfigRemoteFileName, constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}

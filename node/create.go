@@ -53,18 +53,7 @@ func CreateNodes(
 		node.Roles = nodeParams.Roles
 	}
 	wg.Wait()
-	if wgResults.HasErrors() {
-		// if there are errors, collect and return them with nodeIds
-		hostErrorMap := wgResults.GetErrorHostMap()
-		errStr := ""
-		for nodeID, err := range hostErrorMap {
-			errStr += fmt.Sprintf("NodeID: %s, Error: %s\n", nodeID, err)
-		}
-		return nil, fmt.Errorf("failed to provision all hosts: %s", errStr)
-
-	}
-
-	return nodes, nil
+	return nodes, wgResults.Error()
 }
 
 // preCreateCheck checks if the cloud parameters are valid.
@@ -200,10 +189,13 @@ func provisionHost(node Node, nodeParams *NodeParams) error {
 			if err := provisionMonitoringHost(node); err != nil {
 				return err
 			}
+		case AWMRelayer:
+			if err := provisionAWMRelayerHost(node); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("unsupported role %s", role)
 		}
-		return nil
 	}
 	return nil
 }
@@ -234,7 +226,13 @@ func provisionLoadTestHost(node Node) error { // stub
 	return nil
 }
 
-func provisionMonitoringHost(node Node) error { // stub
+func provisionMonitoringHost(node Node) error {
+	if err := node.RunSSHSetupDockerService(); err != nil {
+		return err
+	}
+	if err := node.RunSSHSetupMonitoringFolders(); err != nil {
+		return err
+	}
 	if err := node.ComposeSSHSetupMonitoring(); err != nil {
 		return err
 	}
@@ -248,5 +246,5 @@ func provisionAWMRelayerHost(node Node) error { // stub
 	if err := node.ComposeSSHSetupAWMRelayer(); err != nil {
 		return err
 	}
-	return node.StartDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
+	return node.StartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)
 }

@@ -10,12 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"text/template"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/host/config"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/host/monitoring"
+	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/node/monitoring"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
@@ -105,20 +106,20 @@ func (h *Node) RunSSHSetupDockerService() error {
 	}
 }
 
-// RunSSHRestartNode runs script to restart avalanchego
-func (h *Node) RunSSHRestartNode() error {
+// RunSSHRestartAvalanchego runs script to restart avalanchego
+func (h *Node) RunSSHRestartAvalanchego() error {
 	remoteComposeFile := utils.GetRemoteComposeFile()
-	return h.RestartDockerComposeService(remoteComposeFile, "avalanchego", constants.SSHLongRunningScriptTimeout)
+	return h.RestartDockerComposeService(remoteComposeFile, constants.ServiceAvalanchego, constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHStartAWMRelayerService runs script to start an AWM Relayer Service
 func (h *Node) RunSSHStartAWMRelayerService() error {
-	return h.StartDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
+	return h.StartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHStopAWMRelayerService runs script to start an AWM Relayer Service
 func (h *Node) RunSSHStopAWMRelayerService() error {
-	return h.StopDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
+	return h.StopDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHUpgradeAvalanchego runs script to upgrade avalanchego
@@ -134,14 +135,14 @@ func (h *Node) RunSSHUpgradeAvalanchego(networkID string, avalancheGoVersion str
 	return h.RestartDockerCompose(constants.SSHLongRunningScriptTimeout)
 }
 
-// RunSSHStartNode runs script to start avalanchego
-func (h *Node) RunSSHStartNode() error {
-	return h.StartDockerComposeService(utils.GetRemoteComposeFile(), "avalanchego", constants.SSHLongRunningScriptTimeout)
+// RunSSHStartAvalanchego runs script to start avalanchego
+func (h *Node) RunSSHStartAvalanchego() error {
+	return h.StartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAvalanchego, constants.SSHLongRunningScriptTimeout)
 }
 
-// RunSSHStopNode runs script to stop avalanchego
-func (h *Node) RunSSHStopNode() error {
-	return h.StopDockerComposeService(utils.GetRemoteComposeFile(), "avalanchego", constants.SSHLongRunningScriptTimeout)
+// RunSSHStopAvalanchego runs script to stop avalanchego
+func (h *Node) RunSSHStopAvalanchego() error {
+	return h.StopDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAvalanchego, constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHUpgradeSubnetEVM runs script to upgrade subnet evm
@@ -160,8 +161,8 @@ func (h *Node) RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, loadT
 			return err
 		}
 	}
-	cloudNodePrometheusConfigTemp := utils.GetRemoteComposeServicePath("prometheus", "prometheus.yml")
-	promConfig, err := os.CreateTemp("", "prometheus")
+	cloudNodePrometheusConfigTemp := utils.GetRemoteComposeServicePath(constants.ServicePrometheus, "prometheus.yml")
+	promConfig, err := os.CreateTemp("", constants.ServicePrometheus)
 	if err != nil {
 		return err
 	}
@@ -183,8 +184,8 @@ func (h *Node) RunSSHSetupLokiConfig(port int) error {
 			return err
 		}
 	}
-	cloudNodeLokiConfigTemp := utils.GetRemoteComposeServicePath("loki", "loki.yml")
-	lokiConfig, err := os.CreateTemp("", "loki")
+	cloudNodeLokiConfigTemp := utils.GetRemoteComposeServicePath(constants.ServiceLoki, "loki.yml")
+	lokiConfig, err := os.CreateTemp("", constants.ServiceLoki)
 	if err != nil {
 		return err
 	}
@@ -205,8 +206,8 @@ func (h *Node) RunSSHSetupPromtailConfig(lokiIP string, lokiPort int, cloudID st
 			return err
 		}
 	}
-	cloudNodePromtailConfigTemp := utils.GetRemoteComposeServicePath("promtail", "promtail.yml")
-	promtailConfig, err := os.CreateTemp("", "promtail")
+	cloudNodePromtailConfigTemp := utils.GetRemoteComposeServicePath(constants.ServicePromtail, "promtail.yml")
+	promtailConfig, err := os.CreateTemp("", constants.ServicePromtail)
 	if err != nil {
 		return err
 	}
@@ -271,4 +272,70 @@ func (h *Node) RunSSHUploadStakingFiles(keyPath string) error {
 		filepath.Join(constants.CloudNodeStakingPath, constants.BLSKeyFileName),
 		constants.SSHFileOpsTimeout,
 	)
+}
+
+// RunSSHSetupMonitoringFolders sets up monitoring folders
+func (h *Node) RunSSHSetupMonitoringFolders() error {
+	for _, folder := range remoteconfig.RemoteFoldersToCreateMonitoring() {
+		if err := h.MkdirAll(folder, constants.SSHFileOpsTimeout); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// RegisterWithMonitoring registers the node with the monitoring service
+func (h *Node) RegisterWithMonitoring(targets []*Node, chainID string) error {
+	// necessary checks
+	if !isMonitoringNode(h) {
+		return fmt.Errorf("%s is not a monitoring node", h.NodeID)
+	}
+	for _, target := range targets {
+		if isMonitoringNode(target) {
+			return fmt.Errorf("target %s can't be a monitoring node", target.NodeID)
+		}
+	}
+	// setup monitoring for nodes
+	remoteComposeFile := utils.GetRemoteComposeFile()
+	wg := sync.WaitGroup{}
+	wgResults := NodeResults{}
+	for _, target := range targets {
+		wg.Add(1)
+		go func(NodeResults *NodeResults, target *Node) {
+			defer wg.Done()
+			if err := target.RunSSHSetupPromtailConfig(h.IP, constants.AvalanchegoLokiPort, h.NodeID, h.NodeID, chainID); err != nil {
+				NodeResults.AddResult(target.NodeID, nil, err)
+				return
+			}
+			if err := target.RestartDockerComposeService(remoteComposeFile, constants.ServicePromtail, constants.SSHScriptTimeout); err != nil {
+				NodeResults.AddResult(target.NodeID, nil, err)
+				return
+			}
+		}(&wgResults, target)
+	}
+	wg.Wait()
+	if wgResults.HasErrors() {
+		return wgResults.Error()
+	}
+	avalancheGoPorts, machinePorts, ltPorts, err := getPrometheusTargets(targets)
+	h.Logger.Infof("avalancheGoPorts: %v, machinePorts: %v, ltPorts: %v", avalancheGoPorts, machinePorts, ltPorts)
+	if err != nil {
+		return err
+	}
+	// reconfigure monitoring instance
+	if err := h.RunSSHSetupLokiConfig(constants.AvalanchegoLokiPort); err != nil {
+		return err
+	}
+	if err := h.RestartDockerComposeService(remoteComposeFile, constants.ServiceLoki, constants.SSHScriptTimeout); err != nil {
+		return err
+	}
+	if err := h.RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, ltPorts); err != nil {
+		return err
+	}
+	if err := h.RestartDockerComposeService(remoteComposeFile, constants.ServicePrometheus, constants.SSHScriptTimeout); err != nil {
+		return err
+	}
+
+	return nil
+
 }
