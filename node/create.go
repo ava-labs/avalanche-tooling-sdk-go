@@ -224,13 +224,14 @@ func provisionHost(node Node, nodeParams *NodeParams) error {
 }
 
 func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
+	const withMonitoring = true
 	if err := node.RunSSHSetupNode(nodeParams.AvalancheCliVersion); err != nil {
 		return err
 	}
 	if err := node.RunSSHSetupDockerService(); err != nil {
 		return err
 	}
-	if err := node.ComposeSSHSetupNode(nodeParams.NetworkID, nodeParams.AvalancheGoVersion, false); err != nil {
+	if err := node.ComposeSSHSetupNode(nodeParams.NetworkID, nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}
 	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {
