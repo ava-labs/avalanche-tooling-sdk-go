@@ -26,34 +26,32 @@ func preCreateCheck(cp CloudParams, count int) error {
 	return nil
 }
 
-// Create creates a new node.
-// If wait is true, this function will block until the node is ready.
-func createInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host, error) {
+// createCloudInstances launches the specified number of instances on the selected cloud platform.
+func createCloudInstances(ctx context.Context, cp CloudParams, count int) ([]Node, error) {
 	if err := preCreateCheck(cp, count); err != nil {
 		return nil, err
 	}
-	hosts := make([]Host, 0, count)
+	nodes := make([]Node, 0, count)
 	switch cp.Cloud() {
 	case AWSCloud:
 		ec2Svc, err := awsAPI.NewAwsCloud(
 			ctx,
-			cp.AWSProfile,
+			cp.AWSConfig.AWSProfile,
 			cp.Region,
 		)
 		if err != nil {
 			return nil, err
 		}
 		instanceIds, err := ec2Svc.CreateEC2Instances(
-			cp.Name,
 			count,
-			cp.Image,
+			cp.ImageID,
 			cp.InstanceType,
-			cp.AWSKeyPair,
-			cp.AWSSecurityGroupID,
-			cp.AWSVolumeIOPS,
-			cp.AWSVolumeThroughput,
-			cp.AWSVolumeType,
-			cp.AWSVolumeSize,
+			cp.AWSConfig.AWSKeyPair,
+			cp.AWSConfig.AWSSecurityGroupID,
+			cp.AWSConfig.AWSVolumeIOPS,
+			cp.AWSConfig.AWSVolumeThroughput,
+			cp.AWSConfig.AWSVolumeType,
+			cp.AWSConfig.AWSVolumeSize,
 		)
 		if err != nil {
 			return nil, err
@@ -69,7 +67,7 @@ func createInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 			return nil, err
 		}
 		for _, instanceID := range instanceIds {
-			hosts = append(hosts, Host{
+			nodes = append(nodes, Node{
 				NodeID:      instanceID,
 				IP:          instanceEIPMap[instanceID],
 				Cloud:       cp.Cloud(),
@@ -80,27 +78,25 @@ func createInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 				Roles: nil,
 			})
 		}
-		return hosts, nil
+		return nodes, nil
 	case GCPCloud:
 		gcpSvc, err := gcpAPI.NewGcpCloud(
 			ctx,
-			cp.GCPProject,
-			cp.GCPCredentials,
+			cp.GCPConfig.GCPProject,
+			cp.GCPConfig.GCPCredentials,
 		)
 		if err != nil {
 			return nil, err
 		}
 		computeInstances, err := gcpSvc.SetupInstances(
-			cp.Name,
-			cp.GCPZone,
-			cp.GCPNetwork,
-			cp.GCPSSHKey,
-			cp.Image,
-			cp.Name,
+			cp.GCPConfig.GCPZone,
+			cp.GCPConfig.GCPNetwork,
+			cp.GCPConfig.GCPSSHKey,
+			cp.ImageID,
 			cp.InstanceType,
-			[]string{cp.StaticIP},
+			[]string{},
 			1,
-			cp.GCPVolumeSize,
+			cp.GCPConfig.GCPVolumeSize,
 		)
 		if err != nil {
 			return nil, err
@@ -109,7 +105,7 @@ func createInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 			return nil, fmt.Errorf("failed to create all instances. Expected %d, got %d", count, len(computeInstances))
 		}
 		for _, computeInstance := range computeInstances {
-			hosts = append(hosts, Host{
+			nodes = append(nodes, Node{
 				NodeID:      computeInstance.Name,
 				IP:          computeInstance.NetworkInterfaces[0].NetworkIP,
 				Cloud:       cp.Cloud(),
@@ -123,11 +119,11 @@ func createInstanceList(ctx context.Context, cp CloudParams, count int) ([]Host,
 	default:
 		return nil, fmt.Errorf("unsupported cloud")
 	}
-	return hosts, nil
+	return nodes, nil
 }
 
-// CreateInstanceList creates a list of nodes.
-func CreateInstanceList(
+// CreateNodes creates a list of nodes.
+func CreateNodes(
 	ctx context.Context,
 	cp CloudParams,
 	count int,
@@ -136,28 +132,28 @@ func CreateInstanceList(
 	avalancheGoVersion string,
 	avalancheCliVersion string,
 	withMonitoring bool,
-) ([]Host, error) {
-	hosts, err := createInstanceList(ctx, cp, count)
+) ([]Node, error) {
+	nodes, err := createCloudInstances(ctx, cp, count)
 	if err != nil {
 		return nil, err
 	}
 	wg := sync.WaitGroup{}
 	wgResults := NodeResults{}
 	// wait for all hosts to be ready and provision based on the role list
-	for _, host := range hosts {
+	for _, node := range nodes {
 		wg.Add(1)
-		go func(NodeResults *NodeResults, host Host) {
+		go func(NodeResults *NodeResults, node Node) {
 			defer wg.Done()
-			if err := host.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
-				NodeResults.AddResult(host.NodeID, nil, err)
+			if err := node.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
+				NodeResults.AddResult(node.NodeID, nil, err)
 				return
 			}
-			if err := provisionHost(host, roles, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
-				NodeResults.AddResult(host.NodeID, nil, err)
+			if err := provisionHost(node, roles, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
+				NodeResults.AddResult(node.NodeID, nil, err)
 				return
 			}
-		}(&wgResults, host)
-		host.Roles = roles
+		}(&wgResults, node)
+		node.Roles = roles
 	}
 	wg.Wait()
 	if wgResults.HasErrors() {
@@ -171,33 +167,33 @@ func CreateInstanceList(
 
 	}
 
-	return hosts, nil
+	return nodes, nil
 }
 
 // provisionHost provisions a host with the given roles.
-func provisionHost(host Host, roles []SupportedRole, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
+func provisionHost(node Node, roles []SupportedRole, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
 	if err := CheckRoles(roles); err != nil {
 		return err
 	}
-	if err := host.Connect(constants.SSHTCPPort); err != nil {
+	if err := node.Connect(constants.SSHTCPPort); err != nil {
 		return err
 	}
 	for _, role := range roles {
 		switch role {
 		case Validator:
-			if err := provisionAvagoHost(host, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
+			if err := provisionAvagoHost(node, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
 				return err
 			}
 		case API:
-			if err := provisionAvagoHost(host, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
+			if err := provisionAvagoHost(node, networkID, avalancheGoVersion, avalancheCliVersion, withMonitoring); err != nil {
 				return err
 			}
 		case Loadtest:
-			if err := provisionLoadTestHost(host); err != nil {
+			if err := provisionLoadTestHost(node); err != nil {
 				return err
 			}
 		case Monitor:
-			if err := provisionMonitoringHost(host); err != nil {
+			if err := provisionMonitoringHost(node); err != nil {
 				return err
 			}
 		default:
@@ -208,45 +204,45 @@ func provisionHost(host Host, roles []SupportedRole, networkID string, avalanche
 	return nil
 }
 
-func provisionAvagoHost(host Host, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
-	if err := host.RunSSHSetupNode(avalancheCliVersion); err != nil {
+func provisionAvagoHost(node Node, networkID string, avalancheGoVersion string, avalancheCliVersion string, withMonitoring bool) error {
+	if err := node.RunSSHSetupNode(avalancheCliVersion); err != nil {
 		return err
 	}
-	if err := host.RunSSHSetupDockerService(); err != nil {
+	if err := node.RunSSHSetupDockerService(); err != nil {
 		return err
 	}
-	if err := host.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
+	if err := node.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}
-	if err := host.StartDockerCompose(constants.SSHScriptTimeout); err != nil {
-		return err
-	}
-	return nil
-}
-
-func provisionLoadTestHost(host Host) error { // stub
-	if err := host.ComposeSSHSetupLoadTest(); err != nil {
-		return err
-	}
-	if err := host.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {
 		return err
 	}
 	return nil
 }
 
-func provisionMonitoringHost(host Host) error { // stub
-	if err := host.ComposeSSHSetupMonitoring(); err != nil {
+func provisionLoadTestHost(node Node) error { // stub
+	if err := node.ComposeSSHSetupLoadTest(); err != nil {
 		return err
 	}
-	if err := host.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+	if err := node.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
 		return err
 	}
 	return nil
 }
 
-func provisionAWMRelayerHost(host Host) error { // stub
-	if err := host.ComposeSSHSetupAWMRelayer(); err != nil {
+func provisionMonitoringHost(node Node) error { // stub
+	if err := node.ComposeSSHSetupMonitoring(); err != nil {
 		return err
 	}
-	return host.StartDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
+	if err := node.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+		return err
+	}
+	return nil
+}
+
+func provisionAWMRelayerHost(node Node) error { // stub
+	if err := node.ComposeSSHSetupAWMRelayer(); err != nil {
+		return err
+	}
+	return node.StartDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
 }

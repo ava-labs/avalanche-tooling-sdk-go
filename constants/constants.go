@@ -43,7 +43,7 @@ const (
 	SSHScriptTimeout            = 2 * time.Minute
 	AnsibleSSHUser              = "ubuntu"
 
-	// host
+	// node
 	CloudNodeCLIConfigBasePath   = "/home/ubuntu/.avalanche-cli/"
 	CloudNodeConfigBasePath      = "/home/ubuntu/.avalanchego/"
 	CloudNodeSubnetEvmBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
