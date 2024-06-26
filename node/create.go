@@ -231,6 +231,10 @@ func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	if err := node.RunSSHSetupDockerService(); err != nil {
 		return err
 	}
+	// provide dummy config for promtail
+	if err := node.RunSSHSetupPromtailConfig("127.0.0.1", constants.AvalanchegoLokiPort, node.NodeID, "", ""); err != nil {
+		return err
+	}
 	if err := node.ComposeSSHSetupNode(nodeParams.NetworkID, nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}

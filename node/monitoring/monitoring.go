@@ -115,3 +115,8 @@ func WritePromtailConfig(filePath string, lokiIP string, lokiPort string, host s
 	}
 	return os.WriteFile(filePath, []byte(config), constants.WriteReadReadPerms)
 }
+
+// GetGrafanaUrl returns the URL of the Grafana dashboard.
+func GetGrafanaUrl(monitoringHostIP string) string {
+	return fmt.Sprintf("http://%s:%d/dashboards", monitoringHostIP, constants.AvalanchegoGrafanaPort)
+}
