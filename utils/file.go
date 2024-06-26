@@ -1,4 +1,4 @@
-// Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package utils
 
@@ -16,6 +16,18 @@ func FileExists(filename string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+// DirectoryExists checks if a directory exists.
+//
+// dirName: the name of the directory to check.
+// bool: returns true if the directory exists, false otherwise.
+func DirectoryExists(dirName string) bool {
+	info, err := os.Stat(dirName)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return info.IsDir()
 }
 
 // ExpandHome expands ~ symbol to home directory

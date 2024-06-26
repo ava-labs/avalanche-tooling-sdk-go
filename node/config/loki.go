@@ -4,9 +4,10 @@
 package services
 
 import (
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 func LokiFoldersToCreate() []string {
-	return []string{utils.GetRemoteComposeServicePath("loki", "data")}
+	return []string{utils.GetRemoteComposeServicePath(constants.ServiceLoki, "data")}
 }

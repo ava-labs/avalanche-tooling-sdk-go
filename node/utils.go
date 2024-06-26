@@ -5,11 +5,15 @@ package node
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
@@ -54,4 +58,54 @@ func GetPublicKeyFromSSHKey(keyPath string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSuffix(string(key), "\n"), nil
+}
+
+// isMonitoringNode checks if the node has the Monitor role.
+//
+// Parameter(s):
+// - node *Node: The node to check.
+// Return type(s): bool
+func isMonitoringNode(node Node) bool {
+	return slices.Contains(node.Roles, Monitor)
+}
+
+// isAvalancheGoNode checks if the node has the API or Validator role.
+//
+// - node *Node: The node to check.
+// bool
+func isAvalancheGoNode(node Node) bool {
+	return slices.Contains(node.Roles, API) || slices.Contains(node.Roles, Validator)
+}
+
+// isLoadTestNode checks if the node has the LoadTest role.
+//
+// - node *Node: The node to check.
+// bool
+func isLoadTestNode(node Node) bool {
+	return slices.Contains(node.Roles, Loadtest)
+}
+
+// getPrometheusTargets returns the Prometheus targets for the given nodes.
+//
+// Parameters:
+// - nodes: a slice of Node representing the nodes to get the Prometheus targets for.
+//
+// Returns:
+// - avalancheGoPorts: a slice of strings representing the Prometheus targets for the nodes with the AvalancheGo role.
+// - machinePorts: a slice of strings representing the Prometheus targets for the nodes with the AvalancheGo role.
+// - ltPorts: a slice of strings representing the Prometheus targets for the nodes with the LoadTest role.
+func getPrometheusTargets(nodes []Node) ([]string, []string, []string) {
+	avalancheGoPorts := []string{}
+	machinePorts := []string{}
+	ltPorts := []string{}
+	for _, host := range nodes {
+		if isAvalancheGoNode(host) {
+			avalancheGoPorts = append(avalancheGoPorts, fmt.Sprintf("'%s:%s'", host.IP, strconv.Itoa(constants.AvalanchegoAPIPort)))
+			machinePorts = append(machinePorts, fmt.Sprintf("'%s:%s'", host.IP, strconv.Itoa(constants.AvalanchegoMachineMetricsPort)))
+		}
+		if isLoadTestNode(host) {
+			ltPorts = append(ltPorts, fmt.Sprintf("'%s:%s'", host.IP, strconv.Itoa(constants.AvalanchegoLoadTestPort)))
+		}
+	}
+	return avalancheGoPorts, machinePorts, ltPorts
 }

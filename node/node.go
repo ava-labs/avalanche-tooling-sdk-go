@@ -465,7 +465,7 @@ func (h *Node) WaitForSSHShell(timeout time.Duration) error {
 }
 
 // StreamSSHCommand streams the execution of an SSH command on the node.
-func (h *Node) StreamSSHCommand(command string, env []string, timeout time.Duration) error {
+func (h *Node) StreamSSHCommand(env []string, timeout time.Duration, command string) error {
 	if !h.Connected() {
 		if err := h.Connect(0); err != nil {
 			return err

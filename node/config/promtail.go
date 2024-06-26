@@ -3,11 +3,14 @@
 
 package services
 
-import "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+import (
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+)
 
 func PromtailFoldersToCreate() []string {
 	return []string{
-		utils.GetRemoteComposeServicePath("promtail"),
+		utils.GetRemoteComposeServicePath(constants.ServicePromtail),
 		"/home/ubuntu/.avalanchego/logs",
 	}
 }

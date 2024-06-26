@@ -5,8 +5,8 @@ package services
 
 import (
 	"bytes"
-	"html/template"
 	"path/filepath"
+	"text/template"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )

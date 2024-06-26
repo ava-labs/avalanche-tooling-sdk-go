@@ -3,6 +3,11 @@
 
 package node
 
+import (
+	"fmt"
+	"slices"
+)
+
 type SupportedCloud int
 
 const (
@@ -83,4 +88,18 @@ func (r *SupportedRole) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+// CheckRoles checks if the combination of roles is valid
+func CheckRoles(roles []SupportedRole) error {
+	if slices.Contains(roles, Validator) && slices.Contains(roles, API) {
+		return fmt.Errorf("cannot have both validator and api roles")
+	}
+	if slices.Contains(roles, Loadtest) && len(roles) > 1 {
+		return fmt.Errorf("%v role cannot be combined with other roles", Loadtest)
+	}
+	if slices.Contains(roles, Monitor) && len(roles) > 1 {
+		return fmt.Errorf("%v role cannot be combined with other roles", Monitor)
+	}
+	return nil
 }

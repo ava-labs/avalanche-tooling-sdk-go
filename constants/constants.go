@@ -1,4 +1,4 @@
-// Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package constants
 
@@ -34,6 +34,7 @@ const (
 	AvalanchegoLokiPort           = 23101
 	AvalanchegoMonitoringPort     = 9090
 	AvalanchegoMachineMetricsPort = 9100
+	AvalanchegoLoadTestPort       = 8082
 
 	// ssh
 	SSHSleepBetweenChecks       = 1 * time.Second
@@ -49,6 +50,16 @@ const (
 	CloudNodeSubnetEvmBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
 	CloudNodeStakingPath         = "/home/ubuntu/.avalanchego/staking/"
 	CloudNodeConfigPath          = "/home/ubuntu/.avalanchego/configs/"
+	ServicesDir                  = "services"
+	DashboardsDir                = "dashboards"
+
+	// services
+	ServiceAvalanchego = "avalanchego"
+	ServicePromtail    = "promtail"
+	ServiceGrafana     = "grafana"
+	ServicePrometheus  = "prometheus"
+	ServiceLoki        = "loki"
+	ServiceAWMRelayer  = "awm-relayer"
 
 	// misc
 	DefaultPerms755        = 0o755
@@ -61,4 +72,11 @@ const (
 	AvalancheGoDockerImage = "avaplatform/avalanchego"
 	AvalancheGoGitRepo     = "https://github.com/ava-labs/avalanchego"
 	SubnetEVMRepoName      = "subnet-evm"
+
+	AWMRelayerInstallDir     = "awm-relayer"
+	AWMRelayerConfigFilename = "awm-relayer-config.json"
+
+	StakerCertFileName = "staker.crt"
+	StakerKeyFileName  = "staker.key"
+	BLSKeyFileName     = "signer.key"
 )

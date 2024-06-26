@@ -3,7 +3,10 @@
 
 package services
 
-import "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+import (
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+)
 
 func RenderGrafanaLokiDataSourceConfig() ([]byte, error) {
 	return templates.ReadFile("templates/grafana-loki-datasource.yaml")
@@ -23,9 +26,9 @@ func RenderGrafanaDashboardConfig() ([]byte, error) {
 
 func GrafanaFoldersToCreate() []string {
 	return []string{
-		utils.GetRemoteComposeServicePath("grafana", "data"),
-		utils.GetRemoteComposeServicePath("grafana", "dashboards"),
-		utils.GetRemoteComposeServicePath("grafana", "provisioning", "datasources"),
-		utils.GetRemoteComposeServicePath("grafana", "provisioning", "dashboards"),
+		utils.GetRemoteComposeServicePath(constants.ServiceGrafana, "data"),
+		utils.GetRemoteComposeServicePath(constants.ServiceGrafana, "dashboards"),
+		utils.GetRemoteComposeServicePath(constants.ServiceGrafana, "provisioning", "datasources"),
+		utils.GetRemoteComposeServicePath(constants.ServiceGrafana, "provisioning", "dashboards"),
 	}
 }

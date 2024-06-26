@@ -1,8 +1,9 @@
-// Copyright (C) 2023, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package utils
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -48,5 +49,15 @@ func TestExtractPlaceholderValue(t *testing.T) {
 				t.Errorf("ExtractPlaceholderValue() = %v, want %v", got, tt.expected)
 			}
 		})
+	}
+}
+
+func TestAddSingleQuotes(t *testing.T) {
+	input := []string{"", "b", "orange banana", "'apple'", "'a", "b'"}
+	expected := []string{"''", "'b'", "'orange banana'", "'apple'", "'a'", "'b'"}
+	output := AddSingleQuotes(input)
+
+	if !reflect.DeepEqual(output, expected) {
+		t.Errorf("AddSingleQuotes(%v) = %v, expected %v", input, output, expected)
 	}
 }

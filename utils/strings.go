@@ -1,4 +1,4 @@
-// Copyright (C) 2023, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package utils
 
@@ -32,4 +32,23 @@ func ExtractPlaceholderValue(pattern, text string) (string, error) {
 	} else {
 		return "", fmt.Errorf("no match found")
 	}
+}
+
+// AddSingleQuotes adds single quotes to each string in the given slice.
+func AddSingleQuotes(s []string) []string {
+	return Map(s, func(item string) string {
+		if item == "" {
+			return "''"
+		}
+		if !strings.HasPrefix(item, "'") {
+			item = fmt.Sprintf("'%s", item)
+		}
+		if !strings.HasSuffix(item, "'") {
+			item = fmt.Sprintf("%s'", item)
+		}
+		if !strings.HasPrefix(item, "'") && !strings.HasSuffix(item, "'") {
+			item = fmt.Sprintf("'%s'", item)
+		}
+		return item
+	})
 }

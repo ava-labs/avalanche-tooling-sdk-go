@@ -1,4 +1,4 @@
-// Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
 package gcp
@@ -319,7 +319,7 @@ func (c *GcpCloud) SetupInstances(
 	return instances, nil
 }
 
-// // Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
+// // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // // See the file LICENSE for licensing terms.
 
 func (c *GcpCloud) GetUbuntuimageID() (string, error) {
