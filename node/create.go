@@ -30,7 +30,7 @@ func CreateNodes(
 	ctx context.Context,
 	nodeParams *NodeParams,
 ) ([]Node, error) {
-	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count)
+	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count, nodeParams.UseStaticIP)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func preCreateCheck(cp CloudParams, count int) error {
 }
 
 // createCloudInstances launches the specified number of instances on the selected cloud platform.
-func createCloudInstances(ctx context.Context, cp CloudParams, count int) ([]Node, error) {
+func createCloudInstances(ctx context.Context, cp CloudParams, count int, useStaticIP bool) ([]Node, error) {
 	if err := preCreateCheck(cp, count); err != nil {
 		return nil, err
 	}
@@ -103,9 +103,25 @@ func createCloudInstances(ctx context.Context, cp CloudParams, count int) ([]Nod
 		if err := ec2Svc.WaitForEC2Instances(instanceIds, types.InstanceStateNameRunning); err != nil {
 			return nil, err
 		}
-		instanceEIPMap, err := ec2Svc.GetInstancePublicIPs(instanceIds)
-		if err != nil {
-			return nil, err
+		// elastic IP
+		instanceEIPMap := make(map[string]string)
+		if useStaticIP {
+			for _, instanceID := range instanceIds {
+				allocationID, publicIP, err := ec2Svc.CreateEIP(cp.Region)
+				if err != nil {
+					return nil, err
+				}
+				err = ec2Svc.AssociateEIP(instanceID, allocationID)
+				if err != nil {
+					return nil, err
+				}
+				instanceEIPMap[instanceID] = publicIP
+			}
+		} else {
+			instanceEIPMap, err = ec2Svc.GetInstancePublicIPs(instanceIds)
+			if err != nil {
+				return nil, err
+			}
 		}
 		for _, instanceID := range instanceIds {
 			nodes = append(nodes, Node{
@@ -129,13 +145,20 @@ func createCloudInstances(ctx context.Context, cp CloudParams, count int) ([]Nod
 		if err != nil {
 			return nil, err
 		}
+		staticIPs := []string{}
+		if useStaticIP {
+			staticIPs, err = gcpSvc.SetPublicIP(cp.GCPConfig.GCPZone, "", count)
+			if err != nil {
+				return nil, err
+			}
+		}
 		computeInstances, err := gcpSvc.SetupInstances(
 			cp.GCPConfig.GCPZone,
 			cp.GCPConfig.GCPNetwork,
 			cp.GCPConfig.GCPSSHKey,
 			cp.ImageID,
 			cp.InstanceType,
-			[]string{},
+			staticIPs,
 			1,
 			cp.GCPConfig.GCPVolumeSize,
 		)

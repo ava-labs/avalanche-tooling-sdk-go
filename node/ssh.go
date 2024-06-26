@@ -295,6 +295,9 @@ func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
 			return fmt.Errorf("target %s can't be a monitoring node", target.NodeID)
 		}
 	}
+	if err := h.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
+		return err
+	}
 	// setup monitoring for nodes
 	remoteComposeFile := utils.GetRemoteComposeFile()
 	wg := sync.WaitGroup{}
@@ -337,5 +340,4 @@ func (h *Node) RegisterWithMonitoring(targets []Node, chainID string) error {
 	}
 
 	return nil
-
 }
