@@ -48,7 +48,7 @@ var script embed.FS
 
 // RunOverSSH runs provided script path over ssh.
 // This script can be template as it will be rendered using scriptInputs vars
-func (h *Host) RunOverSSH(
+func (h *Node) RunOverSSH(
 	scriptDesc string,
 	timeout time.Duration,
 	scriptPath string,
@@ -78,7 +78,7 @@ func (h *Host) RunOverSSH(
 }
 
 // RunSSHSetupNode runs script to setup sdk dependencies on a remote host over SSH.
-func (h *Host) RunSSHSetupNode(cliVersion string) error {
+func (h *Node) RunSSHSetupNode(cliVersion string) error {
 	if err := h.RunOverSSH(
 		"Setup Node",
 		constants.SSHLongRunningScriptTimeout,
@@ -91,7 +91,7 @@ func (h *Host) RunSSHSetupNode(cliVersion string) error {
 }
 
 // RunSSHSetupDockerService runs script to setup docker compose service for CLI
-func (h *Host) RunSSHSetupDockerService() error {
+func (h *Node) RunSSHSetupDockerService() error {
 	if h.IsSystemD() {
 		return h.RunOverSSH(
 			"Setup Docker Service",
@@ -106,23 +106,23 @@ func (h *Host) RunSSHSetupDockerService() error {
 }
 
 // RunSSHRestartNode runs script to restart avalanchego
-func (h *Host) RunSSHRestartNode() error {
+func (h *Node) RunSSHRestartNode() error {
 	remoteComposeFile := utils.GetRemoteComposeFile()
 	return h.RestartDockerComposeService(remoteComposeFile, "avalanchego", constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHStartAWMRelayerService runs script to start an AWM Relayer Service
-func (h *Host) RunSSHStartAWMRelayerService() error {
+func (h *Node) RunSSHStartAWMRelayerService() error {
 	return h.StartDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHStopAWMRelayerService runs script to start an AWM Relayer Service
-func (h *Host) RunSSHStopAWMRelayerService() error {
+func (h *Node) RunSSHStopAWMRelayerService() error {
 	return h.StopDockerComposeService(utils.GetRemoteComposeFile(), "awm-relayer", constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHUpgradeAvalanchego runs script to upgrade avalanchego
-func (h *Host) RunSSHUpgradeAvalanchego(networkID string, avalancheGoVersion string) error {
+func (h *Node) RunSSHUpgradeAvalanchego(networkID string, avalancheGoVersion string) error {
 	withMonitoring, err := h.WasNodeSetupWithMonitoring()
 	if err != nil {
 		return err
@@ -135,17 +135,17 @@ func (h *Host) RunSSHUpgradeAvalanchego(networkID string, avalancheGoVersion str
 }
 
 // RunSSHStartNode runs script to start avalanchego
-func (h *Host) RunSSHStartNode() error {
+func (h *Node) RunSSHStartNode() error {
 	return h.StartDockerComposeService(utils.GetRemoteComposeFile(), "avalanchego", constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHStopNode runs script to stop avalanchego
-func (h *Host) RunSSHStopNode() error {
+func (h *Node) RunSSHStopNode() error {
 	return h.StopDockerComposeService(utils.GetRemoteComposeFile(), "avalanchego", constants.SSHLongRunningScriptTimeout)
 }
 
 // RunSSHUpgradeSubnetEVM runs script to upgrade subnet evm
-func (h *Host) RunSSHUpgradeSubnetEVM(subnetEVMBinaryPath string) error {
+func (h *Node) RunSSHUpgradeSubnetEVM(subnetEVMBinaryPath string) error {
 	return h.RunOverSSH(
 		"Upgrade Subnet EVM",
 		constants.SSHScriptTimeout,
@@ -154,7 +154,7 @@ func (h *Host) RunSSHUpgradeSubnetEVM(subnetEVMBinaryPath string) error {
 	)
 }
 
-func (h *Host) RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, loadTestPorts []string) error {
+func (h *Node) RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, loadTestPorts []string) error {
 	for _, folder := range remoteconfig.PrometheusFoldersToCreate() {
 		if err := h.MkdirAll(folder, constants.SSHFileOpsTimeout); err != nil {
 			return err
@@ -177,7 +177,7 @@ func (h *Host) RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, loadT
 	)
 }
 
-func (h *Host) RunSSHSetupLokiConfig(port int) error {
+func (h *Node) RunSSHSetupLokiConfig(port int) error {
 	for _, folder := range remoteconfig.LokiFoldersToCreate() {
 		if err := h.MkdirAll(folder, constants.SSHFileOpsTimeout); err != nil {
 			return err
@@ -199,7 +199,7 @@ func (h *Host) RunSSHSetupLokiConfig(port int) error {
 	)
 }
 
-func (h *Host) RunSSHSetupPromtailConfig(lokiIP string, lokiPort int, cloudID string, nodeID string, chainID string) error {
+func (h *Node) RunSSHSetupPromtailConfig(lokiIP string, lokiPort int, cloudID string, nodeID string, chainID string) error {
 	for _, folder := range remoteconfig.PromtailFoldersToCreate() {
 		if err := h.MkdirAll(folder, constants.SSHFileOpsTimeout); err != nil {
 			return err
@@ -222,7 +222,7 @@ func (h *Host) RunSSHSetupPromtailConfig(lokiIP string, lokiPort int, cloudID st
 	)
 }
 
-func (h *Host) RunSSHUploadNodeAWMRelayerConfig(nodeInstanceDirPath string) error {
+func (h *Node) RunSSHUploadNodeAWMRelayerConfig(nodeInstanceDirPath string) error {
 	cloudAWMRelayerConfigDir := filepath.Join(constants.CloudNodeCLIConfigBasePath, constants.ServicesDir, constants.AWMRelayerInstallDir)
 	if err := h.MkdirAll(cloudAWMRelayerConfigDir, constants.SSHFileOpsTimeout); err != nil {
 		return err
@@ -235,7 +235,7 @@ func (h *Host) RunSSHUploadNodeAWMRelayerConfig(nodeInstanceDirPath string) erro
 }
 
 // RunSSHGetNewSubnetEVMRelease runs script to download new subnet evm
-func (h *Host) RunSSHGetNewSubnetEVMRelease(subnetEVMReleaseURL, subnetEVMArchive string) error {
+func (h *Node) RunSSHGetNewSubnetEVMRelease(subnetEVMReleaseURL, subnetEVMArchive string) error {
 	return h.RunOverSSH(
 		"Get Subnet EVM Release",
 		constants.SSHScriptTimeout,
@@ -245,7 +245,7 @@ func (h *Host) RunSSHGetNewSubnetEVMRelease(subnetEVMReleaseURL, subnetEVMArchiv
 }
 
 // RunSSHUploadStakingFiles uploads staking files to a remote host via SSH.
-func (h *Host) RunSSHUploadStakingFiles(keyPath string) error {
+func (h *Node) RunSSHUploadStakingFiles(keyPath string) error {
 	if err := h.MkdirAll(
 		constants.CloudNodeStakingPath,
 		constants.SSHFileOpsTimeout,

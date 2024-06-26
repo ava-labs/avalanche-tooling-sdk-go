@@ -13,7 +13,7 @@ import (
 	"github.com/ava-labs/avalanchego/staking"
 )
 
-func (h *Host) ProvideStakingCertAndKey(keyPath string) error {
+func (h *Node) ProvideStakingCertAndKey(keyPath string) error {
 	if nodeID, err := h.GenerateNodeCertAndKeys(keyPath); err != nil {
 		return err
 	} else {
@@ -23,7 +23,7 @@ func (h *Host) ProvideStakingCertAndKey(keyPath string) error {
 }
 
 // GenerateNodeCertAndKeys generates a node certificate and keys and return nodeID
-func (h *Host) GenerateNodeCertAndKeys(keyPath string) (ids.NodeID, error) {
+func (h *Node) GenerateNodeCertAndKeys(keyPath string) (ids.NodeID, error) {
 	if err := os.MkdirAll(keyPath, constants.DefaultPerms755); err != nil {
 		return ids.EmptyNodeID, err
 	}
