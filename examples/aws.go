@@ -83,10 +83,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Wait for the monitoring host to be ready
-	if err := monitoringHosts[0].WaitForSSHShell(sshTimeout); err != nil {
-		panic(err)
-	}
+	fmt.Println("Monitoring host SSH shell ready to execute commands")
 	// Register nodes with monitoring host
 	if err := monitoringHosts[0].RegisterWithMonitoring(hosts, ""); err != nil {
 		panic(err)
