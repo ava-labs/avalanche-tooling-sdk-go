@@ -49,6 +49,7 @@ func CreateNodes(
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("nodes created successfully \n")
 	wg := sync.WaitGroup{}
 	wgResults := NodeResults{}
 	// wait for all hosts to be ready and provision based on the role list
@@ -56,10 +57,12 @@ func CreateNodes(
 		wg.Add(1)
 		go func(nodeResults *NodeResults, node Node) {
 			defer wg.Done()
+			fmt.Printf("nodes WaitForSSHShell \n")
 			if err := node.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
 				nodeResults.AddResult(node.NodeID, nil, err)
 				return
 			}
+			fmt.Printf("nodes provisionHost \n")
 			if err := provisionHost(node, nodeParams); err != nil {
 				nodeResults.AddResult(node.NodeID, nil, err)
 				return

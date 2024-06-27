@@ -76,7 +76,6 @@ type GCPConfig struct {
 	GCPSSHKey string
 }
 
-// New returns a new CloudParams with
 func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudParams, error) {
 	// make sure that CloudParams is initialized with default values
 	switch cloud {
