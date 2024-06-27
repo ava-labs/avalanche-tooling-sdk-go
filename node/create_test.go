@@ -66,6 +66,8 @@ func TestCreateNodes(_ *testing.T) {
 		panic(err)
 	}
 
+	fmt.Println("Successfully created Avalanche Validators")
+
 	const (
 		sshTimeout        = 120 * time.Second
 		sshCommandTimeout = 10 * time.Second
@@ -112,12 +114,16 @@ func TestCreateNodes(_ *testing.T) {
 		panic(err)
 	}
 
+	fmt.Println("Successfully created monitoring node")
+	fmt.Println("Linking monitoring node with Avalanche Validator nodes ...")
 	// Link the 2 validator nodes previously created with the monitoring host so that
 	// the monitoring host can start tracking the validator nodes metrics and collecting their logs
 	if err := monitoringHosts[0].MonitorNodes(hosts, ""); err != nil {
 		panic(err)
 	}
+	fmt.Println("Successfully linked monitoring node with Avalanche Validator nodes")
 
+	fmt.Println("Terminating all created nodes ...")
 	// Destroy all created nodes
 	for _, h := range hosts {
 		err = h.Destroy(ctx)
@@ -129,4 +135,5 @@ func TestCreateNodes(_ *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("All nodes terminated")
 }
