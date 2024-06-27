@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package main
+package examples
 
 import (
 	"context"
@@ -29,7 +29,7 @@ func createSecurityGroup(ctx context.Context, awsProfile string, awsRegion strin
 	if err != nil {
 		return "", err
 	}
-	//detect user IP address
+	// detect user IP address
 	userIPAddress, err := utils.GetUserIPAddress()
 	if err != nil {
 		return "", err

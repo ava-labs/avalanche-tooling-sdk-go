@@ -31,7 +31,6 @@ type NodeParams struct {
 func CreateNodes(
 	ctx context.Context,
 	nodeParams *NodeParams,
-
 ) ([]Node, error) {
 	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count, nodeParams.UseStaticIP, nodeParams.SSHPrivateKey)
 	if err != nil {
