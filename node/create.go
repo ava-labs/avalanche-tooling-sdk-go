@@ -21,6 +21,7 @@ type NodeParams struct {
 	Count               int
 	Roles               []SupportedRole
 	Network             avalanche.Network
+	SSHPrivateKey       string
 	AvalancheGoVersion  string
 	AvalancheCliVersion string
 	UseStaticIP         bool
@@ -30,8 +31,9 @@ type NodeParams struct {
 func CreateNodes(
 	ctx context.Context,
 	nodeParams *NodeParams,
+
 ) ([]Node, error) {
-	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count, nodeParams.UseStaticIP)
+	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count, nodeParams.UseStaticIP, nodeParams.SSHPrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -58,19 +60,22 @@ func CreateNodes(
 }
 
 // preCreateCheck checks if the cloud parameters are valid.
-func preCreateCheck(cp CloudParams, count int) error {
+func preCreateCheck(cp CloudParams, count int, sshPrivateKeyPath string) error {
 	if count < 1 {
 		return fmt.Errorf("count must be at least 1")
 	}
 	if err := cp.Validate(); err != nil {
 		return err
 	}
+	if sshPrivateKeyPath != "" && !utils.FileExists(sshPrivateKeyPath) {
+		return fmt.Errorf("ssh private key path %s does not exist", sshPrivateKeyPath)
+	}
 	return nil
 }
 
 // createCloudInstances launches the specified number of instances on the selected cloud platform.
-func createCloudInstances(ctx context.Context, cp CloudParams, count int, useStaticIP bool) ([]Node, error) {
-	if err := preCreateCheck(cp, count); err != nil {
+func createCloudInstances(ctx context.Context, cp CloudParams, count int, useStaticIP bool, sshPrivateKeyPath string) ([]Node, error) {
+	if err := preCreateCheck(cp, count, sshPrivateKeyPath); err != nil {
 		return nil, err
 	}
 	nodes := make([]Node, 0, count)
@@ -131,7 +136,8 @@ func createCloudInstances(ctx context.Context, cp CloudParams, count int, useSta
 				Cloud:       cp.Cloud(),
 				CloudConfig: cp,
 				SSHConfig: SSHConfig{
-					User: constants.AnsibleSSHUser,
+					User:           constants.AnsibleSSHUser,
+					PrivateKeyPath: sshPrivateKeyPath,
 				},
 				Roles: nil,
 			})
@@ -176,7 +182,8 @@ func createCloudInstances(ctx context.Context, cp CloudParams, count int, useSta
 				Cloud:       cp.Cloud(),
 				CloudConfig: cp,
 				SSHConfig: SSHConfig{
-					User: constants.AnsibleSSHUser,
+					User:           constants.AnsibleSSHUser,
+					PrivateKeyPath: sshPrivateKeyPath,
 				},
 				Roles: nil,
 			})
