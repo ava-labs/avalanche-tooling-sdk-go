@@ -39,6 +39,9 @@ func Setup(monitoringDir string) error {
 
 func WriteMonitoringJSONFiles(monitoringDir string) error {
 	dashboardDir := filepath.Join(monitoringDir, constants.DashboardsDir)
+	if err := os.MkdirAll(dashboardDir, constants.DefaultPerms755); err != nil {
+		return err
+	}
 	files, err := dashboards.ReadDir(constants.DashboardsDir)
 	if err != nil {
 		return err
