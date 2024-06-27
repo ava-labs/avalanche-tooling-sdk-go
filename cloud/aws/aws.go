@@ -747,3 +747,52 @@ func (c *AwsCloud) ChangeInstanceType(instanceID, instanceType string) error {
 	}
 	return nil
 }
+
+// CreateSecurityGroup creates a new Security Group in AWS using the specified AWS profile and
+// region.
+//
+// ctx: The context.Context object for the request.
+// awsProfile: The AWS profile to use for the request.
+// awsRegion: The AWS region to use for the request.
+// Returns the ID of the created security group and an error, if any.
+func CreateSecurityGroup(ctx context.Context, securityGroupName, awsProfile, awsRegion string) (string, error) {
+	ec2Svc, err := NewAwsCloud(
+		ctx,
+		awsProfile,
+		awsRegion,
+	)
+	if err != nil {
+		return "", err
+	}
+	// detect user IP address
+	userIPAddress, err := utils.GetUserIPAddress()
+	if err != nil {
+		return "", err
+	}
+	return ec2Svc.SetupSecurityGroup(userIPAddress, securityGroupName)
+}
+
+// CreateSSHKeyPair creates a new SSH key pair for AWS in the specified AWS region.
+// The private key to the created key pair will be downloaded and  stored in the filepath provided
+// in sshPrivateKeyPath.
+// createSSHKeyPair will return an error if the filepath sshPrivateKeyPath is not empty
+//
+// ctx: The context for the request.
+// awsProfile: The AWS profile to use for the request.
+// awsRegion: The AWS region to use for the request.
+// sshPrivateKeyPath: The path to save the SSH private key.
+// Returns an error if unable to create the key pair.
+func CreateSSHKeyPair(ctx context.Context, awsProfile string, awsRegion string, keyPairName string, sshPrivateKeyPath string) error {
+	if utils.FileExists(sshPrivateKeyPath) {
+		return fmt.Errorf("ssh private key path %s is not empty", sshPrivateKeyPath)
+	}
+	ec2Svc, err := NewAwsCloud(
+		ctx,
+		awsProfile,
+		awsRegion,
+	)
+	if err != nil {
+		return err
+	}
+	return ec2Svc.CreateAndDownloadKeyPair(keyPairName, sshPrivateKeyPath)
+}

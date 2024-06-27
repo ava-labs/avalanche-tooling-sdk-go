@@ -83,7 +83,6 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		cp := &CloudParams{
 			AWSConfig: &AWSConfig{
 				AWSProfile:          "default",
-				AWSKeyPair:          "default",
 				AWSVolumeSize:       1000,
 				AWSVolumeThroughput: 500,
 				AWSVolumeIOPS:       1000,

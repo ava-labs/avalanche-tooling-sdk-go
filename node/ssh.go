@@ -284,7 +284,7 @@ func (h *Node) RunSSHSetupMonitoringFolders() error {
 	return nil
 }
 
-// RegisterWithMonitoring registers the node with the monitoring service
+// MonitorNodes links all the nodes specified with the monitoring node
 func (h *Node) MonitorNodes(targets []Node, chainID string) error {
 	// necessary checks
 	if !isMonitoringNode(*h) {

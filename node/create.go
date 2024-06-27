@@ -21,7 +21,7 @@ type NodeParams struct {
 	Count               int
 	Roles               []SupportedRole
 	Network             avalanche.Network
-	SSHPrivateKey       string
+	SSHPrivateKeyPath   string
 	AvalancheGoVersion  string
 	AvalancheCliVersion string
 	UseStaticIP         bool
@@ -45,11 +45,10 @@ func CreateNodes(
 	ctx context.Context,
 	nodeParams *NodeParams,
 ) ([]Node, error) {
-	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count, nodeParams.UseStaticIP, nodeParams.SSHPrivateKey)
+	nodes, err := createCloudInstances(ctx, *nodeParams.CloudParams, nodeParams.Count, nodeParams.UseStaticIP, nodeParams.SSHPrivateKeyPath)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("nodes created successfully \n")
 	wg := sync.WaitGroup{}
 	wgResults := NodeResults{}
 	// wait for all hosts to be ready and provision based on the role list
@@ -57,12 +56,10 @@ func CreateNodes(
 		wg.Add(1)
 		go func(nodeResults *NodeResults, node Node) {
 			defer wg.Done()
-			fmt.Printf("nodes WaitForSSHShell \n")
 			if err := node.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
 				nodeResults.AddResult(node.NodeID, nil, err)
 				return
 			}
-			fmt.Printf("nodes provisionHost \n")
 			if err := provisionHost(node, nodeParams); err != nil {
 				nodeResults.AddResult(node.NodeID, nil, err)
 				return

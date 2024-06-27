@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"testing"
 	"time"
 )
@@ -18,14 +20,22 @@ func TestCreateNodes(_ *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	// Set the cloud parameters for AWS non provided by the default
-	// Please set your own values for the following fields
-	cp.AWSConfig.AWSProfile = "default"
-	cp.AWSConfig.AWSSecurityGroupID = "AWS_SECURITY_GROUP_ID"
-	cp.AWSConfig.AWSKeyPair = "AWS_KEY_PAIR"
+
+	sgID, err := awsAPI.CreateSecurityGroup(ctx, "raymond-avalanche-tooling-sdk-sg", cp.AWSConfig.AWSProfile, cp.Region)
 	if err != nil {
 		panic(err)
 	}
+	// Set the security group we are using when creating our Avalanche Nodes
+	cp.AWSConfig.AWSSecurityGroupID = sgID
+
+	keyPairName := "raymond-avalanche-tooling-sdk"
+	sshPrivateKeyPath := utils.ExpandHome("~/.ssh/raymond-avalanche-tooling-sdk.pem")
+	if err := awsAPI.CreateSSHKeyPair(ctx, cp.AWSConfig.AWSProfile, cp.Region, keyPairName, sshPrivateKeyPath); err != nil {
+		panic(err)
+	}
+	// Set the key pair we are using when creating our Avalanche Nodes
+	cp.AWSConfig.AWSKeyPair = keyPairName
+
 	// Avalanche-CLI is installed in nodes to enable them to join subnets as validators
 	// Avalanche-CLI dependency by Avalanche nodes will be deprecated in the next release
 	// of Avalanche Tooling SDK
@@ -50,6 +60,7 @@ func TestCreateNodes(_ *testing.T) {
 			AvalancheGoVersion:  avalancheGoVersion,
 			AvalancheCliVersion: avalancheCliVersion,
 			UseStaticIP:         false,
+			SSHPrivateKeyPath:   sshPrivateKeyPath,
 		})
 	if err != nil {
 		panic(err)
@@ -91,10 +102,11 @@ func TestCreateNodes(_ *testing.T) {
 	// An example on how the dashboard and logs look like can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-aws
 	monitoringHosts, err := CreateNodes(ctx,
 		&NodeParams{
-			CloudParams: cp,
-			Count:       1,
-			Roles:       []SupportedRole{Monitor},
-			UseStaticIP: false,
+			CloudParams:       cp,
+			Count:             1,
+			Roles:             []SupportedRole{Monitor},
+			UseStaticIP:       false,
+			SSHPrivateKeyPath: sshPrivateKeyPath,
 		})
 	if err != nil {
 		panic(err)

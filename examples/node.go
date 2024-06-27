@@ -14,52 +14,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
-// createSecurityGroup creates a new security group in AWS using the specified AWS profile and region.
-//
-// ctx: The context.Context object for the request.
-// awsProfile: The AWS profile to use for the request.
-// awsRegion: The AWS region to use for the request.
-// Returns the ID of the created security group and an error, if any.
-func createSecurityGroup(ctx context.Context, awsProfile string, awsRegion string) (string, error) {
-	ec2Svc, err := awsAPI.NewAwsCloud(
-		ctx,
-		awsProfile,
-		awsRegion,
-	)
-	if err != nil {
-		return "", err
-	}
-	// detect user IP address
-	userIPAddress, err := utils.GetUserIPAddress()
-	if err != nil {
-		return "", err
-	}
-	const securityGroupName = "avalanche-tooling-sdk-go"
-	return ec2Svc.SetupSecurityGroup(userIPAddress, securityGroupName)
-}
-
-// createSSHKeyPair creates an SSH key pair for AWS.
-//
-// ctx: The context for the request.
-// awsProfile: The AWS profile to use for the request.
-// awsRegion: The AWS region to use for the request.
-// sshPrivateKeyPath: The path to save the SSH private key.
-// Returns an error if unable to create the key pair.
-func createSSHKeyPair(ctx context.Context, awsProfile string, awsRegion string, keyPairName string, sshPrivateKeyPath string) error {
-	if utils.FileExists(sshPrivateKeyPath) {
-		return fmt.Errorf("ssh private key %s already exists", sshPrivateKeyPath)
-	}
-	ec2Svc, err := awsAPI.NewAwsCloud(
-		ctx,
-		awsProfile,
-		awsRegion,
-	)
-	if err != nil {
-		return err
-	}
-	return ec2Svc.CreateAndDownloadKeyPair(keyPairName, sshPrivateKeyPath)
-}
-
 func CreateNodes() {
 	ctx := context.Background()
 
@@ -68,41 +22,31 @@ func CreateNodes() {
 	if err != nil {
 		panic(err)
 	}
-	// Set the cloud parameters for AWS non provided by the default
-	// Please set your own values for the following fields
-	// For example cp.AWSConfig.AWSProfile = "default" and so on
 
-	// Create security group or you can provide your own by setting cp.AWSConfig.AWSSecurityGroupID
-	sgID, err := createSecurityGroup(ctx, cp.AWSConfig.AWSProfile, cp.Region)
+	// Create a new security group in AWS if you do not currently have one in the selected
+	// AWS region.
+	sgID, err := awsAPI.CreateSecurityGroup(ctx, "raymond-avalanche-tooling-sdk-sg", cp.AWSConfig.AWSProfile, cp.Region)
 	if err != nil {
 		panic(err)
 	}
+	// Set the security group we are using when creating our Avalanche Nodes
 	cp.AWSConfig.AWSSecurityGroupID = sgID
 
-	// Change to your own path
-	sshPrivateKey := utils.ExpandHome("~/.ssh/avalanche-tooling-sdk-go.pem")
-
-	// Create aws ssh key pair or you can provide your own by setting cp.AWSConfig.AWSKeyPair.
-	// Make sure that ssh private key matches AWSKeyPair
-	keyPairName := "avalanche-tooling-sdk-go"
-	if err := createSSHKeyPair(ctx, cp.AWSConfig.AWSProfile, cp.Region, keyPairName, sshPrivateKey); err != nil {
+	keyPairName := "raymond-avalanche-tooling-sdk"
+	sshPrivateKeyPath := utils.ExpandHome("~/.ssh/raymond-avalanche-tooling-sdk.pem")
+	// Create a new AWS SSH key pair if you do not currently have one in your selected AWS region.
+	// Note that the created key pair can only be used in the region that it was created in.
+	// The private key to the created key pair will be stored in the filepath provided in
+	// sshPrivateKeyPath.
+	if err := awsAPI.CreateSSHKeyPair(ctx, cp.AWSConfig.AWSProfile, cp.Region, keyPairName, sshPrivateKeyPath); err != nil {
 		panic(err)
 	}
+	// Set the key pair we are using when creating our Avalanche Nodes
 	cp.AWSConfig.AWSKeyPair = keyPairName
 
-	// Create a new host instance. Count is 1 so only one host will be created
-	// Set the cloud parameters for AWS non provided by the default
-	// Please set your own values for the following fields
-	cp.AWSConfig.AWSProfile = "default"
-	cp.AWSConfig.AWSSecurityGroupID = "AWS_SECURITY_GROUP_ID"
-	cp.AWSConfig.AWSKeyPair = "AWS_KEY_PAIR"
-	if err != nil {
-		panic(err)
-	}
 	// Avalanche-CLI is installed in nodes to enable them to join subnets as validators
 	// Avalanche-CLI dependency by Avalanche nodes will be deprecated in the next release
 	// of Avalanche Tooling SDK
-
 	const (
 		avalancheGoVersion  = "v1.11.8"
 		avalancheCliVersion = "v1.6.2"
@@ -124,7 +68,7 @@ func CreateNodes() {
 			AvalancheGoVersion:  avalancheGoVersion,
 			AvalancheCliVersion: avalancheCliVersion,
 			UseStaticIP:         false,
-			SSHPrivateKey:       sshPrivateKey,
+			SSHPrivateKeyPath:   sshPrivateKeyPath,
 		})
 	if err != nil {
 		panic(err)
@@ -166,10 +110,11 @@ func CreateNodes() {
 	// An example on how the dashboard and logs look like can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-aws
 	monitoringHosts, err := node.CreateNodes(ctx,
 		&node.NodeParams{
-			CloudParams: cp,
-			Count:       1,
-			Roles:       []node.SupportedRole{node.Monitor},
-			UseStaticIP: false,
+			CloudParams:       cp,
+			Count:             1,
+			Roles:             []node.SupportedRole{node.Monitor},
+			UseStaticIP:       false,
+			SSHPrivateKeyPath: sshPrivateKeyPath,
 		})
 	if err != nil {
 		panic(err)
