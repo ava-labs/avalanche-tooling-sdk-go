@@ -6,8 +6,6 @@ package node
 import (
 	"fmt"
 	"net"
-	"net/http"
-	"net/rpc"
 	"net/url"
 	"strings"
 	"time"
@@ -33,47 +31,6 @@ func (h *Node) AvalanchegoTCPClient() (*net.Conn, error) {
 		return nil, fmt.Errorf("unable to port forward to %s via %s", h.connection.RemoteAddr(), "ssh")
 	}
 	return &proxy, nil
-}
-
-type httpTransport struct {
-	Transport http.RoundTripper
-	Scope     string
-}
-
-func (t *httpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if !strings.HasPrefix(req.URL.Path, "/ext/"+t.Scope) {
-		return nil, http.ErrNotSupported
-	}
-	return t.Transport.RoundTrip(req)
-}
-
-// AvalanchegoRPCClient returns the RPC client to the node.
-func (h *Node) AvalanchegoRPCClient(chainID string) (*rpc.Client, error) {
-	proxy, err := h.AvalanchegoTCPClient()
-	if err != nil {
-		return nil, err
-	}
-	if chainID != "" {
-		client := rpc.NewClient(&httpTransport{
-			Transport: proxy.Transport,
-			Scope:     scope,
-		})
-		return client, nil
-	} else {
-		return rpc.NewClient(*proxy), nil
-	}
-}
-
-type scopeFilteringTransport struct {
-	Transport http.RoundTripper
-	Scope     string
-}
-
-func (t *scopeFilteringTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if !strings.HasPrefix(req.URL.Path, "/ext/"+t.Scope) {
-		return nil, http.ErrNotSupported
-	}
-	return t.Transport.RoundTrip(req)
 }
 
 // Post sends a POST request to the node at the specified path with the provided body.
