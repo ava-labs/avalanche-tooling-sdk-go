@@ -225,10 +225,6 @@ func (c *AwsCloud) CreateEC2Instances(count int, amiID, instanceType, keyName, s
 				ResourceType: types.ResourceTypeInstance,
 				Tags: []types.Tag{
 					{
-						Key:   aws.String("Name"),
-						Value: aws.String("avalanche-tooling-sdk-node"),
-					},
-					{
 						Key:   aws.String("Managed-By"),
 						Value: aws.String("avalanche-cli"),
 					},
