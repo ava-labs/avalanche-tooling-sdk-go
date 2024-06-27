@@ -14,16 +14,32 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
+// CloudParams contains the specs of the nodes to be created in AWS / GCP
 type CloudParams struct {
 	// Region to use for the node
 	Region string
 
-	// ImageID is Machine Image ID to use for the node
-	// For example Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
+	// ImageID is Machine Image ID to use for the node.
+	// For example, Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
 	// us-west-2 region is ami-0cf2b4e024cdb6960 at the time of this writing
+	// Note that only Ubuntu Machine Images are supported.
+	// To view list of available Machine Images:
+	// - AWS: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html
+	// - GCP: https://cloud.google.com/compute/docs/images#os-compute-support
+	//
+	// Avalanche Tooling team publishes our own Ubuntu 20.04 Machine Image called Avalanche-CLI
+	// Ubuntu 20.04 Docker on AWS & GCP for both arm64 and amd64 architecture.
+	// A benefit to using Avalanche-CLI Ubuntu 20.04 Docker is that it has all the dependencies
+	// that an Avalanche Node requires (AvalancheGo, gcc, go, etc), thereby decreasing in massive
+	// reduction in time required to provision a node.
+	// TODO: add how to get our amiID
 	ImageID string
 
 	// Instance type of the node
+	// For example c5.2xlarge in AWS
+	// For more information about Instance Types:
+	// - AWS: https://aws.amazon.com/ec2/instance-types/
+	// - GCP: https://cloud.google.com/compute/docs/machine-resource
 	InstanceType string
 
 	// AWS specific configuration

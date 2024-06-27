@@ -11,15 +11,12 @@ const (
 	Undefined NetworkKind = iota
 	Mainnet
 	Fuji
-	Local
 	Devnet
 )
 
 const (
-	LocalNetworkID     = 1337
 	FujiAPIEndpoint    = "https://api.avax-test.network"
 	MainnetAPIEndpoint = "https://api.avax.network"
-	LocalAPIEndpoint   = "http://127.0.0.1:9650"
 )
 
 func (nk NetworkKind) String() string {
@@ -28,8 +25,6 @@ func (nk NetworkKind) String() string {
 		return "Mainnet"
 	case Fuji:
 		return "Fuji"
-	case Local:
-		return "Local Network"
 	case Devnet:
 		return "Devnet"
 	}
@@ -46,8 +41,6 @@ var UndefinedNetwork = Network{}
 
 func (n Network) HRP() string {
 	switch n.ID {
-	case constants.LocalID:
-		return constants.LocalHRP
 	case constants.FujiID:
 		return constants.FujiHRP
 	case constants.MainnetID:
@@ -63,8 +56,6 @@ func NetworkFromNetworkID(networkID uint32) Network {
 		return MainnetNetwork()
 	case constants.FujiID:
 		return FujiNetwork()
-	case LocalNetworkID:
-		return LocalNetwork()
 	}
 	return UndefinedNetwork
 }
@@ -75,10 +66,6 @@ func NewNetwork(kind NetworkKind, id uint32, endpoint string) Network {
 		ID:       id,
 		Endpoint: endpoint,
 	}
-}
-
-func LocalNetwork() Network {
-	return NewNetwork(Local, LocalNetworkID, LocalAPIEndpoint)
 }
 
 func FujiNetwork() Network {
