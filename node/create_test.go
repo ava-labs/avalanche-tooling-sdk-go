@@ -6,11 +6,12 @@ package node
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	"testing"
-	"time"
 )
 
 func TestCreateNodes(_ *testing.T) {
