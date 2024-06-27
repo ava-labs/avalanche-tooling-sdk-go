@@ -17,7 +17,7 @@ type httpTransport struct {
 }
 
 func (t *httpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if !strings.HasPrefix(req.URL.Path, "/ext/"+t.Scope) {
+	if t.Scope != "" && !strings.HasPrefix(req.URL.Path, "/ext/"+t.Scope) {
 		return nil, http.ErrNotSupported
 	}
 	return t.Transport.RoundTrip(req)

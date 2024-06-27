@@ -43,7 +43,7 @@ func (e *EchoService) X(args *Args, reply *string) error {
 
 func startServer() {
 	echo := new(EchoService)
-	rpc.Register(echo)
+	rpc.RegisterName("EchoService", echo)
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", constants.AvalanchegoAPIPort))
 	if err != nil {
@@ -59,6 +59,7 @@ func startServer() {
 			log.Println("Accept error:", err)
 			continue
 		}
+		log.Printf("Accepted connection from %s", conn.RemoteAddr().String())
 		go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
 	}
 }
@@ -68,9 +69,16 @@ type MockNode struct{}
 
 // AvalanchegoTCPClient returns a connection to the local RPC server.
 func (h *MockNode) AvalanchegoTCPClient() (net.Conn, error) {
-	return net.Dial("tcp", fmt.Sprintf(":%d", constants.AvalanchegoAPIPort))
+	return net.Dial("tcp", "127.0.0.1:9650")
 }
 
+// AvalanchegoRPCClient returns the RPC client to the node.
+func (h *MockNode) AvalanchegoRPCClient(chainID string, proxy *net.Conn) (*rpc.Client, error) {
+	client := rpc.NewClientWithCodec(jsonrpc.NewClientCodec(*proxy))
+	return client, nil
+}
+
+// TestAvalanchegoRPCClient tests the RPC client using a proxy connection.
 func TestAvalanchegoRPCClient(t *testing.T) {
 	// Start the RPC server in a goroutine.
 	go startServer()
@@ -86,9 +94,11 @@ func TestAvalanchegoRPCClient(t *testing.T) {
 	}
 	defer proxy.Close()
 
-	fakeNode := &Node{}
+	// Log to check if proxy connection is working.
+	t.Logf("Proxy connection established to %s", proxy.RemoteAddr().String())
+
 	// Test the RPC client with the proxy connection.
-	client, err := fakeNode.AvalanchegoRPCClient("", &proxy)
+	client, err := node.AvalanchegoRPCClient("", &proxy)
 	if err != nil {
 		t.Fatalf("Failed to create RPC client: %v", err)
 	}
@@ -124,4 +134,11 @@ func TestAvalanchegoRPCClient(t *testing.T) {
 	if reply != args.Message {
 		t.Errorf("Expected reply %q, got %q", args.Message, reply)
 	}
+
+	XClient, err := node.AvalanchegoRPCClient("X", &proxy)
+	if err != nil {
+		t.Fatalf("Failed to create RPC client: %v", err)
+	}
+	defer XClient.Close()
+
 }
