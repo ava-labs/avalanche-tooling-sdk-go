@@ -60,7 +60,7 @@ func createSSHKeyPair(ctx context.Context, awsProfile string, awsRegion string, 
 	return ec2Svc.CreateAndDownloadKeyPair(keyPairName, sshPrivateKeyPath)
 }
 
-func main() {
+func CreateNodes() {
 	ctx := context.Background()
 
 	// Get the default cloud parameters for AWS
@@ -91,17 +91,37 @@ func main() {
 	cp.AWSConfig.AWSKeyPair = keyPairName
 
 	// Create a new host instance. Count is 1 so only one host will be created
+	// Set the cloud parameters for AWS non provided by the default
+	// Please set your own values for the following fields
+	cp.AWSConfig.AWSProfile = "default"
+	cp.AWSConfig.AWSSecurityGroupID = "AWS_SECURITY_GROUP_ID"
+	cp.AWSConfig.AWSKeyPair = "AWS_KEY_PAIR"
+	if err != nil {
+		panic(err)
+	}
+	// Avalanche-CLI is installed in nodes to enable them to join subnets as validators
+	// Avalanche-CLI dependency by Avalanche nodes will be deprecated in the next release
+	// of Avalanche Tooling SDK
+
 	const (
-		avalanchegoVersion  = "v1.11.8"
+		avalancheGoVersion  = "v1.11.8"
 		avalancheCliVersion = "v1.6.2"
 	)
+
+	// Create two new Avalanche Validator nodes on Fuji Network on AWS without Elastic IPs
+	// attached. Once CreateNodes is completed, the validators will begin bootstrapping process
+	// to Primary Network in Fuji Network. Nodes need to finish bootstrapping process
+	// before they can validate Avalanche Primary Network / Subnet.
+	//
+	// SDK function for nodes to start validating Primary Network / Subnet will be available
+	// in the next Avalanche Tooling SDK release.
 	hosts, err := node.CreateNodes(ctx,
 		&node.NodeParams{
 			CloudParams:         cp,
 			Count:               2,
 			Roles:               []node.SupportedRole{node.Validator},
 			Network:             avalanche.FujiNetwork(),
-			AvalancheGoVersion:  avalanchegoVersion,
+			AvalancheGoVersion:  avalancheGoVersion,
 			AvalancheCliVersion: avalancheCliVersion,
 			UseStaticIP:         false,
 			SSHPrivateKey:       sshPrivateKey,
@@ -114,8 +134,10 @@ func main() {
 		sshTimeout        = 120 * time.Second
 		sshCommandTimeout = 10 * time.Second
 	)
+
+	// Examples showing how to run ssh commands on the created nodes
 	for _, h := range hosts {
-		// Wait for the host to be ready
+		// Wait for the host to be ready (only needs to be done once for newly created nodes)
 		fmt.Println("Waiting for SSH shell")
 		if err := h.WaitForSSHShell(sshTimeout); err != nil {
 			panic(err)
@@ -136,7 +158,12 @@ func main() {
 			fmt.Println(string(output))
 		}
 	}
-	// Create a monitoring node
+
+	// Create a monitoring node.
+	// Monitoring node enables you to have a centralized Grafana Dashboard where you can view
+	// metrics relevant to any Validator & API nodes that the monitoring node is linked to as well
+	// as a centralized logs for the X/P/C Chain and Subnet logs for the Validator & API nodes.
+	// An example on how the dashboard and logs look like can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-aws
 	monitoringHosts, err := node.CreateNodes(ctx,
 		&node.NodeParams{
 			CloudParams: cp,
@@ -147,7 +174,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Register nodes with monitoring host
+
+	// Link the 2 validator nodes previously created with the monitoring host so that
+	// the monitoring host can start tracking the validator nodes metrics and collecting their logs
 	if err := monitoringHosts[0].MonitorNodes(hosts, ""); err != nil {
 		panic(err)
 	}
