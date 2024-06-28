@@ -743,3 +743,26 @@ func (c *AwsCloud) ChangeInstanceType(instanceID, instanceType string) error {
 	}
 	return nil
 }
+
+func (c *AwsCloud) AddMonitoringSecurityGroupRule(monitoringHostPublicIP, securityGroupName string) error {
+	securityGroupExists, sg, err := c.CheckSecurityGroupExists(securityGroupName)
+	if err != nil {
+		return err
+	}
+	if !securityGroupExists {
+		return fmt.Errorf("security group %s doesn't exist", securityGroupName)
+	}
+	metricsPortInSG := CheckIPInSg(&sg, monitoringHostPublicIP, constants.AvalanchegoMachineMetricsPort)
+	apiPortInSG := CheckIPInSg(&sg, monitoringHostPublicIP, constants.AvalanchegoAPIPort)
+	if !metricsPortInSG {
+		if err = c.AddSecurityGroupRule(*sg.GroupId, "ingress", "tcp", monitoringHostPublicIP+constants.IPAddressSuffix, constants.AvalanchegoMachineMetricsPort); err != nil {
+			return err
+		}
+	}
+	if !apiPortInSG {
+		if err = c.AddSecurityGroupRule(*sg.GroupId, "ingress", "tcp", monitoringHostPublicIP+constants.IPAddressSuffix, constants.AvalanchegoAPIPort); err != nil {
+			return err
+		}
+	}
+	return nil
+}
