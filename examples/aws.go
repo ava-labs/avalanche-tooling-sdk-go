@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package examples
+package main
 
 import (
 	"context"
@@ -12,6 +12,11 @@ import (
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/node"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+)
+
+const (
+	securityGroupName = "avalanche-tooling-sdk-go"
+	keyPairName       = "avalanche-tooling-sdk-go"
 )
 
 // createSecurityGroup creates a new security group in AWS using the specified AWS profile and region.
@@ -34,7 +39,7 @@ func createSecurityGroup(ctx context.Context, awsProfile string, awsRegion strin
 	if err != nil {
 		return "", err
 	}
-	const securityGroupName = "avalanche-tooling-sdk-go"
+
 	return ec2Svc.SetupSecurityGroup(userIPAddress, securityGroupName)
 }
 
@@ -58,6 +63,18 @@ func createSSHKeyPair(ctx context.Context, awsProfile string, awsRegion string, 
 		return err
 	}
 	return ec2Svc.CreateAndDownloadKeyPair(keyPairName, sshPrivateKeyPath)
+}
+
+func whitelistMonitoringAccess(ctx context.Context, awsProfile string, awsRegion string, awsSG string, monitoringIP string) error {
+	ec2Svc, err := awsAPI.NewAwsCloud(
+		ctx,
+		awsProfile,
+		awsRegion,
+	)
+	if err != nil {
+		return err
+	}
+	return ec2Svc.AddMonitoringSecurityGroupRule(monitoringIP, awsSG)
 }
 
 func main() {
@@ -84,7 +101,7 @@ func main() {
 
 	// Create aws ssh key pair or you can provide your own by setting cp.AWSConfig.AWSKeyPair.
 	// Make sure that ssh private key matches AWSKeyPair
-	keyPairName := "avalanche-tooling-sdk-go"
+
 	if err := createSSHKeyPair(ctx, cp.AWSConfig.AWSProfile, cp.Region, keyPairName, sshPrivateKey); err != nil {
 		panic(err)
 	}
@@ -139,12 +156,18 @@ func main() {
 	// Create a monitoring node
 	monitoringHosts, err := node.CreateNodes(ctx,
 		&node.NodeParams{
-			CloudParams: cp,
-			Count:       1,
-			Roles:       []node.SupportedRole{node.Monitor},
-			UseStaticIP: false,
+			CloudParams:   cp,
+			Count:         1,
+			Roles:         []node.SupportedRole{node.Monitor},
+			UseStaticIP:   false,
+			SSHPrivateKey: sshPrivateKey,
 		})
 	if err != nil {
+		panic(err)
+	}
+
+	// Whitelist access to monitoring host IP address
+	if err := whitelistMonitoringAccess(ctx, cp.AWSConfig.AWSProfile, cp.Region, securityGroupName, monitoringHosts[0].IP); err != nil {
 		panic(err)
 	}
 	// Register nodes with monitoring host
