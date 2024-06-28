@@ -363,6 +363,7 @@ func (h *Node) RunSSHCopyMonitoringDashboards(monitoringDashboardPath string) er
 	if err := h.MkdirAll(remoteDashboardsPath, constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}
+	monitoringDashboardPath = filepath.Join(monitoringDashboardPath, constants.DashboardsDir)
 	dashboards, err := os.ReadDir(monitoringDashboardPath)
 	if err != nil {
 		return err
