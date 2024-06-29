@@ -8,7 +8,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,6 +15,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
@@ -295,7 +296,7 @@ func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string)
 		nodeSetKeyName := fmt.Sprintf("%s|%s|%s", node.CloudConfig.AWSConfig.AWSProfile, node.CloudConfig.Region, node.CloudConfig.AWSConfig.AWSSecurityGroupName)
 		nodesSet[nodeSetKeyName] = true
 	}
-	for nodeKey, _ := range nodesSet {
+	for nodeKey := range nodesSet {
 		nodeInfo := strings.Split(nodeKey, "|")
 		// Whitelist access to monitoring host IP address
 		if err := awsAPI.WhitelistMonitoringAccess(ctx, nodeInfo[0], nodeInfo[1], nodeInfo[2], h.IP); err != nil {
