@@ -297,7 +297,6 @@ func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string)
 	}
 	for nodeKey, _ := range nodesSet {
 		nodeInfo := strings.Split(nodeKey, "|")
-		fmt.Printf("whitelisting monitoring access for %s, %s, %s, %s", nodeInfo[0], nodeInfo[1], nodeInfo[2], h.IP)
 		// Whitelist access to monitoring host IP address
 		if err := awsAPI.WhitelistMonitoringAccess(ctx, nodeInfo[0], nodeInfo[1], nodeInfo[2], h.IP); err != nil {
 			return fmt.Errorf("unable to whitelist monitoring access for node %s due to %s", h.NodeID, err.Error())
