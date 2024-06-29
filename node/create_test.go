@@ -6,9 +6,10 @@ package node
 import (
 	"context"
 	"fmt"
-	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	"testing"
 	"time"
+
+	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
