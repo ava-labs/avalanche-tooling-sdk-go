@@ -50,26 +50,30 @@ type CloudParams struct {
 }
 
 type AWSConfig struct {
-	// AWS profile to use for the node
+	// AWSProfile is the AWS profile in AWS credentials file to use for the node
+	// For more information about AWS Profile, head to https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-files.html#cli-configure-files-format-profile
 	AWSProfile string
 
-	// AWS KeyPair to use for the node
+	// AWSKeyPair is name of the KeyPair used to access the node
 	AWSKeyPair string
 
-	// AWS volume size in GB
+	// AWSVolumeSize is AWS volume size in GB
 	AWSVolumeSize int
 
-	// AWS volume type
+	// AWSVolumeType is the AWS volume type
 	AWSVolumeType string
 
-	// AWS volume IOPS
+	// AWSVolumeIOPS AWS volume IOPS
 	AWSVolumeIOPS int
 
-	// AWS volume throughput
+	// AWSVolumeThroughput is AWS volume throughput
 	AWSVolumeThroughput int
 
-	// AWS security group to use for the node
+	// AWSSecurityGroupID is ID of the AWS security group to use for the node
 	AWSSecurityGroupID string
+
+	// AWSSecurityGroupName is name of the AWS security group to use for the node
+	AWSSecurityGroupName string
 }
 
 type GCPConfig struct {
@@ -178,7 +182,10 @@ func (cp *CloudParams) Validate() error {
 			return fmt.Errorf("AWS profile is required")
 		}
 		if cp.AWSConfig.AWSSecurityGroupID == "" {
-			return fmt.Errorf("AWS security group is required")
+			return fmt.Errorf("AWS security group ID is required")
+		}
+		if cp.AWSConfig.AWSSecurityGroupName == "" {
+			return fmt.Errorf("AWS security group Name is required")
 		}
 		if cp.AWSConfig.AWSVolumeSize < 0 {
 			return fmt.Errorf("AWS volume size must be positive")

@@ -5,11 +5,14 @@ package node
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
+	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -285,7 +288,21 @@ func (h *Node) RunSSHSetupMonitoringFolders() error {
 }
 
 // MonitorNodes links all the nodes specified with the monitoring node
-func (h *Node) MonitorNodes(targets []Node, chainID string) error {
+func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string) error {
+	// nodesSet is a map with keys being format of targets.AWSProfile-targets.Region-targets.securityGroupName
+	nodesSet := make(map[string]bool) // New empty set
+	for _, node := range targets {
+		nodeSetKeyName := fmt.Sprintf("%s|%s|%s", node.CloudConfig.AWSConfig.AWSProfile, node.CloudConfig.Region, node.CloudConfig.AWSConfig.AWSSecurityGroupName)
+		nodesSet[nodeSetKeyName] = true
+	}
+	for nodeKey, _ := range nodesSet {
+		nodeInfo := strings.Split(nodeKey, "|")
+		fmt.Printf("whitelisting monitoring access for %s, %s, %s, %s", nodeInfo[0], nodeInfo[1], nodeInfo[2], h.IP)
+		// Whitelist access to monitoring host IP address
+		if err := awsAPI.WhitelistMonitoringAccess(ctx, nodeInfo[0], nodeInfo[1], nodeInfo[2], h.IP); err != nil {
+			return fmt.Errorf("unable to whitelist monitoring access for node %s due to %s", h.NodeID, err.Error())
+		}
+	}
 	// necessary checks
 	if !isMonitoringNode(*h) {
 		return fmt.Errorf("%s is not a monitoring node", h.NodeID)
