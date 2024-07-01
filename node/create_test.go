@@ -9,8 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
@@ -22,12 +23,14 @@ func TestCreateNodes(_ *testing.T) {
 		panic(err)
 	}
 
-	sgID, err := awsAPI.CreateSecurityGroup(ctx, "raymond-avalanche-tooling-sdk-sg", cp.AWSConfig.AWSProfile, cp.Region)
+	securityGroupName := "raymond-avalanche-tooling-sdk-sg"
+	sgID, err := awsAPI.CreateSecurityGroup(ctx, securityGroupName, cp.AWSConfig.AWSProfile, cp.Region)
 	if err != nil {
 		panic(err)
 	}
 	// Set the security group we are using when creating our Avalanche Nodes
 	cp.AWSConfig.AWSSecurityGroupID = sgID
+	cp.AWSConfig.AWSSecurityGroupName = securityGroupName
 
 	keyPairName := "raymond-avalanche-tooling-sdk"
 	sshPrivateKeyPath := utils.ExpandHome("~/.ssh/raymond-avalanche-tooling-sdk.pem")
@@ -119,7 +122,7 @@ func TestCreateNodes(_ *testing.T) {
 	fmt.Println("Linking monitoring node with Avalanche Validator nodes ...")
 	// Link the 2 validator nodes previously created with the monitoring host so that
 	// the monitoring host can start tracking the validator nodes metrics and collecting their logs
-	if err := monitoringHosts[0].MonitorNodes(hosts, ""); err != nil {
+	if err := monitoringHosts[0].MonitorNodes(ctx, hosts, ""); err != nil {
 		panic(err)
 	}
 	fmt.Println("Successfully linked monitoring node with Avalanche Validator nodes")

@@ -819,3 +819,15 @@ func (c *AwsCloud) AddMonitoringSecurityGroupRule(monitoringHostPublicIP, securi
 	}
 	return nil
 }
+
+func WhitelistMonitoringAccess(ctx context.Context, awsProfile string, awsRegion string, awsSG string, monitoringIP string) error {
+	ec2Svc, err := NewAwsCloud(
+		ctx,
+		awsProfile,
+		awsRegion,
+	)
+	if err != nil {
+		return err
+	}
+	return ec2Svc.AddMonitoringSecurityGroupRule(monitoringIP, awsSG)
+}
