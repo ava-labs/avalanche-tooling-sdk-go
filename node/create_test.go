@@ -23,7 +23,7 @@ func TestCreateNodes(_ *testing.T) {
 		panic(err)
 	}
 
-	securityGroupName := "raymond-avalanche-tooling-sdk-sg"
+	securityGroupName := "SECURITY_GROUP_NAME"
 	sgID, err := awsAPI.CreateSecurityGroup(ctx, securityGroupName, cp.AWSConfig.AWSProfile, cp.Region)
 	if err != nil {
 		panic(err)
@@ -32,8 +32,8 @@ func TestCreateNodes(_ *testing.T) {
 	cp.AWSConfig.AWSSecurityGroupID = sgID
 	cp.AWSConfig.AWSSecurityGroupName = securityGroupName
 
-	keyPairName := "raymond-avalanche-tooling-sdk"
-	sshPrivateKeyPath := utils.ExpandHome("~/.ssh/raymond-avalanche-tooling-sdk.pem")
+	keyPairName := "KEY_PAIR_NAME"
+	sshPrivateKeyPath := utils.ExpandHome("PRIVATE_KEY_FILEPATH")
 	if err := awsAPI.CreateSSHKeyPair(ctx, cp.AWSConfig.AWSProfile, cp.Region, keyPairName, sshPrivateKeyPath); err != nil {
 		panic(err)
 	}

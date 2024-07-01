@@ -289,6 +289,8 @@ func (h *Node) RunSSHSetupMonitoringFolders() error {
 }
 
 // MonitorNodes links all the nodes specified with the monitoring node
+// so that the monitoring host can start tracking the validator nodes metrics and collecting their
+// logs
 func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string) error {
 	// nodesSet is a map with keys being format of targets.AWSProfile-targets.Region-targets.securityGroupName
 	nodesSet := make(map[string]bool) // New empty set
