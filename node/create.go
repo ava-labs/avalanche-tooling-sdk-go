@@ -24,7 +24,7 @@ type NodeParams struct {
 	// Count is how many Avalanche Nodes to be created during CreateNodes
 	Count int
 
-	// Roles is whether the created node is going to be a Validator / API / Monitoring / Load Test
+	// Roles pertain to whether the created node is going to be a Validator / API / Monitoring
 	// node. See CheckRoles to see which combination of roles for a node is supported.
 	Roles []SupportedRole
 
@@ -49,14 +49,14 @@ type NodeParams struct {
 }
 
 // CreateNodes launches the specified number of nodes on the selected cloud platform.
-// The role of the node (Avalanche Validator / API / monitoring / load test node) is
+// The role of the node (Avalanche Validator / API / monitoring node) is
 // specified through CloudParams in the input NodeParams
 //
-// Prior to calling CreateNodes, the credentials for AWS / GCP will first need to be set up.
-// To set up AWS credentials, more info can be found at https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html#file-format-creds
-// location on where to store AWS credentials file can be found at https://docs.aws.amazon.com/sdkref/latest/guide/file-location.html
+// Prior to calling CreateNodes, the credentials for AWS / GCP will first need to be set up:
+// - To set up AWS credentials, more info can be found at https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html#file-format-creds
+// Location on where to store AWS credentials file can be found at https://docs.aws.amazon.com/sdkref/latest/guide/file-location.html
 //
-// To set up GCP credentials, more info can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-gcp#prerequisites
+// - To set up GCP credentials, more info can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-gcp#prerequisites
 //
 // When CreateNodes is used to create Avalanche Validator / API Nodes, it will:
 //   - Launch the specified number of validator nodes on AWS / GCP
@@ -68,6 +68,14 @@ type NodeParams struct {
 //   - Launch the specified number of validator nodes on AWS / GCP
 //   - Install Docker and have required dependencies (gcc, go, Prometheus, Grafana, Loki,
 //     node_exporter) installed as Docker images.
+//   - For more
+//
+// NOTE:
+// Monitoring node enables you to have a centralized Grafana Dashboard where you can view
+// metrics relevant to any Validator & API nodes that the monitoring node is linked to as well
+// as a centralized logs for the X/P/C Chain and Subnet logs for the Validator & API nodes.
+//
+// An example on how the dashboard and logs look like can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-aws
 //
 // To enable centralized Grafana Dashboard and Logs, monitoring nodes will have to be linked to the
 // Validator / API nodes by calling MonitorNodes function.

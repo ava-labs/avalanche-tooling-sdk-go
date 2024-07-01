@@ -40,6 +40,7 @@ type SSHConfig struct {
 	Params map[string]string // additional parameters to pass to the ssh command
 }
 
+// Node is an output of CreateNodes
 type Node struct {
 	// NodeID is Avalanche Node ID of the node
 	NodeID string

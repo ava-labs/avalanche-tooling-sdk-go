@@ -14,7 +14,8 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
-// CloudParams contains the specs of the nodes to be created in AWS / GCP
+// CloudParams contains the specs of the nodes to be created in AWS / GCP.
+// For the minimum recommended hardware specification for nodes connected to Mainnet, head to https://github.com/ava-labs/avalanchego?tab=readme-ov-file#installation
 type CloudParams struct {
 	// Region to use for the node
 	Region string
@@ -27,12 +28,14 @@ type CloudParams struct {
 	// - AWS: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html
 	// - GCP: https://cloud.google.com/compute/docs/images#os-compute-support
 	//
-	// Avalanche Tooling team publishes our own Ubuntu 20.04 Machine Image called Avalanche-CLI
+	// Avalanche Tooling publishes our own Ubuntu 20.04 Machine Image called Avalanche-CLI
 	// Ubuntu 20.04 Docker on AWS & GCP for both arm64 and amd64 architecture.
 	// A benefit to using Avalanche-CLI Ubuntu 20.04 Docker is that it has all the dependencies
 	// that an Avalanche Node requires (AvalancheGo, gcc, go, etc), thereby decreasing in massive
-	// reduction in time required to provision a node.
-	// TODO: add how to get our amiID
+	// reduction in the time required to provision a node.
+	//
+	// To get the AMI ID of the Avalanche Tooling Ubuntu 20.04 Machine Image, call
+	// GetAvalancheUbuntuAMIID function.
 	ImageID string
 
 	// Instance type of the node
@@ -54,19 +57,23 @@ type AWSConfig struct {
 	// For more information about AWS Profile, head to https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-files.html#cli-configure-files-format-profile
 	AWSProfile string
 
-	// AWSKeyPair is name of the KeyPair used to access the node
+	// AWSKeyPair is the name of the KeyPair used to access the node
 	AWSKeyPair string
 
-	// AWSVolumeSize is AWS volume size in GB
+	// AWSVolumeSize is AWS EBS volume size in GB
 	AWSVolumeSize int
 
-	// AWSVolumeType is the AWS volume type
+	// AWSVolumeType is the AWS EBS volume type
+	// For example gp2 / gp3
+	// For more information on AWS EBS volume types, head to https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
 	AWSVolumeType string
 
-	// AWSVolumeIOPS AWS volume IOPS
+	// AWSVolumeIOPS is the IOPS of an AWS EBS volume
+	// For more information on the IOPS of various EBS volume types, head to https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
 	AWSVolumeIOPS int
 
 	// AWSVolumeThroughput is AWS volume throughput
+	// For more information on the throughput of various EBS volume types, head to https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
 	AWSVolumeThroughput int
 
 	// AWSSecurityGroupID is ID of the AWS security group to use for the node
@@ -119,7 +126,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		imageID, err := awsSvc.GetUbuntuAMIID(arch, constants.UbuntuVersionLTS)
+		imageID, err := awsSvc.GetAvalancheUbuntuAMIID(arch, constants.UbuntuVersionLTS)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +157,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		imageID, err := gcpSvc.GetUbuntuimageID()
+		imageID, err := gcpSvc.GetAvalancheUbuntuAMIID()
 		if err != nil {
 			return nil, err
 		}
