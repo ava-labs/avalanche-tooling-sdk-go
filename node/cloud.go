@@ -104,7 +104,7 @@ type GCPConfig struct {
 }
 
 // GetDefaultCloudParams returns the following specs:
-//-  AWSVolumeType:       "gp3",
+// -  AWSVolumeType:       "gp3",
 // - AWSVolumeSize:       1000,
 // - AWSVolumeThroughput: 500,
 // - AWSVolumeIOPS:       1000,
