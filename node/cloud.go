@@ -103,6 +103,13 @@ type GCPConfig struct {
 	GCPSSHKey string
 }
 
+// GetDefaultCloudParams returns the following specs:
+//-  AWSVolumeType:       "gp3",
+// - AWSVolumeSize:       1000,
+// - AWSVolumeThroughput: 500,
+// - AWSVolumeIOPS:       1000,
+// - InstanceType: 		  "c5.2xlarge" (AWS), "e2-standard-8" (GCP)
+// - AMI:				  Avalanche-CLI Ubuntu 20.04
 func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudParams, error) {
 	// make sure that CloudParams is initialized with default values
 	switch cloud {
