@@ -126,4 +126,16 @@ func CreateNodes() {
 	if err := monitoringHosts[0].MonitorNodes(ctx, hosts, ""); err != nil {
 		panic(err)
 	}
+
+	// Destroy all created nodes
+	for _, h := range hosts {
+		err = h.Destroy(ctx)
+		if err != nil {
+			panic(err)
+		}
+	}
+	err = monitoringHosts[0].Destroy(ctx)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -176,9 +176,10 @@ func CreateNodes() {
 		panic(err)
 	}
 
+	securityGroupName := "SECURITY_GROUP_NAME"
 	// Create a new security group in AWS if you do not currently have one in the selected
 	// AWS region.
-	sgID, err := awsAPI.CreateSecurityGroup(ctx, "SECURITY_GROUP_NAME", cp.AWSConfig.AWSProfile, cp.Region)
+	sgID, err := awsAPI.CreateSecurityGroup(ctx, securityGroupName, cp.AWSConfig.AWSProfile, cp.Region)
 	if err != nil {
 		panic(err)
 	}
@@ -275,7 +276,7 @@ func CreateNodes() {
 
 	// Link the 2 validator nodes previously created with the monitoring host so that
 	// the monitoring host can start tracking the validator nodes metrics and collecting their logs
-	if err := monitoringHosts[0].MonitorNodes(hosts, ""); err != nil {
+	if err := monitoringHosts[0].MonitorNodes(ctx, hosts, ""); err != nil {
 		panic(err)
 	}
 }
