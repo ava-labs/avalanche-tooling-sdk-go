@@ -14,16 +14,35 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
+// CloudParams contains the specs of the nodes to be created in AWS / GCP.
+// For the minimum recommended hardware specification for nodes connected to Mainnet, head to https://github.com/ava-labs/avalanchego?tab=readme-ov-file#installation
 type CloudParams struct {
 	// Region to use for the node
 	Region string
 
-	// ImageID is Machine Image ID to use for the node
-	// For example Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
+	// ImageID is Machine Image ID to use for the node.
+	// For example, Machine Image ID for Ubuntu 22.04 LTS (HVM), SSD Volume Type on AWS in
 	// us-west-2 region is ami-0cf2b4e024cdb6960 at the time of this writing
+	// Note that only Ubuntu Machine Images are supported.
+	// To view list of available Machine Images:
+	// - AWS: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html
+	// - GCP: https://cloud.google.com/compute/docs/images#os-compute-support
+	//
+	// Avalanche Tooling publishes our own Ubuntu 20.04 Machine Image called Avalanche-CLI
+	// Ubuntu 20.04 Docker on AWS & GCP for both arm64 and amd64 architecture.
+	// A benefit to using Avalanche-CLI Ubuntu 20.04 Docker is that it has all the dependencies
+	// that an Avalanche Node requires (AvalancheGo, gcc, go, etc), thereby decreasing in massive
+	// reduction in the time required to provision a node.
+	//
+	// To get the AMI ID of the Avalanche Tooling Ubuntu 20.04 Machine Image, call
+	// GetAvalancheUbuntuAMIID function.
 	ImageID string
 
 	// Instance type of the node
+	// For example c5.2xlarge in AWS
+	// For more information about Instance Types:
+	// - AWS: https://aws.amazon.com/ec2/instance-types/
+	// - GCP: https://cloud.google.com/compute/docs/machine-resource
 	InstanceType string
 
 	// AWS specific configuration
@@ -34,26 +53,34 @@ type CloudParams struct {
 }
 
 type AWSConfig struct {
-	// AWS profile to use for the node
+	// AWSProfile is the AWS profile in AWS credentials file to use for the node
+	// For more information about AWS Profile, head to https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-files.html#cli-configure-files-format-profile
 	AWSProfile string
 
-	// AWS KeyPair to use for the node
+	// AWSKeyPair is the name of the KeyPair used to access the node
 	AWSKeyPair string
 
-	// AWS volume size in GB
+	// AWSVolumeSize is AWS EBS volume size in GB
 	AWSVolumeSize int
 
-	// AWS volume type
+	// AWSVolumeType is the AWS EBS volume type
+	// For example gp2 / gp3
+	// For more information on AWS EBS volume types, head to https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
 	AWSVolumeType string
 
-	// AWS volume IOPS
+	// AWSVolumeIOPS is the IOPS of an AWS EBS volume
+	// For more information on the IOPS of various EBS volume types, head to https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
 	AWSVolumeIOPS int
 
-	// AWS volume throughput
+	// AWSVolumeThroughput is AWS volume throughput
+	// For more information on the throughput of various EBS volume types, head to https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
 	AWSVolumeThroughput int
 
-	// AWS security group to use for the node
+	// AWSSecurityGroupID is ID of the AWS security group to use for the node
 	AWSSecurityGroupID string
+
+	// AWSSecurityGroupName is name of the AWS security group to use for the node
+	AWSSecurityGroupName string
 }
 
 type GCPConfig struct {
@@ -76,7 +103,13 @@ type GCPConfig struct {
 	GCPSSHKey string
 }
 
-// New returns a new CloudParams with
+// GetDefaultCloudParams returns the following specs:
+// -  AWSVolumeType:       "gp3",
+// - AWSVolumeSize:       1000,
+// - AWSVolumeThroughput: 500,
+// - AWSVolumeIOPS:       1000,
+// - InstanceType: 		  "c5.2xlarge" (AWS), "e2-standard-8" (GCP)
+// - AMI:				  Avalanche-CLI Ubuntu 20.04
 func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudParams, error) {
 	// make sure that CloudParams is initialized with default values
 	switch cloud {
@@ -84,7 +117,6 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		cp := &CloudParams{
 			AWSConfig: &AWSConfig{
 				AWSProfile:          "default",
-				AWSKeyPair:          "default",
 				AWSVolumeSize:       1000,
 				AWSVolumeThroughput: 500,
 				AWSVolumeIOPS:       1000,
@@ -101,7 +133,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		imageID, err := awsSvc.GetUbuntuAMIID(arch, constants.UbuntuVersionLTS)
+		imageID, err := awsSvc.GetAvalancheUbuntuAMIID(arch, constants.UbuntuVersionLTS)
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +164,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 		if err != nil {
 			return nil, err
 		}
-		imageID, err := gcpSvc.GetUbuntuimageID()
+		imageID, err := gcpSvc.GetAvalancheUbuntuAMIID()
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +196,10 @@ func (cp *CloudParams) Validate() error {
 			return fmt.Errorf("AWS profile is required")
 		}
 		if cp.AWSConfig.AWSSecurityGroupID == "" {
-			return fmt.Errorf("AWS security group is required")
+			return fmt.Errorf("AWS security group ID is required")
+		}
+		if cp.AWSConfig.AWSSecurityGroupName == "" {
+			return fmt.Errorf("AWS security group Name is required")
 		}
 		if cp.AWSConfig.AWSVolumeSize < 0 {
 			return fmt.Errorf("AWS volume size must be positive")

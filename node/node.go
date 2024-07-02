@@ -40,6 +40,7 @@ type SSHConfig struct {
 	Params map[string]string // additional parameters to pass to the ssh command
 }
 
+// Node is an output of CreateNodes
 type Node struct {
 	// NodeID is Avalanche Node ID of the node
 	NodeID string
@@ -549,8 +550,8 @@ func consumeOutput(ctx context.Context, output io.Reader) error {
 	return scanner.Err()
 }
 
-// HasSystemDAvaliable checks if systemd is available on a remote node.
-func (h *Node) IsSystemD() bool {
+// HasSystemDAvailable checks if systemd is available on a remote host.
+func (h *Node) HasSystemDAvailable() bool {
 	// check for the folder
 	if _, err := h.FileExists("/run/systemd/system"); err != nil {
 		return false

@@ -9,7 +9,6 @@ type VMType string
 
 const (
 	SubnetEvm = "Subnet-EVM"
-	CustomVM  = "Custom"
 )
 
 func (v VMType) RepoName() string {

@@ -225,6 +225,10 @@ func (c *AwsCloud) CreateEC2Instances(count int, amiID, instanceType, keyName, s
 				ResourceType: types.ResourceTypeInstance,
 				Tags: []types.Tag{
 					{
+						Key:   aws.String("Name"),
+						Value: aws.String("avalanche-tooling-sdk-node"),
+					},
+					{
 						Key:   aws.String("Managed-By"),
 						Value: aws.String("avalanche-cli"),
 					},
@@ -532,8 +536,15 @@ func (c *AwsCloud) CheckKeyPairExists(kpName string) (bool, error) {
 	return true, nil
 }
 
-// GetUbuntuAMIID returns the ID of the latest Ubuntu Amazon Machine Image (AMI).
-func (c *AwsCloud) GetUbuntuAMIID(arch string, ubuntuVerLTS string) (string, error) {
+// GetAvalancheUbuntuAMIID returns the ID of the latest Ubuntu Amazon Machine Image (AMI) published
+// by Avalanche Tooling on AWS.
+//
+// Avalanche Tooling publishes our own Ubuntu 20.04 Machine Image called Avalanche-CLI
+// Ubuntu 20.04 Docker for both arm64 and amd64 architecture.
+// A benefit to using Avalanche-CLI Ubuntu 20.04 Docker is that it has all the dependencies
+// that an Avalanche Node requires (AvalancheGo, gcc, go, etc), thereby decreasing in massive
+// reduction in the time required to provision a node.
+func (c *AwsCloud) GetAvalancheUbuntuAMIID(arch string, ubuntuVerLTS string) (string, error) {
 	if !utils.ArchSupported(arch) {
 		return "", fmt.Errorf("unsupported architecture: %s", arch)
 	}
@@ -744,6 +755,55 @@ func (c *AwsCloud) ChangeInstanceType(instanceID, instanceType string) error {
 	return nil
 }
 
+// CreateSecurityGroup creates a new Security Group in AWS using the specified AWS profile and
+// region.
+//
+// ctx: The context.Context object for the request.
+// awsProfile: The AWS profile to use for the request.
+// awsRegion: The AWS region to use for the request.
+// Returns the ID of the created security group and an error, if any.
+func CreateSecurityGroup(ctx context.Context, securityGroupName, awsProfile, awsRegion string) (string, error) {
+	ec2Svc, err := NewAwsCloud(
+		ctx,
+		awsProfile,
+		awsRegion,
+	)
+	if err != nil {
+		return "", err
+	}
+	// detect user IP address
+	userIPAddress, err := utils.GetUserIPAddress()
+	if err != nil {
+		return "", err
+	}
+	return ec2Svc.SetupSecurityGroup(userIPAddress, securityGroupName)
+}
+
+// CreateSSHKeyPair creates a new SSH key pair for AWS in the specified AWS region.
+// The private key to the created key pair will be downloaded and  stored in the filepath provided
+// in sshPrivateKeyPath.
+// createSSHKeyPair will return an error if the filepath sshPrivateKeyPath is not empty
+//
+// ctx: The context for the request.
+// awsProfile: The AWS profile to use for the request.
+// awsRegion: The AWS region to use for the request.
+// sshPrivateKeyPath: The path to save the SSH private key.
+// Returns an error if unable to create the key pair.
+func CreateSSHKeyPair(ctx context.Context, awsProfile string, awsRegion string, keyPairName string, sshPrivateKeyPath string) error {
+	if utils.FileExists(sshPrivateKeyPath) {
+		return fmt.Errorf("ssh private key path %s is not empty", sshPrivateKeyPath)
+	}
+	ec2Svc, err := NewAwsCloud(
+		ctx,
+		awsProfile,
+		awsRegion,
+	)
+	if err != nil {
+		return err
+	}
+	return ec2Svc.CreateAndDownloadKeyPair(keyPairName, sshPrivateKeyPath)
+}
+
 func (c *AwsCloud) AddMonitoringSecurityGroupRule(monitoringHostPublicIP, securityGroupName string) error {
 	securityGroupExists, sg, err := c.CheckSecurityGroupExists(securityGroupName)
 	if err != nil {
@@ -765,4 +825,16 @@ func (c *AwsCloud) AddMonitoringSecurityGroupRule(monitoringHostPublicIP, securi
 		}
 	}
 	return nil
+}
+
+func WhitelistMonitoringAccess(ctx context.Context, awsProfile string, awsRegion string, awsSG string, monitoringIP string) error {
+	ec2Svc, err := NewAwsCloud(
+		ctx,
+		awsProfile,
+		awsRegion,
+	)
+	if err != nil {
+		return err
+	}
+	return ec2Svc.AddMonitoringSecurityGroupRule(monitoringIP, awsSG)
 }
