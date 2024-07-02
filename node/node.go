@@ -550,8 +550,8 @@ func consumeOutput(ctx context.Context, output io.Reader) error {
 	return scanner.Err()
 }
 
-// HasSystemDAvaliable checks if systemd is available on a remote node.
-func (h *Node) IsSystemD() bool {
+// HasSystemDAvailable checks if systemd is available on a remote host.
+func (h *Node) HasSystemDAvailable() bool {
 	// check for the folder
 	if _, err := h.FileExists("/run/systemd/system"); err != nil {
 		return false

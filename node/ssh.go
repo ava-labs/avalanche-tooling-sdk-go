@@ -97,7 +97,7 @@ func (h *Node) RunSSHSetupNode(cliVersion string) error {
 
 // RunSSHSetupDockerService runs script to setup docker compose service for CLI
 func (h *Node) RunSSHSetupDockerService() error {
-	if h.IsSystemD() {
+	if h.HasSystemDAvailable() {
 		return h.RunOverSSH(
 			"Setup Docker Service",
 			constants.SSHLongRunningScriptTimeout,
