@@ -5,14 +5,18 @@ package node
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
+
+	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
@@ -93,7 +97,7 @@ func (h *Node) RunSSHSetupNode(cliVersion string) error {
 
 // RunSSHSetupDockerService runs script to setup docker compose service for CLI
 func (h *Node) RunSSHSetupDockerService() error {
-	if h.IsSystemD() {
+	if h.HasSystemDAvailable() {
 		return h.RunOverSSH(
 			"Setup Docker Service",
 			constants.SSHLongRunningScriptTimeout,
@@ -284,8 +288,23 @@ func (h *Node) RunSSHSetupMonitoringFolders() error {
 	return nil
 }
 
-// RegisterWithMonitoring registers the node with the monitoring service
-func (h *Node) MonitorNodes(targets []Node, chainID string) error {
+// MonitorNodes links all the nodes specified with the monitoring node
+// so that the monitoring host can start tracking the validator nodes metrics and collecting their
+// logs
+func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string) error {
+	// nodesSet is a map with keys being format of targets.AWSProfile-targets.Region-targets.securityGroupName
+	nodesSet := make(map[string]bool) // New empty set
+	for _, node := range targets {
+		nodeSetKeyName := fmt.Sprintf("%s|%s|%s", node.CloudConfig.AWSConfig.AWSProfile, node.CloudConfig.Region, node.CloudConfig.AWSConfig.AWSSecurityGroupName)
+		nodesSet[nodeSetKeyName] = true
+	}
+	for nodeKey := range nodesSet {
+		nodeInfo := strings.Split(nodeKey, "|")
+		// Whitelist access to monitoring host IP address
+		if err := awsAPI.WhitelistMonitoringAccess(ctx, nodeInfo[0], nodeInfo[1], nodeInfo[2], h.IP); err != nil {
+			return fmt.Errorf("unable to whitelist monitoring access for node %s due to %s", h.NodeID, err.Error())
+		}
+	}
 	// necessary checks
 	if !isMonitoringNode(*h) {
 		return fmt.Errorf("%s is not a monitoring node", h.NodeID)

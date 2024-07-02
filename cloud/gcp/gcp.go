@@ -319,10 +319,15 @@ func (c *GcpCloud) SetupInstances(
 	return instances, nil
 }
 
-// // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
-// // See the file LICENSE for licensing terms.
-
-func (c *GcpCloud) GetUbuntuimageID() (string, error) {
+// GetAvalancheUbuntuAMIID returns the ID of the latest Ubuntu Amazon Machine Image (AMI) published
+// by Avalanche Tooling on GCP.
+//
+// Avalanche Tooling publishes our own Ubuntu 20.04 Machine Image called Avalanche-CLI
+// Ubuntu 20.04 Docker for both arm64 and amd64 architecture.
+// A benefit to using Avalanche-CLI Ubuntu 20.04 Docker is that it has all the dependencies
+// that an Avalanche Node requires (AvalancheGo, gcc, go, etc), thereby decreasing in massive
+// reduction in the time required to provision a node.
+func (c *GcpCloud) GetAvalancheUbuntuAMIID() (string, error) {
 	imageListCall := c.gcpClient.Images.List(constants.GCPDefaultImageProvider).Filter(constants.GCPImageFilter)
 	imageList, err := imageListCall.Do()
 	if err != nil {
