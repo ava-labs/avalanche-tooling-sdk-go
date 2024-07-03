@@ -13,11 +13,11 @@ dependencies (AvalancheGo, gcc, Promtail, Grafana, etc).
 Currently, only stored keys are supported for transaction building and signing, ledger support is 
 coming soon.
 
-Future SDK releases will contain the following features: 
-- Additional Subnet SDK features (i.e. Adding Validators to a Subnet, Custom Subnets, Exporting Subnets)
-- Ledger Support 
-- Teleporter Support
-- Nodes SDK (Have Avalanche nodes validate a Subnet & Primary Network)
+Future SDK releases will contain the following features (in order of priority): 
+- Additional Nodes SDK features (Have Avalanche nodes validate a Subnet & Primary Network)
+- Additional Subnet SDK features (i.e. Adding Validators to a Subnet, Custom Subnets)
+- Teleporter SDK
+- Ledger SDK
 
 ## Getting Started
 
