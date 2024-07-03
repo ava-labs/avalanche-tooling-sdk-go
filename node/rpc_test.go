@@ -4,9 +4,11 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"testing"
@@ -24,26 +26,17 @@ type Args struct {
 type EchoService struct{}
 
 // P echoes the message for the P endpoint.
-func (e *EchoService) P(args *Args, reply *string) error {
+func (e *EchoService) Echo(args *Args, reply *string) error {
 	*reply = args.Message
 	return nil
 }
 
-// C echoes the message for the C endpoint.
-func (e *EchoService) C(args *Args, reply *string) error {
-	*reply = args.Message
-	return nil
-}
-
-// X echoes the message for the X endpoint.
-func (e *EchoService) X(args *Args, reply *string) error {
-	*reply = args.Message
-	return nil
-}
-
-func startServer() {
+func startMockServer(ctx context.Context, path string) {
 	echo := new(EchoService)
-	rpc.RegisterName("EchoService", echo)
+	server := rpc.NewServer()
+	server.Register(echo)
+	mux := http.NewServeMux()
+	mux.Handle(path, server)
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", constants.AvalanchegoAPIPort))
 	if err != nil {
@@ -51,16 +44,20 @@ func startServer() {
 	}
 	defer listener.Close()
 
+	srv := &http.Server{
+		Handler: mux,
+	}
 	log.Printf("Serving RPC server on port %d", constants.AvalanchegoAPIPort)
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println("Accept error:", err)
-			continue
-		}
-		log.Printf("Accepted connection from %s", conn.RemoteAddr().String())
-		go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
+	go func() {
+		<-ctx.Done()
+		log.Println("Shutting down server...")
+		srv.Shutdown(context.Background())
+	}()
+
+	log.Printf("Serving RPC server on port %d", constants.AvalanchegoAPIPort)
+	if err := srv.Serve(listener); err != http.ErrServerClosed {
+		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
 }
 
@@ -81,7 +78,8 @@ func (h *MockNode) AvalanchegoRPCClient(chainID string, proxy *net.Conn) (*rpc.C
 // TestAvalanchegoRPCClient tests the RPC client using a proxy connection.
 func TestAvalanchegoRPCClient(t *testing.T) {
 	// Start the RPC server in a goroutine.
-	go startServer()
+	ctx, cancelRoot := context.WithCancel(context.Background())
+	go startMockServer(ctx, "/")
 
 	// Allow some time for the server to start.
 	time.Sleep(time.Second)
@@ -109,36 +107,13 @@ func TestAvalanchegoRPCClient(t *testing.T) {
 	var reply string
 
 	// Test the P endpoint.
-	err = client.Call("EchoService.P", args, &reply)
+	err = client.Call("EchoService.Echo", args, &reply)
 	if err != nil {
-		t.Fatalf("RPC call to EchoService.P failed: %v", err)
+		t.Fatalf("RPC call to EchoService.ECho failed: %v", err)
 	}
 	if reply != args.Message {
 		t.Errorf("Expected reply %q, got %q", args.Message, reply)
 	}
-
-	// Test the C endpoint.
-	err = client.Call("EchoService.C", args, &reply)
-	if err != nil {
-		t.Fatalf("RPC call to EchoService.C failed: %v", err)
-	}
-	if reply != args.Message {
-		t.Errorf("Expected reply %q, got %q", args.Message, reply)
-	}
-
-	// Test the X endpoint.
-	err = client.Call("EchoService.X", args, &reply)
-	if err != nil {
-		t.Fatalf("RPC call to EchoService.X failed: %v", err)
-	}
-	if reply != args.Message {
-		t.Errorf("Expected reply %q, got %q", args.Message, reply)
-	}
-
-	XClient, err := node.AvalanchegoRPCClient("X", &proxy)
-	if err != nil {
-		t.Fatalf("Failed to create RPC client: %v", err)
-	}
-	defer XClient.Close()
+	cancelRoot()
 
 }

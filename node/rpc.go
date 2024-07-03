@@ -17,7 +17,7 @@ type httpTransport struct {
 }
 
 func (t *httpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if t.Scope != "" && !strings.HasPrefix(req.URL.Path, "/ext/"+t.Scope) {
+	if t.Scope != "" && !strings.HasPrefix(req.URL.Path, "/ext/bc/"+t.Scope) {
 		return nil, http.ErrNotSupported
 	}
 	return t.Transport.RoundTrip(req)
@@ -45,6 +45,7 @@ func (h *Node) AvalanchegoRPCClient(chainID string, proxy *net.Conn) (*rpc.Clien
 			return nil, err
 		}
 	}
+	// create transport
 	transport := &http.Transport{
 		Dial: func(network, addr string) (net.Conn, error) {
 			return *proxy, nil
