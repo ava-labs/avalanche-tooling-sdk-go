@@ -27,9 +27,9 @@ func DeploySubnetMultiSig() {
 	// Create three keys that will be used as control keys of the subnet
 	// NewKeychain will generate a new key pair in the provided path if no .pk file currently
 	// exists in the provided path
-	keychainA, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk")
-	keychainB, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKey2.pk")
-	keychainC, _ := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKey10.pk")
+	keychainA, _ := keychain.NewKeychain(network, "KEY_PATH_A")
+	keychainB, _ := keychain.NewKeychain(network, "KEY_PATH_B")
+	keychainC, _ := keychain.NewKeychain(network, "KEY_PATH_C")
 
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key
