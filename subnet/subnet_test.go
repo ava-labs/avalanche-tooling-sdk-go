@@ -42,7 +42,7 @@ func TestSubnetDeploy(_ *testing.T) {
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, _ := New(&subnetParams)
 	network := avalanche.FujiNetwork()
-	keychain, _ := keychain.NewKeychain(network, "KEY_PATH")
+	keychain, _ := keychain.NewKeychain(network, "KEY_PATH", nil)
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1

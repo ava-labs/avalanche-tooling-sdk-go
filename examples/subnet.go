@@ -48,7 +48,7 @@ func DeploySubnet() {
 	// Key that will be used for paying the transaction fees of CreateSubnetTx and CreateChainTx
 	// NewKeychain will generate a new key pair in the provided path if no .pk file currently
 	// exists in the provided path
-	keychain, _ := keychain.NewKeychain(network, "KEY_PATH")
+	keychain, _ := keychain.NewKeychain(network, "KEY_PATH", nil)
 
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key

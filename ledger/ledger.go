@@ -8,7 +8,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
-	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/crypto/ledger"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
@@ -43,7 +42,7 @@ func (dev *LedgerDevice) P(network avalanche.Network, indices []uint32) ([]strin
 	return utils.P(network.HRP(), addresses)
 }
 
-func (dev *LedgerDevice) FindStrAddresses(addresses []string, maxIndex uint32) (map[string]uint32, error) {
+func (dev *LedgerDevice) FindAddresses(addresses []string, maxIndex uint32) (map[string]uint32, error) {
 	addressesIDs, err := address.ParseToIDs(addresses)
 	if err != nil {
 		return nil, fmt.Errorf("failure parsing ledger addresses: %w", err)
@@ -61,31 +60,6 @@ func (dev *LedgerDevice) FindStrAddresses(addresses []string, maxIndex uint32) (
 			return nil, err
 		}
 		for addressIndex, addr := range addressesIDs {
-			if addr == ledgerAddress[0] {
-				indices[addresses[addressIndex]] = index
-			}
-		}
-		if len(indices) == len(addresses) {
-			break
-		}
-	}
-	return indices, nil
-}
-
-func (dev *LedgerDevice) FindAddresses(addresses []ids.ShortID, maxIndex uint32) (map[ids.ShortID]uint32, error) {
-	// for all ledger indices to search for, find if the ledger address belongs to the input
-	// addresses and, if so, add an index association to indexMap.
-	// breaks the loop if all addresses were found
-	if maxIndex == 0 {
-		maxIndex = maxIndexToSearch
-	}
-	indices := map[ids.ShortID]uint32{}
-	for index := uint32(0); index < maxIndex; index++ {
-		ledgerAddress, err := dev.Addresses([]uint32{index})
-		if err != nil {
-			return nil, err
-		}
-		for addressIndex, addr := range addresses {
 			if addr == ledgerAddress[0] {
 				indices[addresses[addressIndex]] = index
 			}
