@@ -29,7 +29,6 @@ func NewKeychain(
 }
 
 func KeychainFromKey(
-	network avalanche.Network,
 	sf *key.SoftKey,
 ) *Keychain {
 	kc := Keychain{
