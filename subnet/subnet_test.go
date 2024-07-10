@@ -72,7 +72,7 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	// Create new Subnet EVM genesis
 	newSubnet, _ := New(&subnetParams)
 
-	network := avalanche.LocalNetwork()
+	network := avalanche.FujiNetwork()
 
 	// Key that will be used for paying the transaction fees of CreateSubnetTx and CreateChainTx
 	// NewKeychain will generate a new key pair in the provided path if no .pk file currently
@@ -83,9 +83,9 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	require.NoError(err)
 	keyC, err := key.NewSoft()
 	require.NoError(err)
-	keychainA := keychain.KeychainFromKey(network, keyA)
-	keychainB := keychain.KeychainFromKey(network, keyB)
-	keychainC := keychain.KeychainFromKey(network, keyC)
+	keychainA := keychain.KeychainFromKey(keyA)
+	keychainB := keychain.KeychainFromKey(keyB)
+	keychainC := keychain.KeychainFromKey(keyC)
 
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key
