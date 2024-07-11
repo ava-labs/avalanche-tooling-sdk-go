@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
@@ -21,8 +20,6 @@ type ValidatorParams struct {
 	Duration time.Duration
 
 	Weight uint64
-
-	Network avalanche.Network
 }
 
 // AddValidator adds validator to subnet

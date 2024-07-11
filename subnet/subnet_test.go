@@ -6,6 +6,7 @@ package subnet
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"math/big"
 	"testing"
 	"time"
@@ -42,15 +43,18 @@ func getDefaultSubnetEVMGenesis() SubnetParams {
 }
 
 func TestSubnetDeploy(_ *testing.T) {
+	require := require.New(t)
 	subnetParams := getDefaultSubnetEVMGenesis()
-	newSubnet, _ := New(&subnetParams)
+	newSubnet, err := New(&subnetParams)
+	require.NoError(err)
 	network := avalanche.FujiNetwork()
-	keychain, _ := keychain.NewKeychain(network, "KEY_PATH")
+	keychain, err := keychain.NewKeychain(network, "KEY_PATH")
+	require.NoError(err)
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
 	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
-	wallet, _ := wallet.New(
+	wallet, err := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
 			URI:              network.Endpoint,
@@ -59,24 +63,33 @@ func TestSubnetDeploy(_ *testing.T) {
 			PChainTxsToFetch: nil,
 		},
 	)
-	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
-	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
+	require.NoError(err)
+	deploySubnetTx, err := newSubnet.CreateSubnetTx(wallet)
+	require.NoError(err)
+	subnetID, err := newSubnet.Commit(*deploySubnetTx, wallet, true)
+	require.NoError(err)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 	time.Sleep(2 * time.Second)
 	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
-	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
-	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
+	deployChainTx, err := newSubnet.CreateBlockchainTx(wallet)
+	require.NoError(err)
+	blockchainID, err := newSubnet.Commit(*deployChainTx, wallet, true)
+	require.NoError(err)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
 
 func TestSubnetDeployMultiSig(_ *testing.T) {
+	require := require.New(t)
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, _ := New(&subnetParams)
 	network := avalanche.FujiNetwork()
 
-	keychainA, _ := keychain.NewKeychain(network, "KEY_PATH_A")
-	keychainB, _ := keychain.NewKeychain(network, "KEY_PATH_B")
-	keychainC, _ := keychain.NewKeychain(network, "KEY_PATH_C")
+	keychainA, err := keychain.NewKeychain(network, "KEY_PATH_A")
+	require.NoError(err)
+	keychainB, err := keychain.NewKeychain(network, "KEY_PATH_B")
+	require.NoError(err)
+	keychainC, err := keychain.NewKeychain(network, "KEY_PATH_C")
+	require.NoError(err)
 
 	controlKeys := []ids.ShortID{}
 	controlKeys = append(controlKeys, keychainA.Addresses().List()[0])
@@ -89,7 +102,7 @@ func TestSubnetDeployMultiSig(_ *testing.T) {
 	threshold := 2
 	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
 
-	walletA, _ := wallet.New(
+	walletA, err := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
 			URI:              network.Endpoint,
@@ -98,22 +111,24 @@ func TestSubnetDeployMultiSig(_ *testing.T) {
 			PChainTxsToFetch: nil,
 		},
 	)
+	require.NoError(err)
 
-	deploySubnetTx, _ := newSubnet.CreateSubnetTx(walletA)
-	subnetID, _ := newSubnet.Commit(*deploySubnetTx, walletA, true)
+	deploySubnetTx, err := newSubnet.CreateSubnetTx(walletA)
+	require.NoError(err)
+	subnetID, err := newSubnet.Commit(*deploySubnetTx, walletA, true)
+	require.NoError(err)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
 
 	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	// first signature of CreateChainTx using keychain A
 	deployChainTx, err := newSubnet.CreateBlockchainTx(walletA)
-	if err != nil {
-		fmt.Printf("error signing tx walletA: %s", err)
-	}
+	require.NoError(err)
 
 	// include subnetID in PChainTxsToFetch when creating second wallet
-	walletB, _ := wallet.New(
+	walletB, err := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
 			URI:              network.Endpoint,
@@ -122,14 +137,15 @@ func TestSubnetDeployMultiSig(_ *testing.T) {
 			PChainTxsToFetch: set.Of(subnetID),
 		},
 	)
+	require.NoError(err)
 
-	// second signature
-	if err = walletB.P().Signer().Sign(context.Background(), deployChainTx.PChainTx); err != nil {
-		fmt.Printf("error signing tx walletB: %s", err)
-	}
+	// second signature using keychain B
+	err = walletB.P().Signer().Sign(context.Background(), deployChainTx.PChainTx)
+	require.NoError(err)
 
 	// since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
-	blockchainID, _ := newSubnet.Commit(*deployChainTx, walletA, true)
+	blockchainID, err := newSubnet.Commit(*deployChainTx, walletA, true)
+	require.NoError(err)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
