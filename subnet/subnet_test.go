@@ -6,11 +6,14 @@ package subnet
 import (
 	"context"
 	"fmt"
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
-	"github.com/ava-labs/avalanchego/utils/set"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/ava-labs/avalanchego/utils/formatting/address"
+	"github.com/ava-labs/avalanchego/utils/set"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
@@ -68,28 +71,28 @@ func TestSubnetDeploy(_ *testing.T) {
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
 
-func TestSubnetDeployLedger(_ *testing.T) {
+func TestSubnetDeployLedger(t *testing.T) {
+	require := require.New(t)
 	subnetParams := getDefaultSubnetEVMGenesis()
-	newSubnet, _ := New(&subnetParams)
+	newSubnet, err := New(&subnetParams)
+	require.NoError(err)
 	network := avalanche.FujiNetwork()
-	//fee := network.GenesisParams().CreateBlockchainTxFee + network.GenesisParams().CreateSubnetTxFee
-	//ledgerInfo := keychain.LedgerParams{
-	//	RequiredFunds: fee,
-	//}
+
 	ledgerInfo := keychain.LedgerParams{
-		LedgerAddresses: []string{"P-fuji1c8qchzh27navtly08kz5deenm5jvdqayyasuhh"}, //index 0
+		LedgerAddresses: []string{"P-fujixxxxxxxxx"},
 	}
 	keychainA, err := keychain.NewKeychain(network, "", &ledgerInfo)
-	fmt.Printf("error NewKeychain %s \n", err)
-	addressesIDs, err := address.ParseToIDs([]string{"P-fuji1jjrlhfrx6e975y6e3fass72a09xp73zxd9gqf0"}) //index 7
-	fmt.Printf("error ParseToIDs %s \n", err)
+	require.NoError(err)
+
+	addressesIDs, err := address.ParseToIDs([]string{"P-fujiyyyyyyyy"})
+	require.NoError(err)
 	controlKeys := addressesIDs
-	fmt.Printf("control keys %s \n", controlKeys)
 	subnetAuthKeys := addressesIDs
-	fmt.Printf("subnetAuthKeys %s \n", subnetAuthKeys)
 	threshold := 1
+
 	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
-	walletA, _ := wallet.New(
+
+	walletA, err := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
 			URI:              network.Endpoint,
@@ -98,23 +101,29 @@ func TestSubnetDeployLedger(_ *testing.T) {
 			PChainTxsToFetch: nil,
 		},
 	)
+
+	require.NoError(err)
 	deploySubnetTx, err := newSubnet.CreateSubnetTx(walletA)
-	fmt.Printf("error CreateSubnetTx %s \n", err)
+	require.NoError(err)
 	subnetID, err := newSubnet.Commit(*deploySubnetTx, walletA, true)
-	fmt.Printf("error CreateSubnetTx Commit %s \n", err)
+	require.NoError(err)
 	fmt.Printf("subnetID %s \n", subnetID.String())
+
 	time.Sleep(2 * time.Second)
+
 	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
 	deployChainTx, err := newSubnet.CreateBlockchainTx(walletA)
-	fmt.Printf("error CreateBlockchainTx %s \n", err)
-	// include subnetID in PChainTxsToFetch when creating second wallet
+	require.NoError(err)
+
 	ledgerInfoB := keychain.LedgerParams{
-		LedgerAddresses: []string{"P-fuji1jjrlhfrx6e975y6e3fass72a09xp73zxd9gqf0"}, //index 7
+		LedgerAddresses: []string{"P-fujiyyyyyyyy"},
 	}
 	err = keychainA.Ledger.LedgerDevice.Disconnect()
-	fmt.Printf("error keychain A disconnect %s \n", err)
+	require.NoError(err)
+
 	keychainB, err := keychain.NewKeychain(network, "", &ledgerInfoB)
-	fmt.Printf("error NewKeychainB %s \n", err)
+	require.NoError(err)
+
 	walletB, err := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
@@ -124,13 +133,14 @@ func TestSubnetDeployLedger(_ *testing.T) {
 			PChainTxsToFetch: set.Of(subnetID),
 		},
 	)
-	fmt.Printf("error new wallet B %s \n", err)
+	require.NoError(err)
 
 	// second signature
-	if err = walletB.P().Signer().Sign(context.Background(), deployChainTx.PChainTx); err != nil {
-		fmt.Printf("error signing tx walletB: %s", err)
-	}
+	err = walletB.P().Signer().Sign(context.Background(), deployChainTx.PChainTx)
+	require.NoError(err)
+
 	blockchainID, err := newSubnet.Commit(*deployChainTx, walletB, true)
-	fmt.Printf("error commit %s \n", err)
+	require.NoError(err)
+
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
