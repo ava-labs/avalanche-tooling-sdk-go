@@ -109,7 +109,7 @@ func TestSubnetDeployMultiSig(_ *testing.T) {
 	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
 	deployChainTx, err := newSubnet.CreateBlockchainTx(walletA)
 	if err != nil {
-		fmt.Errorf("error signing tx walletA: %w", err)
+		fmt.Printf("error signing tx walletA: %s", err)
 	}
 
 	// include subnetID in PChainTxsToFetch when creating second wallet
