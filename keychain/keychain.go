@@ -64,6 +64,7 @@ func NewKeychain(
 				return nil, err
 			}
 		}
+		fmt.Printf("key chain index %s \n", kc.Ledger.LedgerIndices)
 		return &kc, nil
 	}
 	sf, err := key.LoadSoftOrCreate(keyPath)
