@@ -19,20 +19,39 @@ type Keychain struct {
 	Ledger  *Ledger
 }
 
-// TODO: add descriptions for the properties below
+// LedgerParams is an input to NewKeyChain if a new keychain is to be created using Ledger
+//
+// To view Ledger addresses and their balances, you can use Avalanche CLI and use the command
+// avalanche key list --ledger [0,1,2,3,4]
+// The example command above will list the first five addresses in your Ledger
+//
+// To transfer funds between addresses in Ledger, refer to https://docs.avax.network/tooling/cli-transfer-funds/how-to-transfer-funds
 type LedgerParams struct {
-	RequiredFunds   uint64
+	// LedgerAddresses specify which addresses in Ledger should be in the Keychain
+	// NewKeyChain will then look for the indexes of the specified addresses and add the indexes
+	// into LedgerIndices in Ledger
 	LedgerAddresses []string
+
+	// RequiredFunds is the minimum total AVAX that the selected addresses from Ledger should contain.
+	// NewKeychain will then look through all indexes of all addresses in the Ledger until
+	// sufficient AVAX balance is reached.
+	// For example if Ledger's index 0 and index 1 each contains 0.1 AVAX and RequiredFunds is
+	// 0.2 AVAX, LedgerIndices will have value of [0,1]
+	RequiredFunds uint64
 }
 
-// TODO: add descriptions for the properties below
+// Ledger is part of the output of NewKeyChain if a new keychain is to be created using Ledger
 type Ledger struct {
-	LedgerDevice  *ledger.LedgerDevice
+	// LedgerDevice is the main interface of interacting with the Ledger Device
+	LedgerDevice *ledger.LedgerDevice
+
+	// LedgerIndices contain indexes of the addresses selected from Ledger
 	LedgerIndices []uint32
 }
 
-// NewKeychain will generate a new key pair in the provided keyPath if no .pk file currently
-// exists in the provided keyPath
+// NewKeychain generates a new key pair from either a stored key path or Ledger.
+// For stored keys, NewKeychain will generate a new key pair in the provided keyPath if no .pk
+// file currently exists in the provided path.
 func NewKeychain(
 	network avalanche.Network,
 	keyPath string,
