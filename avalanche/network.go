@@ -3,7 +3,10 @@
 
 package avalanche
 
-import "github.com/ava-labs/avalanchego/utils/constants"
+import (
+	"github.com/ava-labs/avalanchego/genesis"
+	"github.com/ava-labs/avalanchego/utils/constants"
+)
 
 type NetworkKind int64
 
@@ -74,4 +77,16 @@ func FujiNetwork() Network {
 
 func MainnetNetwork() Network {
 	return NewNetwork(Mainnet, constants.MainnetID, MainnetAPIEndpoint)
+}
+
+func (n Network) GenesisParams() *genesis.Params {
+	switch n.Kind {
+	case Devnet:
+		return &genesis.LocalParams
+	case Fuji:
+		return &genesis.FujiParams
+	case Mainnet:
+		return &genesis.MainnetParams
+	}
+	return nil
 }

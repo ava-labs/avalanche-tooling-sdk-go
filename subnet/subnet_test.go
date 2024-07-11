@@ -70,10 +70,11 @@ func TestSubnetDeployLedger(_ *testing.T) {
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, _ := New(&subnetParams)
 	network := avalanche.FujiNetwork()
+	fee := network.GenesisParams().CreateBlockchainTxFee + network.GenesisParams().CreateSubnetTxFee
 	ledgerInfo := keychain.LedgerParams{
-		RequiredFunds:
+		RequiredFunds: fee,
 	}
-	keychain, _ := keychain.NewKeychain(network, "KEY_PATH", nil)
+	keychain, _ := keychain.NewKeychain(network, "", &ledgerInfo)
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
