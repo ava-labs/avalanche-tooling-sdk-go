@@ -6,6 +6,8 @@ package examples
 import (
 	"context"
 	"fmt"
+	"github.com/ava-labs/avalanchego/utils/formatting/address"
+	"github.com/ava-labs/avalanchego/utils/set"
 	"math/big"
 	"time"
 
@@ -89,5 +91,91 @@ func DeploySubnet() {
 	// since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
 	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
+	fmt.Printf("blockchainID %s \n", blockchainID.String())
+}
+
+func DeploySubnetWithLedger() {
+	subnetParams := getDefaultSubnetEVMGenesis()
+	newSubnet, _ := subnet.New(&subnetParams)
+	network := avalanche.FujiNetwork()
+
+	// Create keychain with a specific Ledger address. More than 1 address can be used.
+	//
+	// Alternatively, keychain can also be created from Ledger without specifying any Ledger address
+	// by stating the amount of AVAX required to pay for transaction fees. Keychain SDK will
+	// then look through all indexes of all addresses in the Ledger until sufficient AVAX balance
+	// is reached. For example:
+	//
+	// fee := network.GenesisParams().CreateBlockchainTxFee + network.GenesisParams().CreateSubnetTxFee
+	// ledgerInfo := keychain.LedgerParams{
+	//	 RequiredFunds: fee,
+	// }
+	//
+	ledgerInfo := keychain.LedgerParams{
+		LedgerAddresses: []string{"P-fujixxxxxxxxx"},
+	}
+
+	// Here we are creating keychain A which will be used as fee-paying key for CreateSubnetTx
+	// and CreateChainTx
+	keychainA, _ := keychain.NewKeychain(network, "", &ledgerInfo)
+	walletA, _ := wallet.New(
+		context.Background(),
+		&primary.WalletConfig{
+			URI:              network.Endpoint,
+			AVAXKeychain:     keychainA.Keychain,
+			EthKeychain:      secp256k1fx.NewKeychain(),
+			PChainTxsToFetch: nil,
+		},
+	)
+
+	// In this example, we are using a key different from fee-paying key generated above
+	// as control key and subnet auth key
+	addressesIDs, _ := address.ParseToIDs([]string{"P-fujiyyyyyyyy"})
+	controlKeys := addressesIDs
+	subnetAuthKeys := addressesIDs
+	threshold := 1
+	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+
+	// Pay and Sign CreateSubnet Tx with fee paying key A using Ledger
+	deploySubnetTx, _ := newSubnet.CreateSubnetTx(walletA)
+	subnetID, _ := newSubnet.Commit(*deploySubnetTx, walletA, true)
+	fmt.Printf("subnetID %s \n", subnetID.String())
+
+	// we need to wait to allow the transaction to reach other nodes in Fuji
+	time.Sleep(2 * time.Second)
+
+	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+
+	// Pay and sign CreateChain Tx with fee paying key A using Ledger
+	deployChainTx, _ := newSubnet.CreateBlockchainTx(walletA)
+
+	// We have to first disconnect Ledger to avoid errors when signing with our subnet auth
+	// keys later
+	_ = keychainA.Ledger.LedgerDevice.Disconnect()
+
+	// Here we are creating keychain B using the Ledger address that was used as the control key and
+	// subnet auth key for our subnet.
+	ledgerInfoB := keychain.LedgerParams{
+		LedgerAddresses: []string{"P-fujiyyyyyyyy"},
+	}
+	keychainB, _ := keychain.NewKeychain(network, "", &ledgerInfoB)
+
+	// include subnetID in PChainTxsToFetch when creating second wallet
+	walletB, _ := wallet.New(
+		context.Background(),
+		&primary.WalletConfig{
+			URI:              network.Endpoint,
+			AVAXKeychain:     keychainB.Keychain,
+			EthKeychain:      secp256k1fx.NewKeychain(),
+			PChainTxsToFetch: set.Of(subnetID),
+		},
+	)
+
+	// Sign with our Subnet auth key
+	_ = walletB.P().Signer().Sign(context.Background(), deployChainTx.PChainTx)
+
+	// Now that the number of signatures have been met, we can commit our transaction
+	// on chain
+	blockchainID, _ := newSubnet.Commit(*deployChainTx, walletB, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
