@@ -63,9 +63,8 @@ func NewKeychain(
 			}
 		}
 		if len(kc.Ledger.LedgerIndices) == 0 {
-			fmt.Printf("keychain currently does not contain any addresses from ledger")
+			return nil, fmt.Errorf("keychain currently does not contain any addresses from ledger")
 		}
-		fmt.Printf("key chain index %s \n", kc.Ledger.LedgerIndices)
 		return &kc, nil
 	}
 	sf, err := key.LoadSoftOrCreate(keyPath)
