@@ -98,10 +98,6 @@ func (dev *LedgerDevice) FindFunds(
 			totalBalance += uint64(resp.Balance)
 			indices = append(indices, index)
 		}
-		fmt.Printf("obtained ledger addr %s \n", ledgerAddress)
-		fmt.Printf("obtained ledger addr balance %s \n", resp.Balance)
-		fmt.Printf("total balance %s \n", totalBalance)
-		fmt.Printf("indices %s \n", indices)
 		if totalBalance >= amount {
 			break
 		}
