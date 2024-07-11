@@ -111,6 +111,11 @@ func DeploySubnetWithLedger() {
 	//	 RequiredFunds: fee,
 	// }
 	//
+	// To view Ledger addresses and their balances, you can use Avalanche CLI and use the command
+	// avalanche key list --ledger [0,1,2,3,4]
+	// The example command above will list the first five addresses in your Ledger
+	//
+	// To transfer funds between addresses in Ledger, refer to https://docs.avax.network/tooling/cli-transfer-funds/how-to-transfer-funds
 	ledgerInfo := keychain.LedgerParams{
 		LedgerAddresses: []string{"P-fujixxxxxxxxx"},
 	}
