@@ -65,3 +65,31 @@ func TestSubnetDeploy(_ *testing.T) {
 	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
+
+func TestSubnetDeployLedger(_ *testing.T) {
+	subnetParams := getDefaultSubnetEVMGenesis()
+	newSubnet, _ := New(&subnetParams)
+	network := avalanche.FujiNetwork()
+	keychain, _ := keychain.NewKeychain(network, "KEY_PATH", nil)
+	controlKeys := keychain.Addresses().List()
+	subnetAuthKeys := keychain.Addresses().List()
+	threshold := 1
+	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	wallet, _ := wallet.New(
+		context.Background(),
+		&primary.WalletConfig{
+			URI:              network.Endpoint,
+			AVAXKeychain:     keychain.Keychain,
+			EthKeychain:      secp256k1fx.NewKeychain(),
+			PChainTxsToFetch: nil,
+		},
+	)
+	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
+	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
+	fmt.Printf("subnetID %s \n", subnetID.String())
+	time.Sleep(2 * time.Second)
+	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
+	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
+	fmt.Printf("blockchainID %s \n", blockchainID.String())
+}
