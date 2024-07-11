@@ -6,11 +6,12 @@ package subnet
 import (
 	"context"
 	"fmt"
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/set"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/set"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
@@ -123,8 +124,8 @@ func TestSubnetDeployMultiSig(_ *testing.T) {
 	)
 
 	// second signature
-	if err := walletB.P().Signer().Sign(context.Background(), deployChainTx.PChainTx); err != nil {
-		fmt.Errorf("error signing tx walletB: %w", err)
+	if err = walletB.P().Signer().Sign(context.Background(), deployChainTx.PChainTx); err != nil {
+		fmt.Printf("error signing tx walletB: %s", err)
 	}
 
 	// since we are using the fee paying key as control key too, we can commit the transaction
