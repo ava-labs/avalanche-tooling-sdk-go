@@ -42,7 +42,7 @@ func getDefaultSubnetEVMGenesis() SubnetParams {
 	}
 }
 
-func TestSubnetDeploy(_ *testing.T) {
+func TestSubnetDeploy(t *testing.T) {
 	require := require.New(t)
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, err := New(&subnetParams)
@@ -78,7 +78,7 @@ func TestSubnetDeploy(_ *testing.T) {
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
 }
 
-func TestSubnetDeployMultiSig(_ *testing.T) {
+func TestSubnetDeployMultiSig(t *testing.T) {
 	require := require.New(t)
 	subnetParams := getDefaultSubnetEVMGenesis()
 	newSubnet, _ := New(&subnetParams)
