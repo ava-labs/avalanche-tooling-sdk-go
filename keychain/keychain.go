@@ -51,9 +51,6 @@ func NewKeychain(
 			},
 			network: network,
 		}
-		if err := kc.AddLedgerIndices([]uint32{0}); err != nil {
-			return nil, err
-		}
 		if ledgerInfo.RequiredFunds > 0 {
 			if err := kc.AddLedgerFunds(ledgerInfo.RequiredFunds); err != nil {
 				return nil, err
@@ -63,6 +60,9 @@ func NewKeychain(
 			if err := kc.AddLedgerAddresses(ledgerInfo.LedgerAddresses); err != nil {
 				return nil, err
 			}
+		}
+		if len(kc.Ledger.LedgerIndices) == 0 {
+			fmt.Printf("keychain currently does not contain any addresses from ledger")
 		}
 		fmt.Printf("key chain index %s \n", kc.Ledger.LedgerIndices)
 		return &kc, nil
