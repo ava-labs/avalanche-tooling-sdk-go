@@ -5,8 +5,9 @@ package subnet
 
 import (
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
