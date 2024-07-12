@@ -5,6 +5,7 @@ package subnet
 
 import (
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
@@ -28,16 +29,16 @@ type ValidatorParams struct {
 // TODO: add more description once node join subnet sdk is done
 func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorParams) (*multisig.Multisig, error) {
 	if validatorInput.NodeID == ids.EmptyNodeID {
-		return nil, fmt.Errorf("validator node id is not provided")
+		return nil, fmt.Errorf(constants.EmptyValidatorNodeIDError)
 	}
 	if validatorInput.Duration == 0 {
-		return nil, fmt.Errorf("validator duration is not provided")
+		return nil, fmt.Errorf(constants.EmptyValidatorDurationError)
 	}
 	if validatorInput.Weight == 0 {
-		return nil, fmt.Errorf("validator weight is not provided")
+		return nil, fmt.Errorf(constants.EmptyValidatorWeightError)
 	}
 	if c.SubnetID == ids.Empty {
-		return nil, fmt.Errorf("subnet ID is not provided")
+		return nil, fmt.Errorf(constants.EmptySubnetIDEError)
 	}
 
 	wallet.SetSubnetAuthMultisig(c.DeployInfo.SubnetAuthKeys)

@@ -79,4 +79,10 @@ const (
 	StakerCertFileName = "staker.crt"
 	StakerKeyFileName  = "staker.key"
 	BLSKeyFileName     = "signer.key"
+
+	// errors
+	EmptyValidatorNodeIDError   = "validator node id is not provided"
+	EmptyValidatorDurationError = "validator duration is not provided"
+	EmptyValidatorWeightError   = "validator weight is not provided"
+	EmptySubnetIDEError         = "subnet ID is not provided"
 )
