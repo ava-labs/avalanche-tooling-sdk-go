@@ -24,10 +24,10 @@ type ValidatorParams struct {
 }
 
 var (
-	EmptyValidatorNodeIDError   = errors.New("validator node id is not provided")
-	EmptyValidatorDurationError = errors.New("validator duration is not provided")
-	EmptyValidatorWeightError   = errors.New("validator weight is not provided")
-	EmptySubnetIDEError         = errors.New("subnet ID is not provided")
+	ErrEmptyValidatorNodeID   = errors.New("validator node id is not provided")
+	ErrEmptyValidatorDuration = errors.New("validator duration is not provided")
+	ErrEmptyValidatorWeight   = errors.New("validator weight is not provided")
+	ErrEmptySubnetID          = errors.New("subnet ID is not provided")
 )
 
 // AddValidator adds validator to subnet
@@ -36,16 +36,16 @@ var (
 // TODO: add more description once node join subnet sdk is done
 func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput ValidatorParams) (*multisig.Multisig, error) {
 	if validatorInput.NodeID == ids.EmptyNodeID {
-		return nil, EmptyValidatorNodeIDError
+		return nil, ErrEmptyValidatorNodeID
 	}
 	if validatorInput.Duration == 0 {
-		return nil, EmptyValidatorDurationError
+		return nil, ErrEmptyValidatorDuration
 	}
 	if validatorInput.Weight == 0 {
-		return nil, EmptyValidatorWeightError
+		return nil, ErrEmptyValidatorWeight
 	}
 	if c.SubnetID == ids.Empty {
-		return nil, EmptySubnetIDEError
+		return nil, ErrEmptySubnetID
 	}
 
 	wallet.SetSubnetAuthMultisig(c.DeployInfo.SubnetAuthKeys)
