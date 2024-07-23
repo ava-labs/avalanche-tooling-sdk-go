@@ -4,41 +4,71 @@
 package node
 
 import (
+	"encoding/json"
 	"os"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	config "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
+	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
-func (h *Node) prepareAvalanchegoConfig(networkID string) (string, string, error) {
-	avagoConf := config.PrepareAvalancheConfig(h.IP, networkID)
-	nodeConf, err := config.RenderAvalancheNodeConfig(avagoConf)
+// PrepareAvalanchegoConfig creates the config files for the AvalancheGo
+// networkID is the ID of the network to be used
+// trackSubnets is the list of subnets to track
+func (h *Node) RunSSHRenderAvalancheNodeConfig(networkID string, trackSubnets []string) error {
+	avagoConf := remoteconfig.PrepareAvalancheConfig(h.IP, networkID, trackSubnets)
+
+	nodeConf, err := remoteconfig.RenderAvalancheNodeConfig(avagoConf)
 	if err != nil {
-		return "", "", err
+		return err
 	}
-	nodeConfFile, err := os.CreateTemp("", "avalanchecli-node-*.yml")
+	// make sure that bootsrap configuration is preserved
+	if genesisFileExists(*h) {
+		avagoConf.GenesisPath = remoteconfig.GetRemoteAvalancheGenesis()
+	}
+	remoteAvagoConf, err := h.GetAvalancheGoConfigData()
 	if err != nil {
-		return "", "", err
+		return err
 	}
-	if err := os.WriteFile(nodeConfFile.Name(), nodeConf, constants.WriteReadUserOnlyPerms); err != nil {
-		return "", "", err
-	}
-	cChainConf, err := config.RenderAvalancheCChainConfig(avagoConf)
+	bootstrapIDs, err := utils.StringValue(remoteAvagoConf, "bootstrap-ids")
 	if err != nil {
-		return "", "", err
+		return err
 	}
-	cChainConfFile, err := os.CreateTemp("", "avalanchecli-cchain-*.yml")
+	bootstrapIPs, err := utils.StringValue(remoteAvagoConf, "bootstrap-ips")
 	if err != nil {
-		return "", "", err
+		return err
 	}
-	if err := os.WriteFile(cChainConfFile.Name(), cChainConf, constants.WriteReadUserOnlyPerms); err != nil {
-		return "", "", err
+	avagoConf.BootstrapIDs = bootstrapIDs
+	avagoConf.BootstrapIPs = bootstrapIPs
+	// configuration is ready to be uploaded
+	if err := h.UploadBytes(nodeConf, remoteconfig.GetRemoteAvalancheNodeConfig(), constants.SSHFileOpsTimeout); err != nil {
+		return err
 	}
-	return nodeConfFile.Name(), cChainConfFile.Name(), nil
+	cChainConf, err := remoteconfig.RenderAvalancheCChainConfig(avagoConf)
+	if err != nil {
+		return err
+	}
+	if err := h.UploadBytes(cChainConf, remoteconfig.GetRemoteAvalancheCChainConfig(), constants.SSHFileOpsTimeout); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *Node) GetAvalancheGoConfigData() (map[string]interface{}, error) {
+	// get remote node.json file
+	nodeJSON, err := h.ReadFileBytes(remoteconfig.GetRemoteAvalancheNodeConfig(), constants.SSHFileOpsTimeout)
+	if err != nil {
+		return nil, err
+	}
+	var avagoConfig map[string]interface{}
+	if err := json.Unmarshal(nodeJSON, &avagoConfig); err != nil {
+		return nil, err
+	}
+	return avagoConfig, nil
 }
 
 func prepareGrafanaConfig() (string, string, string, string, error) {
-	grafanaDataSource, err := config.RenderGrafanaLokiDataSourceConfig()
+	grafanaDataSource, err := remoteconfig.RenderGrafanaLokiDataSourceConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -50,7 +80,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaPromDataSource, err := config.RenderGrafanaPrometheusDataSourceConfigg()
+	grafanaPromDataSource, err := remoteconfig.RenderGrafanaPrometheusDataSourceConfigg()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -62,7 +92,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaDashboards, err := config.RenderGrafanaDashboardConfig()
+	grafanaDashboards, err := remoteconfig.RenderGrafanaDashboardConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -74,7 +104,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 
-	grafanaConfig, err := config.RenderGrafanaConfig()
+	grafanaConfig, err := remoteconfig.RenderGrafanaConfig()
 	if err != nil {
 		return "", "", "", "", err
 	}

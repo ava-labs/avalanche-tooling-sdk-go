@@ -32,6 +32,10 @@ type NodeParams struct {
 	// in Fuji / Mainnet / Devnet
 	Network avalanche.Network
 
+	// SubnetIDs is the list of subnet IDs that the created nodes will be tracking
+	// For primary network, it should be empty
+	SubnetIDs []string
+
 	// SSHPrivateKeyPath is the file path to the private key of the SSH key pair that is used
 	// to gain access to the created nodes
 	SSHPrivateKeyPath string
@@ -290,7 +294,7 @@ func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	if err := node.RunSSHSetupPromtailConfig("127.0.0.1", constants.AvalanchegoLokiPort, node.NodeID, "", ""); err != nil {
 		return err
 	}
-	if err := node.ComposeSSHSetupNode(nodeParams.Network.HRP(), nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
+	if err := node.ComposeSSHSetupNode(nodeParams.Network.HRP(), nodeParams.SubnetIDs, nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}
 	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {

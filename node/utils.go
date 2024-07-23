@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
@@ -108,4 +109,14 @@ func getPrometheusTargets(nodes []Node) ([]string, []string, []string) {
 		}
 	}
 	return avalancheGoPorts, machinePorts, ltPorts
+}
+
+func composeFileExists(node Node) bool {
+	composeFileExists, _ := node.FileExists(utils.GetRemoteComposeFile())
+	return composeFileExists
+}
+
+func genesisFileExists(node Node) bool {
+	genesisFileExists, _ := node.FileExists(remoteconfig.GetRemoteAvalancheGenesis())
+	return genesisFileExists
 }

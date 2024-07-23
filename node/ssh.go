@@ -131,7 +131,17 @@ func (h *Node) RunSSHUpgradeAvalanchego(networkID string, avalancheGoVersion str
 		return err
 	}
 
-	if err := h.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
+	if err := h.ComposeOverSSH("Compose Node",
+		constants.SSHScriptTimeout,
+		"templates/avalanchego.docker-compose.yml",
+		dockerComposeInputs{
+			AvalanchegoVersion: avalancheGoVersion,
+			WithMonitoring:     withMonitoring,
+			WithAvalanchego:    true,
+			E2E:                utils.IsE2E(),
+			E2EIP:              utils.E2EConvertIP(h.IP),
+			E2ESuffix:          utils.E2ESuffix(h.IP),
+		}); err != nil {
 		return err
 	}
 	return h.RestartDockerCompose(constants.SSHLongRunningScriptTimeout)
@@ -149,12 +159,10 @@ func (h *Node) RunSSHStopAvalanchego() error {
 
 // RunSSHUpgradeSubnetEVM runs script to upgrade subnet evm
 func (h *Node) RunSSHUpgradeSubnetEVM(subnetEVMBinaryPath string) error {
-	return h.RunOverSSH(
-		"Upgrade Subnet EVM",
-		constants.SSHScriptTimeout,
-		"shell/upgradeSubnetEVM.sh",
-		scriptInputs{SubnetVMBinaryPath: subnetEVMBinaryPath},
-	)
+	if _, err := h.Commandf(nil, constants.SSHScriptTimeout, "cp -f subnet-evm %s", subnetEVMBinaryPath); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (h *Node) RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, loadTestPorts []string) error {
