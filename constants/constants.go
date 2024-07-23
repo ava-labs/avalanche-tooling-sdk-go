@@ -45,13 +45,13 @@ const (
 	AnsibleSSHUser              = "ubuntu"
 
 	// node
-	CloudNodeCLIConfigBasePath   = "/home/ubuntu/.avalanche-cli/"
-	CloudNodeConfigBasePath      = "/home/ubuntu/.avalanchego/"
-	CloudNodeSubnetEvmBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
-	CloudNodeStakingPath         = "/home/ubuntu/.avalanchego/staking/"
-	CloudNodeConfigPath          = "/home/ubuntu/.avalanchego/configs/"
-	ServicesDir                  = "services"
-	DashboardsDir                = "dashboards"
+	CloudNodeCLIConfigBasePath  = "/home/ubuntu/.avalanche-cli/"
+	CloudNodeConfigBasePath     = "/home/ubuntu/.avalanchego/"
+	CloudNodeSubnetVMBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
+	CloudNodeStakingPath        = "/home/ubuntu/.avalanchego/staking/"
+	CloudNodeConfigPath         = "/home/ubuntu/.avalanchego/configs/"
+	ServicesDir                 = "services"
+	DashboardsDir               = "dashboards"
 
 	// services
 	ServiceAvalanchego = "avalanchego"

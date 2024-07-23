@@ -52,3 +52,11 @@ func AddSingleQuotes(s []string) []string {
 		return item
 	})
 }
+
+// StringValue returns the value of a key in a map as a string.
+func StringValue(data map[string]interface{}, key string) (string, error) {
+	if value, ok := data[key]; ok {
+		return fmt.Sprintf("%v", value), nil
+	}
+	return "", fmt.Errorf("key %s not found", key)
+}

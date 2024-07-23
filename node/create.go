@@ -39,9 +39,6 @@ type NodeParams struct {
 	// AvalancheGoVersion is the version of Avalanche Go to install in the created node
 	AvalancheGoVersion string
 
-	// AvalancheCliVersion is the version of Avalanche CLI to install in the created node
-	AvalancheCliVersion string
-
 	// UseStaticIP is whether the created node should have static IP attached to it. Note that
 	// assigning Static IP to a node may incur additional charges on AWS / GCP. There could also be
 	// a limit to how many Static IPs you can have in a region in AWS & GCP.
@@ -283,7 +280,7 @@ func provisionHost(node Node, nodeParams *NodeParams) error {
 
 func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	const withMonitoring = true
-	if err := node.RunSSHSetupNode(nodeParams.AvalancheCliVersion); err != nil {
+	if err := node.RunSSHSetupNode(); err != nil {
 		return err
 	}
 	if err := node.RunSSHSetupDockerService(); err != nil {

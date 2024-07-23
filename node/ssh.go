@@ -26,15 +26,13 @@ import (
 
 type scriptInputs struct {
 	AvalancheGoVersion   string
-	CLIVersion           string
 	SubnetExportFileName string
 	SubnetName           string
 	ClusterName          string
 	GoVersion            string
-	CliBranch            string
 	IsDevNet             bool
 	NetworkFlag          string
-	SubnetEVMBinaryPath  string
+	SubnetVMBinaryPath   string
 	SubnetEVMReleaseURL  string
 	SubnetEVMArchive     string
 	LoadTestRepoDir      string
@@ -83,12 +81,12 @@ func (h *Node) RunOverSSH(
 }
 
 // RunSSHSetupNode runs script to setup sdk dependencies on a remote host over SSH.
-func (h *Node) RunSSHSetupNode(cliVersion string) error {
+func (h *Node) RunSSHSetupNode() error {
 	if err := h.RunOverSSH(
 		"Setup Node",
 		constants.SSHLongRunningScriptTimeout,
 		"shell/setupNode.sh",
-		scriptInputs{CLIVersion: cliVersion},
+		scriptInputs{},
 	); err != nil {
 		return err
 	}
@@ -155,7 +153,7 @@ func (h *Node) RunSSHUpgradeSubnetEVM(subnetEVMBinaryPath string) error {
 		"Upgrade Subnet EVM",
 		constants.SSHScriptTimeout,
 		"shell/upgradeSubnetEVM.sh",
-		scriptInputs{SubnetEVMBinaryPath: subnetEVMBinaryPath},
+		scriptInputs{SubnetVMBinaryPath: subnetEVMBinaryPath},
 	)
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 func (h *Node) prepareAvalanchegoConfig(networkID string) (string, string, error) {
-	avagoConf := config.DefaultCliAvalancheConfig(h.IP, networkID)
+	avagoConf := config.PrepareAvalancheConfig(h.IP, networkID)
 	nodeConf, err := config.RenderAvalancheNodeConfig(avagoConf)
 	if err != nil {
 		return "", "", err
