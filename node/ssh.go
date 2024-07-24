@@ -125,7 +125,7 @@ func (h *Node) RunSSHStopAWMRelayerService() error {
 }
 
 // RunSSHUpgradeAvalanchego runs script to upgrade avalanchego
-func (h *Node) RunSSHUpgradeAvalanchego(networkID string, avalancheGoVersion string) error {
+func (h *Node) RunSSHUpgradeAvalanchego(avalancheGoVersion string) error {
 	withMonitoring, err := h.WasNodeSetupWithMonitoring()
 	if err != nil {
 		return err
