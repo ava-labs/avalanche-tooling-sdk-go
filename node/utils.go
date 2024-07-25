@@ -120,3 +120,8 @@ func genesisFileExists(node Node) bool {
 	genesisFileExists, _ := node.FileExists(remoteconfig.GetRemoteAvalancheGenesis())
 	return genesisFileExists
 }
+
+func nodeConfigFileExists(node Node) bool {
+	nodeConfigFileExists, _ := node.FileExists(remoteconfig.GetRemoteAvalancheNodeConfig())
+	return nodeConfigFileExists
+}

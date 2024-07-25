@@ -22,24 +22,23 @@ func (h *Node) RunSSHRenderAvalancheNodeConfig(networkID string, trackSubnets []
 	if err != nil {
 		return err
 	}
-	// make sure that bootsrap configuration is preserved
-	if genesisFileExists(*h) {
-		avagoConf.GenesisPath = remoteconfig.GetRemoteAvalancheGenesis()
+	// preserve remote configuration if it exists
+	if nodeConfigFileExists(*h) {
+		// make sure that bootsrap configuration is preserved
+		if genesisFileExists(*h) {
+			avagoConf.GenesisPath = remoteconfig.GetRemoteAvalancheGenesis()
+		}
+		remoteAvagoConf, err := h.GetAvalancheGoConfigData()
+		if err != nil {
+			return err
+		}
+		//ignore errors if bootstrap configuration is not present - it's fine
+		bootstrapIDs, _ := utils.StringValue(remoteAvagoConf, "bootstrap-ids")
+		bootstrapIPs, _ := utils.StringValue(remoteAvagoConf, "bootstrap-ips")
+
+		avagoConf.BootstrapIDs = bootstrapIDs
+		avagoConf.BootstrapIPs = bootstrapIPs
 	}
-	remoteAvagoConf, err := h.GetAvalancheGoConfigData()
-	if err != nil {
-		return err
-	}
-	bootstrapIDs, err := utils.StringValue(remoteAvagoConf, "bootstrap-ids")
-	if err != nil {
-		return err
-	}
-	bootstrapIPs, err := utils.StringValue(remoteAvagoConf, "bootstrap-ips")
-	if err != nil {
-		return err
-	}
-	avagoConf.BootstrapIDs = bootstrapIDs
-	avagoConf.BootstrapIPs = bootstrapIPs
 	// configuration is ready to be uploaded
 	if err := h.UploadBytes(nodeConf, remoteconfig.GetRemoteAvalancheNodeConfig(), constants.SSHFileOpsTimeout); err != nil {
 		return err
