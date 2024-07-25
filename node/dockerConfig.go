@@ -32,7 +32,7 @@ func (h *Node) RunSSHRenderAvalancheNodeConfig(networkID string, trackSubnets []
 		if err != nil {
 			return err
 		}
-		//ignore errors if bootstrap configuration is not present - it's fine
+		// ignore errors if bootstrap configuration is not present - it's fine
 		bootstrapIDs, _ := utils.StringValue(remoteAvagoConf, "bootstrap-ids")
 		bootstrapIPs, _ := utils.StringValue(remoteAvagoConf, "bootstrap-ips")
 
