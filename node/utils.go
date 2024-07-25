@@ -111,6 +111,11 @@ func getPrometheusTargets(nodes []Node) ([]string, []string, []string) {
 	return avalancheGoPorts, machinePorts, ltPorts
 }
 
+func composeFileExists(node Node) bool {
+	composeFileExists, _ := node.FileExists(utils.GetRemoteComposeFile())
+	return composeFileExists
+}
+
 func genesisFileExists(node Node) bool {
 	genesisFileExists, _ := node.FileExists(remoteconfig.GetRemoteAvalancheGenesis())
 	return genesisFileExists

@@ -402,7 +402,7 @@ func (h *Node) RunSSHCopyMonitoringDashboards(monitoringDashboardPath string) er
 			return err
 		}
 	}
-	if composeFileExists, err := h.FileExists(utils.GetRemoteComposeFile()); err == nil && composeFileExists {
+	if composeFileExists(*h) {
 		return h.RestartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceGrafana, constants.SSHScriptTimeout)
 	}
 	return nil
