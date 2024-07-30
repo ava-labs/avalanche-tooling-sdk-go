@@ -53,7 +53,7 @@ func (h *Node) Post(path string, requestBody string) ([]byte, error) {
 		return nil, err
 	}
 	requestHeaders := fmt.Sprintf("POST %s HTTP/1.1\r\n"+
-		"Node: %s\r\n"+
+		"Host: %s\r\n"+
 		"Content-Length: %d\r\n"+
 		"Content-Type: application/json\r\n\r\n", path, localhost.Host, len(requestBody))
 	httpRequest := requestHeaders + requestBody
