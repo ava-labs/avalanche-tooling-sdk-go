@@ -12,8 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/utils/set"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
@@ -52,8 +52,8 @@ func TestSubnetDeploy(t *testing.T) {
 	network := avalanche.FujiNetwork()
 
 	keychain, err := keychain.NewKeychain(network, "KEY_PATH", nil)
-  require.NoError(err)
-  
+	require.NoError(err)
+
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
@@ -88,11 +88,11 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	newSubnet, _ := New(&subnetParams)
 	network := avalanche.FujiNetwork()
 
-	keychainA, err := keychain.NewKeychain(network, "KEY_PATH_A")
+	keychainA, err := keychain.NewKeychain(network, "KEY_PATH_A", nil)
 	require.NoError(err)
-	keychainB, err := keychain.NewKeychain(network, "KEY_PATH_B")
+	keychainB, err := keychain.NewKeychain(network, "KEY_PATH_B", nil)
 	require.NoError(err)
-	keychainC, err := keychain.NewKeychain(network, "KEY_PATH_C")
+	keychainC, err := keychain.NewKeychain(network, "KEY_PATH_C", nil)
 	require.NoError(err)
 
 	controlKeys := []ids.ShortID{}
