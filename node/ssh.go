@@ -380,7 +380,7 @@ func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string)
 }
 
 // ValidateSubnets reconfigures avalanchego to validate subnets
-func (h *Node) ValidateSubnets(ctx context.Context, networkName string, subnetsToTrack []string, avalancheGoVersion string) error {
+func (h *Node) ValidateSubnets(subnetsToTrack []string) error {
 	// necessary checks
 	if !isAvalancheGoNode(*h) {
 		return fmt.Errorf("%s is not a avalanchego node", h.NodeID)
@@ -392,7 +392,15 @@ func (h *Node) ValidateSubnets(ctx context.Context, networkName string, subnetsT
 	if err := h.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
 		return err
 	}
-	if err := h.ComposeSSHSetupNode(networkName, subnetsToTrack, avalancheGoVersion, withMonitoring); err != nil {
+	avagoVersion, err := h.GetAvalancheGoVersion()
+	if err != nil {
+		return err
+	}
+	networkName, err := h.GetAvalancheGoNetworkName()
+	if err != nil {
+		return err
+	}
+	if err := h.ComposeSSHSetupNode(networkName, subnetsToTrack, avagoVersion, withMonitoring); err != nil {
 		return err
 	}
 	if err := h.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
@@ -401,6 +409,7 @@ func (h *Node) ValidateSubnets(ctx context.Context, networkName string, subnetsT
 
 	return nil
 }
+
 func (h *Node) RunSSHCopyMonitoringDashboards(monitoringDashboardPath string) error {
 	// TODO: download dashboards from github instead
 	remoteDashboardsPath := utils.GetRemoteComposeServicePath("grafana", "dashboards")
