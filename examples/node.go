@@ -106,7 +106,7 @@ func CreateNodes() {
 	// examle of how to reconfigure the created nodes to track a subnet
 	for _, h := range hosts {
 		fmt.Println("Reconfiguring node %s to track subnet %s", h.NodeID, subnetIDsToValidate)
-		if err := h.TrackSubnet(subnetIDsToValidate); err != nil {
+		if err := h.ValidateSubnets(subnetIDsToValidate); err != nil {
 			panic(err)
 		}
 	}
