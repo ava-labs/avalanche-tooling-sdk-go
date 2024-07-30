@@ -49,8 +49,7 @@ func CreateNodes() {
 	// Avalanche-CLI dependency by Avalanche nodes will be deprecated in the next release
 	// of Avalanche Tooling SDK
 	const (
-		avalancheGoVersion  = "v1.11.8"
-		subnetIDsToValidate = []string{"xxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyzzzzzzzzzzzzzzz"}
+		avalancheGoVersion = "v1.11.8"
 	)
 
 	// Create two new Avalanche Validator nodes on Fuji Network on AWS without Elastic IPs
@@ -104,6 +103,7 @@ func CreateNodes() {
 	}
 
 	// examle of how to reconfigure the created nodes to track a subnet
+	subnetIDsToValidate := []string{"xxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyzzzzzzzzzzzzzzz"}
 	for _, h := range hosts {
 		fmt.Println("Reconfiguring node %s to track subnet %s", h.NodeID, subnetIDsToValidate)
 		if err := h.ValidateSubnets(subnetIDsToValidate); err != nil {
