@@ -70,13 +70,6 @@ func (h *Node) WasNodeSetupWithMonitoring() (bool, error) {
 	return h.HasRemoteComposeService(utils.GetRemoteComposeFile(), constants.ServicePromtail, constants.SSHScriptTimeout)
 }
 
-func (h *Node) GetAvalancheGoVersion() (string, error) {
-	if withAvago, err := h.HasRemoteComposeService(utils.GetRemoteComposeFile(), constants.ServiceAvalanchego, constants.SSHScriptTimeout); err != nil || !withAvago {
-		return "", err
-	} else {
-	}
-}
-
 // ComposeSSHSetupMonitoring sets up monitoring using docker-compose.
 func (h *Node) ComposeSSHSetupMonitoring() error {
 	grafanaConfigFile, grafanaDashboardsFile, grafanaLokiDatasourceFile, grafanaPromDatasourceFile, err := prepareGrafanaConfig()
