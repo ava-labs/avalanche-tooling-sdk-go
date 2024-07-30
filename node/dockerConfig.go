@@ -4,7 +4,6 @@
 package node
 
 import (
-	"encoding/json"
 	"os"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
@@ -51,19 +50,6 @@ func (h *Node) RunSSHRenderAvalancheNodeConfig(networkID string, trackSubnets []
 		return err
 	}
 	return nil
-}
-
-func (h *Node) GetAvalancheGoConfigData() (map[string]interface{}, error) {
-	// get remote node.json file
-	nodeJSON, err := h.ReadFileBytes(remoteconfig.GetRemoteAvalancheNodeConfig(), constants.SSHFileOpsTimeout)
-	if err != nil {
-		return nil, err
-	}
-	var avagoConfig map[string]interface{}
-	if err := json.Unmarshal(nodeJSON, &avagoConfig); err != nil {
-		return nil, err
-	}
-	return avagoConfig, nil
 }
 
 func prepareGrafanaConfig() (string, string, string, string, error) {
