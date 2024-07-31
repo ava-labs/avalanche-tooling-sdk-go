@@ -300,13 +300,13 @@ func (h *Node) ListDockerComposeImages(composeFile string, timeout time.Duration
 		Name       string `json:"ContainerName"`
 		Repository string `json:"Repository"`
 		Tag        string `json:"Tag"`
-		Size       string `json:"Size"`
+		Size       uint   `json:"Size"`
 	}
 	var images []dockerImages
 	if err := json.Unmarshal(output, &images); err != nil {
 		return nil, err
 	}
-	var imageMap map[string]string
+	imageMap := make(map[string]string)
 	for _, image := range images {
 		imageMap[image.Repository] = image.Tag
 	}
