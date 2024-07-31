@@ -35,7 +35,6 @@ func (h *Node) GetAvalancheGoHealth() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	fmt.Println(string(resp))
 	return parseHealthyOutput(resp)
 }
 
