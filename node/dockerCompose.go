@@ -6,6 +6,7 @@ package node
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -287,4 +288,35 @@ func (h *Node) HasRemoteComposeService(composeFile string, service string, timeo
 		}
 	}
 	return found, nil
+}
+
+func (h *Node) ListDockerComposeImages(composeFile string, timeout time.Duration) (map[string]string, error) {
+	output, err := h.Commandf(nil, timeout, "docker compose -f %s --format json", composeFile)
+	if err != nil {
+		return nil, err
+	}
+	type dockerImages struct {
+		Id         string `json:"ID"`
+		Name       string `json:"ContainerName"`
+		Repository string `json:"Repository"`
+		Tag        string `json:"Tag"`
+		Size       string `json:"Size"`
+	}
+	var images []dockerImages
+	if err := json.Unmarshal(output, &images); err != nil {
+		return nil, err
+	}
+	var imageMap map[string]string
+	for _, image := range images {
+		imageMap[image.Repository] = image.Tag
+	}
+	return imageMap, nil
+}
+
+func (h *Node) GetDockerImageVersion(image string, timeout time.Duration) (string, error) {
+	imageMap, err := h.ListDockerComposeImages(utils.GetRemoteComposeFile(), timeout)
+	if err != nil {
+		return "", err
+	}
+	return imageMap[image], nil
 }

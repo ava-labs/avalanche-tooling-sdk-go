@@ -392,10 +392,7 @@ func (h *Node) ValidateSubnets(subnetsToTrack []string) error {
 	if err := h.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
 		return err
 	}
-	if err := h.WaitForAvalancheGoHealth(constants.SSHLongRunningScriptTimeout); err != nil {
-		return fmt.Errorf("error waiting for avalanchego health: %w", err)
-	}
-	avagoVersion, err := h.GetAvalancheGoVersion()
+	avagoVersion, err := h.GetDockerImageVersion(constants.AvalancheGoDockerImage, constants.SSHScriptTimeout)
 	if err != nil {
 		return err
 	}
