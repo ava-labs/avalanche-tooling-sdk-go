@@ -16,12 +16,14 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.24.0
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
-	golang.org/x/net v0.26.0
 	golang.org/x/sync v0.7.0
 	google.golang.org/api v0.182.0
 )
 
-require github.com/onsi/gomega v1.33.1 // indirect
+require (
+	github.com/onsi/gomega v1.33.1 // indirect
+	golang.org/x/net v0.26.0 // indirect
+)
 
 require (
 	cloud.google.com/go/auth v0.4.2 // indirect
