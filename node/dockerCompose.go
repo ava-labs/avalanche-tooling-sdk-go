@@ -291,7 +291,7 @@ func (h *Node) HasRemoteComposeService(composeFile string, service string, timeo
 }
 
 func (h *Node) ListDockerComposeImages(composeFile string, timeout time.Duration) (map[string]string, error) {
-	output, err := h.Commandf(nil, timeout, "docker compose -f %s --format json", composeFile)
+	output, err := h.Commandf(nil, timeout, "docker compose -f %s images --format json", composeFile)
 	if err != nil {
 		return nil, err
 	}
