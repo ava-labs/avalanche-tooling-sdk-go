@@ -296,7 +296,7 @@ func (h *Node) ListDockerComposeImages(composeFile string, timeout time.Duration
 		return nil, err
 	}
 	type dockerImages struct {
-		Id         string `json:"ID"`
+		ID         string `json:"ID"`
 		Name       string `json:"ContainerName"`
 		Repository string `json:"Repository"`
 		Tag        string `json:"Tag"`
