@@ -32,15 +32,16 @@ type NodeParams struct {
 	// in Fuji / Mainnet / Devnet
 	Network avalanche.Network
 
+	// SubnetIDs is the list of subnet IDs that the created nodes will be tracking
+	// For primary network, it should be empty
+	SubnetIDs []string
+
 	// SSHPrivateKeyPath is the file path to the private key of the SSH key pair that is used
 	// to gain access to the created nodes
 	SSHPrivateKeyPath string
 
 	// AvalancheGoVersion is the version of Avalanche Go to install in the created node
 	AvalancheGoVersion string
-
-	// AvalancheCliVersion is the version of Avalanche CLI to install in the created node
-	AvalancheCliVersion string
 
 	// UseStaticIP is whether the created node should have static IP attached to it. Note that
 	// assigning Static IP to a node may incur additional charges on AWS / GCP. There could also be
@@ -283,7 +284,7 @@ func provisionHost(node Node, nodeParams *NodeParams) error {
 
 func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	const withMonitoring = true
-	if err := node.RunSSHSetupNode(nodeParams.AvalancheCliVersion); err != nil {
+	if err := node.RunSSHSetupNode(); err != nil {
 		return err
 	}
 	if err := node.RunSSHSetupDockerService(); err != nil {
@@ -293,7 +294,7 @@ func provisionAvagoHost(node Node, nodeParams *NodeParams) error {
 	if err := node.RunSSHSetupPromtailConfig("127.0.0.1", constants.AvalanchegoLokiPort, node.NodeID, "", ""); err != nil {
 		return err
 	}
-	if err := node.ComposeSSHSetupNode(nodeParams.Network.HRP(), nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
+	if err := node.ComposeSSHSetupNode(nodeParams.Network.HRP(), nodeParams.SubnetIDs, nodeParams.AvalancheGoVersion, withMonitoring); err != nil {
 		return err
 	}
 	if err := node.StartDockerCompose(constants.SSHScriptTimeout); err != nil {

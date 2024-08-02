@@ -19,10 +19,3 @@ fi
 sudo usermod -aG docker ubuntu
 sudo chgrp ubuntu /var/run/docker.sock
 sudo chmod +rw /var/run/docker.sock
-export PATH=$PATH:~/go/bin
-mkdir -p ~/.avalanche-cli
-rm -vf install.sh && busybox wget -q -nd https://raw.githubusercontent.com/ava-labs/avalanche-cli/main/scripts/install.sh
-#name:TASK [modify permissions]
-chmod 755 install.sh
-#name:TASK [run install script]
-./install.sh {{ .CLIVersion }}

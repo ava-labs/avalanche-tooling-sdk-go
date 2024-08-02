@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	config "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
+	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
@@ -23,9 +23,9 @@ func (h *Node) ValidateComposeFile(composeFile string, timeout time.Duration) er
 }
 
 // ComposeSSHSetupNode sets up an AvalancheGo node and dependencies on a remote node over SSH.
-func (h *Node) ComposeSSHSetupNode(networkID string, avalancheGoVersion string, withMonitoring bool) error {
+func (h *Node) ComposeSSHSetupNode(networkID string, subnetsToTrack []string, avalancheGoVersion string, withMonitoring bool) error {
 	startTime := time.Now()
-	folderStructure := config.RemoteFoldersToCreateAvalanchego()
+	folderStructure := remoteconfig.RemoteFoldersToCreateAvalanchego()
 	for _, dir := range folderStructure {
 		if err := h.MkdirAll(dir, constants.SSHFileOpsTimeout); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
@@ -38,23 +38,7 @@ func (h *Node) ComposeSSHSetupNode(networkID string, avalancheGoVersion string, 
 		return err
 	}
 	h.Logger.Infof("AvalancheGo Docker image %s ready on %s[%s] after %s", avagoDockerImage, h.NodeID, h.IP, time.Since(startTime))
-	nodeConfFile, cChainConfFile, err := h.prepareAvalanchegoConfig(networkID)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := os.Remove(nodeConfFile); err != nil {
-			h.Logger.Errorf("Error removing temporary file %s: %s", nodeConfFile, err)
-		}
-		if err := os.Remove(cChainConfFile); err != nil {
-			h.Logger.Errorf("Error removing temporary file %s: %s", cChainConfFile, err)
-		}
-	}()
-
-	if err := h.Upload(nodeConfFile, config.GetRemoteAvalancheNodeConfig(), constants.SSHFileOpsTimeout); err != nil {
-		return err
-	}
-	if err := h.Upload(cChainConfFile, config.GetRemoteAvalancheCChainConfig(), constants.SSHFileOpsTimeout); err != nil {
+	if err := h.RunSSHRenderAvalancheNodeConfig(networkID, subnetsToTrack); err != nil {
 		return err
 	}
 	h.Logger.Infof("AvalancheGo configs uploaded to %s[%s] after %s", h.NodeID, h.IP, time.Since(startTime))

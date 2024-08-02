@@ -203,7 +203,6 @@ func CreateNodes() {
 	// of Avalanche Tooling SDK
 	const (
 		avalancheGoVersion  = "v1.11.8"
-		avalancheCliVersion = "v1.6.2"
 	)
 
 	// Create two new Avalanche Validator nodes on Fuji Network on AWS without Elastic IPs
@@ -220,7 +219,6 @@ func CreateNodes() {
 			Roles:               []node.SupportedRole{node.Validator},
 			Network:             avalanche.FujiNetwork(),
 			AvalancheGoVersion:  avalancheGoVersion,
-			AvalancheCliVersion: avalancheCliVersion,
 			UseStaticIP:         false,
 			SSHPrivateKeyPath:   sshPrivateKeyPath,
 		})

@@ -26,15 +26,13 @@ import (
 
 type scriptInputs struct {
 	AvalancheGoVersion   string
-	CLIVersion           string
 	SubnetExportFileName string
 	SubnetName           string
 	ClusterName          string
 	GoVersion            string
-	CliBranch            string
 	IsDevNet             bool
 	NetworkFlag          string
-	SubnetEVMBinaryPath  string
+	SubnetVMBinaryPath   string
 	SubnetEVMReleaseURL  string
 	SubnetEVMArchive     string
 	LoadTestRepoDir      string
@@ -83,12 +81,12 @@ func (h *Node) RunOverSSH(
 }
 
 // RunSSHSetupNode runs script to setup sdk dependencies on a remote host over SSH.
-func (h *Node) RunSSHSetupNode(cliVersion string) error {
+func (h *Node) RunSSHSetupNode() error {
 	if err := h.RunOverSSH(
 		"Setup Node",
 		constants.SSHLongRunningScriptTimeout,
 		"shell/setupNode.sh",
-		scriptInputs{CLIVersion: cliVersion},
+		scriptInputs{},
 	); err != nil {
 		return err
 	}
@@ -127,13 +125,23 @@ func (h *Node) RunSSHStopAWMRelayerService() error {
 }
 
 // RunSSHUpgradeAvalanchego runs script to upgrade avalanchego
-func (h *Node) RunSSHUpgradeAvalanchego(networkID string, avalancheGoVersion string) error {
+func (h *Node) RunSSHUpgradeAvalanchego(avalancheGoVersion string) error {
 	withMonitoring, err := h.WasNodeSetupWithMonitoring()
 	if err != nil {
 		return err
 	}
 
-	if err := h.ComposeSSHSetupNode(networkID, avalancheGoVersion, withMonitoring); err != nil {
+	if err := h.ComposeOverSSH("Compose Node",
+		constants.SSHScriptTimeout,
+		"templates/avalanchego.docker-compose.yml",
+		dockerComposeInputs{
+			AvalanchegoVersion: avalancheGoVersion,
+			WithMonitoring:     withMonitoring,
+			WithAvalanchego:    true,
+			E2E:                utils.IsE2E(),
+			E2EIP:              utils.E2EConvertIP(h.IP),
+			E2ESuffix:          utils.E2ESuffix(h.IP),
+		}); err != nil {
 		return err
 	}
 	return h.RestartDockerCompose(constants.SSHLongRunningScriptTimeout)
@@ -151,12 +159,10 @@ func (h *Node) RunSSHStopAvalanchego() error {
 
 // RunSSHUpgradeSubnetEVM runs script to upgrade subnet evm
 func (h *Node) RunSSHUpgradeSubnetEVM(subnetEVMBinaryPath string) error {
-	return h.RunOverSSH(
-		"Upgrade Subnet EVM",
-		constants.SSHScriptTimeout,
-		"shell/upgradeSubnetEVM.sh",
-		scriptInputs{SubnetEVMBinaryPath: subnetEVMBinaryPath},
-	)
+	if _, err := h.Commandf(nil, constants.SSHScriptTimeout, "cp -f subnet-evm %s", subnetEVMBinaryPath); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (h *Node) RunSSHSetupPrometheusConfig(avalancheGoPorts, machinePorts, loadTestPorts []string) error {
@@ -373,6 +379,37 @@ func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string)
 	return nil
 }
 
+// SyncSubnets reconfigures avalanchego to sync subnets
+func (h *Node) SyncSubnets(subnetsToTrack []string) error {
+	// necessary checks
+	if !isAvalancheGoNode(*h) {
+		return fmt.Errorf("%s is not a avalanchego node", h.NodeID)
+	}
+	withMonitoring, err := h.WasNodeSetupWithMonitoring()
+	if err != nil {
+		return err
+	}
+	if err := h.WaitForSSHShell(constants.SSHScriptTimeout); err != nil {
+		return err
+	}
+	avagoVersion, err := h.GetDockerImageVersion(constants.AvalancheGoDockerImage, constants.SSHScriptTimeout)
+	if err != nil {
+		return err
+	}
+	networkName, err := h.GetAvalancheGoNetworkName()
+	if err != nil {
+		return err
+	}
+	if err := h.ComposeSSHSetupNode(networkName, subnetsToTrack, avagoVersion, withMonitoring); err != nil {
+		return err
+	}
+	if err := h.RestartDockerCompose(constants.SSHScriptTimeout); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (h *Node) RunSSHCopyMonitoringDashboards(monitoringDashboardPath string) error {
 	// TODO: download dashboards from github instead
 	remoteDashboardsPath := utils.GetRemoteComposeServicePath("grafana", "dashboards")
@@ -396,7 +433,7 @@ func (h *Node) RunSSHCopyMonitoringDashboards(monitoringDashboardPath string) er
 			return err
 		}
 	}
-	if composeFileExists, err := h.FileExists(utils.GetRemoteComposeFile()); err == nil && composeFileExists {
+	if composeFileExists(*h) {
 		return h.RestartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceGrafana, constants.SSHScriptTimeout)
 	}
 	return nil

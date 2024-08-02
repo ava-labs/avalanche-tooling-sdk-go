@@ -184,6 +184,22 @@ func (h *Node) Upload(localFile string, remoteFile string, timeout time.Duration
 	return err
 }
 
+// UploadBytes uploads a byte array to a remote file on the host.
+func (h *Node) UploadBytes(data []byte, remoteFile string, timeout time.Duration) error {
+	tmpFile, err := os.CreateTemp("", "NodeUploadBytes-*.tmp")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpFile.Name())
+	if _, err := tmpFile.Write(data); err != nil {
+		return err
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+	return h.Upload(tmpFile.Name(), remoteFile, timeout)
+}
+
 // Download downloads a file from the remote server to the local machine.
 func (h *Node) Download(remoteFile string, localFile string, timeout time.Duration) error {
 	if !h.Connected() {
@@ -205,6 +221,19 @@ func (h *Node) Download(remoteFile string, localFile string, timeout time.Durati
 		err = fmt.Errorf("%w for node %s", err, h.IP)
 	}
 	return err
+}
+
+// ReadFileBytes downloads a file from the remote server to a byte array
+func (h *Node) ReadFileBytes(remoteFile string, timeout time.Duration) ([]byte, error) {
+	tmpFile, err := os.CreateTemp("", "NodeDownloadBytes-*.tmp")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(tmpFile.Name())
+	if err := h.Download(remoteFile, tmpFile.Name(), timeout); err != nil {
+		return nil, err
+	}
+	return os.ReadFile(tmpFile.Name())
 }
 
 // ExpandHome expands the ~ symbol to the home directory.

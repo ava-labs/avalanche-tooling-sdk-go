@@ -44,8 +44,7 @@ func TestCreateNodes(_ *testing.T) {
 	// Avalanche-CLI dependency by Avalanche nodes will be deprecated in the next release
 	// of Avalanche Tooling SDK
 	const (
-		avalancheGoVersion  = "v1.11.8"
-		avalancheCliVersion = "v1.6.2"
+		avalancheGoVersion = "v1.11.8"
 	)
 
 	// Create two new Avalanche Validator nodes on Fuji Network on AWS without Elastic IPs
@@ -57,14 +56,13 @@ func TestCreateNodes(_ *testing.T) {
 	// in the next Avalanche Tooling SDK release.
 	hosts, err := CreateNodes(ctx,
 		&NodeParams{
-			CloudParams:         cp,
-			Count:               2,
-			Roles:               []SupportedRole{Validator},
-			Network:             avalanche.FujiNetwork(),
-			AvalancheGoVersion:  avalancheGoVersion,
-			AvalancheCliVersion: avalancheCliVersion,
-			UseStaticIP:         false,
-			SSHPrivateKeyPath:   sshPrivateKeyPath,
+			CloudParams:        cp,
+			Count:              2,
+			Roles:              []SupportedRole{Validator},
+			Network:            avalanche.FujiNetwork(),
+			AvalancheGoVersion: avalancheGoVersion,
+			UseStaticIP:        false,
+			SSHPrivateKeyPath:  sshPrivateKeyPath,
 		})
 	if err != nil {
 		panic(err)
