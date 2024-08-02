@@ -106,7 +106,7 @@ func CreateNodes() {
 	subnetIDsToValidate := []string{"xxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyzzzzzzzzzzzzzzz"}
 	for _, h := range hosts {
 		fmt.Println("Reconfiguring node %s to track subnet %s", h.NodeID, subnetIDsToValidate)
-		if err := h.ValidateSubnets(subnetIDsToValidate); err != nil {
+		if err := h.SyncSubnets(subnetIDsToValidate); err != nil {
 			panic(err)
 		}
 	}

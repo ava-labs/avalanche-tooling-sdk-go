@@ -379,8 +379,8 @@ func (h *Node) MonitorNodes(ctx context.Context, targets []Node, chainID string)
 	return nil
 }
 
-// ValidateSubnets reconfigures avalanchego to validate subnets
-func (h *Node) ValidateSubnets(subnetsToTrack []string) error {
+// SyncSubnets reconfigures avalanchego to sync subnets
+func (h *Node) SyncSubnets(subnetsToTrack []string) error {
 	// necessary checks
 	if !isAvalancheGoNode(*h) {
 		return fmt.Errorf("%s is not a avalanchego node", h.NodeID)
