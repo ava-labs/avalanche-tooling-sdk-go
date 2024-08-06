@@ -23,7 +23,8 @@ func CreateNodes() {
 		panic(err)
 	}
 
-	securityGroupName := "SECURITY_GROUP_NAME"
+	//securityGroupName := "SECURITY_GROUP_NAME"
+	securityGroupName := "rs_security_group_sdk"
 	// Create a new security group in AWS if you do not currently have one in the selected
 	// AWS region.
 	sgID, err := awsAPI.CreateSecurityGroup(ctx, securityGroupName, cp.AWSConfig.AWSProfile, cp.Region)
@@ -33,8 +34,10 @@ func CreateNodes() {
 	// Set the security group we are using when creating our Avalanche Nodes
 	cp.AWSConfig.AWSSecurityGroupID = sgID
 
-	keyPairName := "KEY_PAIR_NAME"
-	sshPrivateKeyPath := utils.ExpandHome("PRIVATE_KEY_FILEPATH")
+	//keyPairName := "KEY_PAIR_NAME"
+	keyPairName := "rs_key_pair_sdk"
+	//sshPrivateKeyPath := utils.ExpandHome("PRIVATE_KEY_FILEPATH")
+	sshPrivateKeyPath := utils.ExpandHome("/Users/raymondsukanto/.ssh")
 	// Create a new AWS SSH key pair if you do not currently have one in your selected AWS region.
 	// Note that the created key pair can only be used in the region that it was created in.
 	// The private key to the created key pair will be stored in the filepath provided in
