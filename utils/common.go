@@ -82,17 +82,20 @@ func AppendSlices[T any](slices ...[]T) []T {
 	return result
 }
 
-// RetryFunction retries the given function until it succeeds or the maximum number of attempts is reached.
-func RetryFunction(fn func() (interface{}, error), maxAttempts int, retryInterval time.Duration) (
-	interface{},
-	error,
-) {
-	var err error
-	var result interface{}
+// Retry retries the given function until it succeeds or the maximum number of attempts is reached.
+func Retry[T any](
+	fn func() (T, error),
+	maxAttempts int,
+	retryInterval time.Duration,
+) (T, error) {
 	const defaultRetryInterval = 2 * time.Second
 	if retryInterval == 0 {
 		retryInterval = defaultRetryInterval
 	}
+	var (
+		result T
+		err    error
+	)
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		result, err = fn()
 		if err == nil {
@@ -100,7 +103,7 @@ func RetryFunction(fn func() (interface{}, error), maxAttempts int, retryInterva
 		}
 		time.Sleep(retryInterval)
 	}
-	return nil, fmt.Errorf("maximum retry attempts reached: %w", err)
+	return result, err
 }
 
 // TimedFunction is a function that executes the given function `f` within a specified timeout duration.
@@ -136,7 +139,7 @@ func TimedFunctionWithRetry(
 	maxAttempts int,
 	retryInterval time.Duration,
 ) (interface{}, error) {
-	return RetryFunction(func() (interface{}, error) {
+	return Retry(func() (interface{}, error) {
 		return TimedFunction(f, name, timeout)
 	}, maxAttempts, retryInterval)
 }
