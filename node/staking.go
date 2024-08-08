@@ -16,10 +16,8 @@ import (
 
 func (h *Node) ProvideStakingCertAndKey(keyPath string) error {
 	if nodeID, err := GenerateNodeCertAndKeys(keyPath); err != nil {
-		fmt.Printf("we have err here GenerateNodeCertAndKeys ")
 		return err
 	} else {
-		fmt.Printf("we are all good here GenerateNodeCertAndKeys")
 		h.Logger.Infof("Generated Staking Cert and Key for NodeID: %s in folder %s", nodeID.String(), keyPath)
 	}
 	return h.RunSSHUploadStakingFiles(keyPath)
