@@ -257,6 +257,7 @@ func (h *Node) RunSSHGetNewSubnetEVMRelease(subnetEVMReleaseURL, subnetEVMArchiv
 
 // RunSSHUploadStakingFiles uploads staking files to a remote host via SSH.
 func (h *Node) RunSSHUploadStakingFiles(keyPath string) error {
+	fmt.Printf("we are starting RunSSHUploadStakingFiles ")
 	if err := h.MkdirAll(
 		constants.CloudNodeStakingPath,
 		constants.SSHFileOpsTimeout,
@@ -268,6 +269,7 @@ func (h *Node) RunSSHUploadStakingFiles(keyPath string) error {
 		filepath.Join(constants.CloudNodeStakingPath, constants.StakerCertFileName),
 		constants.SSHFileOpsTimeout,
 	); err != nil {
+		fmt.Printf("we have error uploading staker file")
 		return err
 	}
 	if err := h.Upload(

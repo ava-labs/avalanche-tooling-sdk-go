@@ -122,7 +122,7 @@ func GetDefaultCloudParams(ctx context.Context, cloud SupportedCloud) (*CloudPar
 				AWSVolumeIOPS:       1000,
 				AWSVolumeType:       "gp3",
 			},
-			Region:       "us-east-1",
+			Region:       "us-west-1",
 			InstanceType: constants.AWSDefaultInstanceType,
 		}
 		awsSvc, err := awsAPI.NewAwsCloud(ctx, cp.AWSConfig.AWSProfile, cp.Region)
