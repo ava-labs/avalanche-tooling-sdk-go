@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ava-labs/avalanchego/utils/crypto/bls"
 	"io"
 	"net"
 	"net/http"
@@ -75,6 +76,8 @@ type Node struct {
 
 	// Logger for node
 	Logger avalanche.LeveledLogger
+
+	BlsSecretKey *bls.SecretKey
 }
 
 // NewNodeConnection creates a new SSH connection to the node
@@ -171,6 +174,8 @@ func (h *Node) Upload(localFile string, remoteFile string, timeout time.Duration
 			return err
 		}
 	}
+	fmt.Printf("we are connected \n")
+	fmt.Printf("we are uploading from localfile %s to remotefile %s \n", localFile, remoteFile)
 	_, err := utils.TimedFunction(
 		func() (interface{}, error) {
 			return nil, h.connection.Upload(localFile, remoteFile)
