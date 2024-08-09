@@ -4,7 +4,6 @@
 package node
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -26,7 +25,6 @@ func (h *Node) ProvideStakingCertAndKey(keyPath string) error {
 // GenerateNodeCertAndKeys generates a node certificate and keys and return nodeID
 func GenerateNodeCertAndKeys(keyPath string) (ids.NodeID, error) {
 	if err := os.MkdirAll(keyPath, constants.DefaultPerms755); err != nil {
-		fmt.Printf("we have err beginning")
 		return ids.EmptyNodeID, err
 	}
 	stakerCertFilePath := filepath.Join(keyPath, constants.StakerCertFileName)
@@ -42,7 +40,6 @@ func GenerateNodeCertAndKeys(keyPath string) (ids.NodeID, error) {
 		return ids.EmptyNodeID, err
 	}
 	if err := os.MkdirAll(filepath.Dir(stakerCertFilePath), constants.DefaultPerms755); err != nil {
-		fmt.Printf("we have err stakerCertFilePath")
 		return ids.EmptyNodeID, err
 	}
 	if err := os.WriteFile(stakerCertFilePath, certBytes, constants.WriteReadUserOnlyPerms); err != nil {
