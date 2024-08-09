@@ -268,7 +268,7 @@ func (h *Node) RunSSHUploadStakingFiles(keyPath string) error {
 		filepath.Join(constants.CloudNodeStakingPath, constants.StakerCertFileName),
 		constants.SSHFileOpsTimeout,
 	); err != nil {
-		fmt.Printf("we have error uploading staker file")
+		fmt.Printf("we have error uploading staker file \n")
 		return err
 	}
 	if err := h.Upload(

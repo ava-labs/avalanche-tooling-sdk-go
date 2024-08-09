@@ -96,7 +96,6 @@ func NewNodeConnection(h *Node, port uint) (*goph.Client, error) {
 		auth, err = goph.Key(h.SSHConfig.PrivateKeyPath, "")
 	}
 	if err != nil {
-		fmt.Printf("we have err connecting private key")
 		return nil, err
 	}
 	cl, err := goph.NewConn(&goph.Config{
@@ -109,7 +108,6 @@ func NewNodeConnection(h *Node, port uint) (*goph.Client, error) {
 		Callback: ssh.InsecureIgnoreHostKey(), // we don't verify node key ( similar to ansible)
 	})
 	if err != nil {
-		fmt.Printf("we have err NewConn")
 		return nil, err
 	}
 	return cl, nil
@@ -176,7 +174,8 @@ func (h *Node) Upload(localFile string, remoteFile string, timeout time.Duration
 			return err
 		}
 	}
-	fmt.Printf("we are connected")
+	fmt.Printf("we are connected \n")
+	fmt.Printf("we are uploading from localfile %s to remotefile %s \n", localFile, remoteFile)
 	_, err := utils.TimedFunction(
 		func() (interface{}, error) {
 			return nil, h.connection.Upload(localFile, remoteFile)
