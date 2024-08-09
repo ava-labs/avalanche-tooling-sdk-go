@@ -55,7 +55,7 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 	validator := ValidatorParams{
 		NodeID: nodeID,
 		// Validate Primary Network for 48 hours
-		Duration: 48 * time.Hour,
+		Duration: 72 * time.Hour,
 		// 1 billion in weight is equivalent to 1 AVAX
 		Weight: 2000000000,
 	}

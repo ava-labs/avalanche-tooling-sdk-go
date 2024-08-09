@@ -183,6 +183,10 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 	return &subnet, nil
 }
 
+func (c *Subnet) SetSubnetID(subnetID ids.ID) {
+	c.SubnetID = subnetID
+}
+
 func createEvmGenesis(
 	subnetEVMParams *SubnetEVMParams,
 ) ([]byte, error) {
