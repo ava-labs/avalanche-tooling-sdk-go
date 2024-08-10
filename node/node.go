@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ava-labs/avalanchego/utils/crypto/bls"
 	"io"
 	"net"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ava-labs/avalanchego/utils/crypto/bls"
 
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
@@ -174,8 +175,6 @@ func (h *Node) Upload(localFile string, remoteFile string, timeout time.Duration
 			return err
 		}
 	}
-	fmt.Printf("we are connected \n")
-	fmt.Printf("we are uploading from localfile %s to remotefile %s \n", localFile, remoteFile)
 	_, err := utils.TimedFunction(
 		func() (interface{}, error) {
 			return nil, h.connection.Upload(localFile, remoteFile)
