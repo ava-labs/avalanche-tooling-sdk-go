@@ -79,4 +79,8 @@ const (
 	StakerCertFileName = "staker.crt"
 	StakerKeyFileName  = "staker.key"
 	BLSKeyFileName     = "signer.key"
+
+	// github
+	AvaLabsOrg         = "ava-labs"
+	TeleporterRepoName = "teleporter"
 )
