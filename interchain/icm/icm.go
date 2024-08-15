@@ -1,6 +1,6 @@
 // Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package teleporter
+package icm
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ var (
 )
 
 func GetLatestVersion() (string, error) {
-	return utils.GetLatestGithubReleaseVersion(constants.AvaLabsOrg, constants.TeleporterRepoName, "")
+	return utils.GetLatestGithubReleaseVersion(constants.AvaLabsOrg, constants.ICMRepoName, "")
 }
 
 func getURLs(version string) (string, string, string, string) {
@@ -49,7 +49,7 @@ type Deployer struct {
 
 func (t *Deployer) CheckAssets() error {
 	if len(t.messengerContractAddress) == 0 || len(t.messengerDeployerAddress) == 0 || len(t.messengerDeployerTx) == 0 || len(t.registryBytecode) == 0 {
-		return fmt.Errorf("teleporter assets has not been initialized")
+		return fmt.Errorf("interchain messaging assets has not been initialized")
 	}
 	return nil
 }
@@ -163,23 +163,13 @@ func (t *Deployer) DeployMessenger(
 	} else if messengerAlreadyDeployed {
 		return true, string(t.messengerContractAddress), nil
 	}
-	messengerDeployerBalance, err := evm.GetAddressBalance(
+	if err := evm.SetMinBalance(
 		client,
+		privateKey,
 		string(t.messengerDeployerAddress),
-	)
-	if err != nil {
+		messengerDeployerRequiredBalance,
+	); err != nil {
 		return false, "", err
-	}
-	if messengerDeployerBalance.Cmp(messengerDeployerRequiredBalance) < 0 {
-		toFund := big.NewInt(0).Sub(messengerDeployerRequiredBalance, messengerDeployerBalance)
-		if err := evm.FundAddress(
-			client,
-			privateKey,
-			string(t.messengerDeployerAddress),
-			toFund,
-		); err != nil {
-			return false, "", err
-		}
 	}
 	if err := evm.IssueTx(client, string(t.messengerDeployerTx)); err != nil {
 		return false, "", err

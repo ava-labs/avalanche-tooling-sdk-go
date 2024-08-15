@@ -168,7 +168,32 @@ func EstimateBaseFee(
 	return baseFee, err
 }
 
-func FundAddress(
+func SetMinBalance(
+	client ethclient.Client,
+	privateKey string,
+	address string,
+	requiredMinBalance *big.Int,
+) error {
+	balance, err := GetAddressBalance(client, address)
+	if err != nil {
+		return err
+	}
+	if balance.Cmp(requiredMinBalance) < 0 {
+		toFund := big.NewInt(0).Sub(requiredMinBalance, balance)
+		err := Transfer(
+			client,
+			privateKey,
+			address,
+			toFund,
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func Transfer(
 	client ethclient.Client,
 	sourceAddressPrivateKeyStr string,
 	targetAddressStr string,
