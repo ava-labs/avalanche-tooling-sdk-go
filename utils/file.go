@@ -18,6 +18,15 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// IsExecutable checks if a file is executable.
+func IsExecutable(filename string) bool {
+	if !FileExists(filename) {
+		return false
+	}
+	info, _ := os.Stat(filename)
+	return info.Mode()&0x0100 != 0
+}
+
 // DirectoryExists checks if a directory exists.
 //
 // dirName: the name of the directory to check.
