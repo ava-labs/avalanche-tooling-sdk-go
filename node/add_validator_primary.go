@@ -22,12 +22,14 @@ import (
 	"golang.org/x/net/context"
 )
 
-type ValidatorParams struct {
+type PrimaryNetworkValidatorParams struct {
 	NodeID ids.NodeID
 
 	Duration time.Duration
 
 	Weight uint64
+
+	DelegationFee uint32
 }
 
 func GetMinStakingAmount(network avalanche.Network) (uint64, error) {
@@ -59,7 +61,7 @@ func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
 // and uses the wallet provided in the argument to pay for the transaction fee
 func (h *Node) ValidatePrimaryNetwork(
 	network avalanche.Network,
-	validator ValidatorParams,
+	validator PrimaryNetworkValidatorParams,
 	wallet wallet.Wallet,
 ) (ids.ID, error) {
 	minValStake, err := GetMinStakingAmount(network)

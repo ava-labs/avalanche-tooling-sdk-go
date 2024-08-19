@@ -52,7 +52,7 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		panic(err)
 	}
 
-	validator := ValidatorParams{
+	validator := PrimaryNetworkValidatorParams{
 		NodeID: nodeID,
 		// Validate Primary Network for 48 hours
 		Duration: 48 * time.Hour,
