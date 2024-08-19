@@ -4,7 +4,6 @@
 package node
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -31,13 +30,6 @@ type ValidatorParams struct {
 	Weight uint64
 }
 
-var (
-	ErrEmptyValidatorNodeID   = errors.New("validator node id is not provided")
-	ErrEmptyValidatorDuration = errors.New("validator duration is not provided")
-	ErrEmptyValidatorWeight   = errors.New("validator weight is not provided")
-	ErrEmptySubnetID          = errors.New("subnet ID is not provided")
-)
-
 func GetMinStakingAmount(network avalanche.Network) (uint64, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
 	ctx, cancel := utils.GetAPIContext()
@@ -62,19 +54,21 @@ func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
 	return nil
 }
 
-// AddNodeAsPrimaryNetworkValidator returns bool if node is added as primary network validator
-// as it impacts the output in adding node as subnet validator in the next steps
-func (h *Node) AddNodeAsPrimaryNetworkValidator(
+// ValidatePrimaryNetwork adds node as primary network validator.
+// It adds the node in the specified network (Fuji / Mainnet / Devnet)
+// and uses the wallet provided in the argument to pay for the transaction fee
+func (h *Node) ValidatePrimaryNetwork(
 	network avalanche.Network,
-	validatorInput ValidatorParams,
+	validator ValidatorParams,
 	wallet wallet.Wallet,
 ) (ids.ID, error) {
 	minValStake, err := GetMinStakingAmount(network)
 	if err != nil {
 		return ids.Empty, err
 	}
-	if validatorInput.Weight < minValStake {
-		return ids.Empty, fmt.Errorf("invalid weight, must be greater than or equal to %d: %d", minValStake, validatorInput.Weight)
+
+	if validator.Weight < minValStake {
+		return ids.Empty, fmt.Errorf("invalid weight, must be greater than or equal to %d: %d", minValStake, validator.Weight)
 	}
 
 	delegationFee := network.GenesisParams().MinDelegationFee
@@ -98,8 +92,8 @@ func (h *Node) AddNodeAsPrimaryNetworkValidator(
 		&txs.SubnetValidator{
 			Validator: txs.Validator{
 				NodeID: nodeID,
-				End:    uint64(time.Now().Add(validatorInput.Duration).Unix()),
-				Wght:   validatorInput.Weight,
+				End:    uint64(time.Now().Add(validator.Duration).Unix()),
+				Wght:   validator.Weight,
 			},
 			Subnet: ids.Empty,
 		},

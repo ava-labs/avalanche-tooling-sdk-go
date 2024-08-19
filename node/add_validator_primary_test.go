@@ -26,9 +26,9 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 
 	node := Node{
 		// NodeID is Avalanche Node ID of the node
-		NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
+		NodeID: "NodeID-F63677rCUsAzGWVfwqYBdtVcgNGTXs2Vj",
 		// IP address of the node
-		IP: "18.144.79.215",
+		IP: "54.67.114.200",
 		// SSH configuration for the node
 		SSHConfig: SSHConfig{
 			User:           constants.AnsibleSSHUser,
@@ -42,10 +42,10 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		Roles: []SupportedRole{Validator},
 	}
 
-	//err = node.ProvideStakingCertAndKey(fmt.Sprintf("/Users/raymondsukanto/.avalanche-cli/nodes/%s", node.NodeID))
-	//if err != nil {
-	//	panic(err)
-	//}
+	err = node.ProvideStakingCertAndKey(fmt.Sprintf("/Users/raymondsukanto/.avalanche-cli/nodes/%s", node.NodeID))
+	if err != nil {
+		panic(err)
+	}
 
 	nodeID, err := ids.NodeIDFromString(node.NodeID)
 	if err != nil {
@@ -85,7 +85,7 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		panic(err)
 	}
 
-	txID, err := node.AddNodeAsPrimaryNetworkValidator(avalanche.FujiNetwork(), validator, wallet)
+	txID, err := node.ValidatePrimaryNetwork(avalanche.FujiNetwork(), validator, wallet)
 	if err != nil {
 		panic(err)
 	}
