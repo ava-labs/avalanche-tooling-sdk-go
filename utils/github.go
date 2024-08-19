@@ -75,3 +75,13 @@ func GetLatestGithubPreReleaseVersion(org, repo, authToken string) (string, erro
 	}
 	return releases[0], nil
 }
+
+func GetGithubReleaseAssetURL(org, repo, version, asset string) string {
+	return fmt.Sprintf(
+		"https://github.com/%s/%s/releases/download/%s/%s",
+		org,
+		repo,
+		version,
+		asset,
+	)
+}

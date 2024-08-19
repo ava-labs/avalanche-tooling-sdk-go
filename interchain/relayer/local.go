@@ -30,33 +30,32 @@ type relayerRunFile struct {
 	Pid int `json:"pid"`
 }
 
-func GetGithubReleaseURL(version string) (string, error) {
+func GetReleaseURL(version string) (string, error) {
 	goarch, goos := runtime.GOARCH, runtime.GOOS
 	if goos != "linux" && goos != "darwin" {
 		return "", fmt.Errorf("OS not supported: %s", goos)
 	}
 	trimmedVersion := strings.TrimPrefix(version, "v")
-	return fmt.Sprintf(
-		"https://github.com/%s/%s/releases/download/%s/awm-relayer_%s_%s_%s.tar.gz",
-		constants.AvaLabsOrg,
+	asset := fmt.Sprintf("%s_%s_%s_%s.tar.gz",
 		constants.RelayerRepoName,
-		version,
 		trimmedVersion,
 		goos,
 		goarch,
+	)
+	return utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.RelayerRepoName,
+		version,
+		asset,
 	), nil
 }
 
-// TODO: do something as simple as this, but more generic,
-// (avago/subnet-evm/relayer/etc):
-// - local install in subdir given by tool name and version
-// - specify latest release, latest prerelease, or just some version
-func InstallRelayer(binDir, version string) (string, error) {
-	binPath := filepath.Join(binDir, constants.RelayerBinName)
+func InstallRelayer(outputDir, version string) (string, error) {
+	binPath := filepath.Join(outputDir, constants.RelayerBinName)
 	if utils.IsExecutable(binPath) {
 		return binPath, nil
 	}
-	url, err := GetGithubReleaseURL(version)
+	url, err := GetReleaseURL(version)
 	if err != nil {
 		return "", err
 	}
@@ -64,10 +63,19 @@ func InstallRelayer(binDir, version string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := utils.InstallArchive("tar.gz", bs, binDir); err != nil {
+	if err := utils.ExtractArchive(utils.TarGz, bs, outputDir); err != nil {
 		return "", err
 	}
+	if !utils.FileExists(binPath) {
+		return "", fmt.Errorf("%s does not exist after installing release", binPath)
+	}
+	if !utils.IsExecutable(binPath) {
+		return "", fmt.Errorf("release asset %s is not an executable", binPath)
+	}
 	return binPath, nil
+    return utils.InstallVersionedBinary(
+        baseDir,
+        baseDir string, version string, getURL func(string) (string, error), archiveKind utils.ArchiveKind, relativeBinPath string)
 }
 
 func InstallLatestRelayer(binDir string) (string, error) {

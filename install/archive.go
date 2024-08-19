@@ -1,6 +1,6 @@
 // Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package utils
+package install
 
 import (
 	"archive/tar"
@@ -20,7 +20,7 @@ import (
 type ArchiveKind int64
 
 const (
-	Undefined ArchiveKind = iota
+	UndefinedArchive ArchiveKind = iota
 	Zip
 	TarGz
 )
