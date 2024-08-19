@@ -5,6 +5,7 @@ package node
 
 import (
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/subnet"
 	"os"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 )
 
 type PrimaryNetworkValidatorParams struct {
+	// NodeID is the unique identifier of the node to be added as a validator on the Primary Network.
 	NodeID ids.NodeID
 
 	Duration time.Duration
@@ -64,6 +66,12 @@ func (h *Node) ValidatePrimaryNetwork(
 	validator PrimaryNetworkValidatorParams,
 	wallet wallet.Wallet,
 ) (ids.ID, error) {
+	if validator.NodeID == ids.EmptyNodeID {
+		return ids.Empty, subnet.ErrEmptyValidatorNodeID
+	}
+	if validator.Duration == 0 {
+		return ids.Empty, subnet.ErrEmptyValidatorDuration
+	}
 	minValStake, err := GetMinStakingAmount(network)
 	if err != nil {
 		return ids.Empty, err

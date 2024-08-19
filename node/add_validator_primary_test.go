@@ -42,7 +42,7 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		Roles: []SupportedRole{Validator},
 	}
 
-	err = node.ProvideStakingCertAndKey(fmt.Sprintf("/Users/raymondsukanto/.avalanche-cli/nodes/%s", node.NodeID))
+	err = node.ProvideStakingFiles(fmt.Sprintf("/Users/raymondsukanto/.avalanche-cli/nodes/%s", node.NodeID))
 	if err != nil {
 		panic(err)
 	}
