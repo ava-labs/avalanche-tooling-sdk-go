@@ -17,6 +17,14 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
+type ArchiveKind int64
+
+const (
+	Undefined ArchiveKind = iota
+	Zip
+	TarGz
+)
+
 const maxCopy = 2147483648 // 2 GB
 
 // Sanitize archive file pathing from "G305: Zip Slip vulnerability"
@@ -29,29 +37,26 @@ func sanitizeArchivePath(d, t string) (v string, err error) {
 	return "", fmt.Errorf("%s: %s", "content filepath is tainted", t)
 }
 
-// InstallArchive installs the binary archive downloaded
-func InstallArchive(ext string, archive []byte, binDir string) error {
-	// create binDir if it doesn't exist
-	if err := os.MkdirAll(binDir, constants.DefaultPerms755); err != nil {
+// ExtractArchive extracts the archive given as bytes slice [archive], into [outputDir]
+func ExtractArchive(kind ArchiveKind, archive []byte, outputDir string) error {
+	if err := os.MkdirAll(outputDir, constants.DefaultPerms755); err != nil {
 		return err
 	}
-
-	if ext == "zip" {
-		return installZipArchive(archive, binDir)
+	switch kind {
+	case Zip:
+		return extractZip(archive, outputDir)
+	case TarGz:
+		return extractTarGz(archive, outputDir)
 	}
-	return installTarGzArchive(archive, binDir)
+	return fmt.Errorf("unsupported archive kind: %d", kind)
 }
 
-// installZipArchive expects a byte stream of a zip file
-func installZipArchive(zipfile []byte, binDir string) error {
+// extractZip expects a byte stream of a zip file
+func extractZip(zipfile []byte, outputDir string) error {
 	bytesReader := bytes.NewReader(zipfile)
 	zipReader, err := zip.NewReader(bytesReader, int64(len(zipfile)))
 	if err != nil {
 		return fmt.Errorf("failed creating zip reader from binary stream: %w", err)
-	}
-
-	if err := os.MkdirAll(binDir, constants.DefaultPerms755); err != nil {
-		return fmt.Errorf("failed to create app binary directory: %w", err)
 	}
 
 	// Closure to address file descriptors issue, uses Close to to not leave open descriptors
@@ -62,7 +67,7 @@ func installZipArchive(zipfile []byte, binDir string) error {
 		}
 
 		// check for zip slip
-		path, err := sanitizeArchivePath(binDir, f.Name)
+		path, err := sanitizeArchivePath(outputDir, f.Name)
 		if err != nil {
 			return err
 		}
@@ -104,8 +109,8 @@ func installZipArchive(zipfile []byte, binDir string) error {
 	return nil
 }
 
-// installTarGzArchive expects a byte array in targz format
-func installTarGzArchive(targz []byte, binDir string) error {
+// extractTarGz expects a byte array in targz format
+func extractTarGz(targz []byte, outputDir string) error {
 	byteReader := bytes.NewReader(targz)
 	uncompressedStream, err := gzip.NewReader(byteReader)
 	if err != nil {
@@ -128,7 +133,7 @@ func installTarGzArchive(targz []byte, binDir string) error {
 
 		// the target location where the dir/file should be created
 		// check for zip slip
-		target, err := sanitizeArchivePath(binDir, header.Name)
+		target, err := sanitizeArchivePath(outputDir, header.Name)
 		if err != nil {
 			return err
 		}
