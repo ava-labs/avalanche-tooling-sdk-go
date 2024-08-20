@@ -5,9 +5,13 @@ package node
 
 import (
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/subnet"
 	"os"
+	"os/user"
+	"path/filepath"
 	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/subnet"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -27,35 +31,20 @@ type PrimaryNetworkValidatorParams struct {
 	// NodeID is the unique identifier of the node to be added as a validator on the Primary Network.
 	NodeID ids.NodeID
 
+	// Duration is how long the node will be staking the Primary Network
+	// Duration has to be greater than or equal to minimum duration for the specified network
+	// (Fuji / Mainnet)
 	Duration time.Duration
 
-	Weight uint64
+	// StakeAmount is the amount of Avalanche tokens (AVAX) to stake in this validator
+	// StakeAmount is in the amount of nAVAX
+	// StakeAmount has to be greater than or equal to minimum stake required for the specified network
+	StakeAmount uint64
 
+	// DelegationFee is the percent fee this validator will charge when others delegate stake to it
+	// When DelegationFee is not set, the minimum delegation fee for the specified network will be set
+	// For more information on delegation fee, please head to https://docs.avax.network/nodes/validate/node-validator#delegation-fee-rate
 	DelegationFee uint32
-}
-
-func GetMinStakingAmount(network avalanche.Network) (uint64, error) {
-	pClient := platformvm.NewClient(network.Endpoint)
-	ctx, cancel := utils.GetAPIContext()
-	defer cancel()
-	minValStake, _, err := pClient.GetMinStake(ctx, ids.Empty)
-	if err != nil {
-		return 0, err
-	}
-	return minValStake, nil
-}
-
-func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
-	blsKeyBytes, err := os.ReadFile(signingKeyPath)
-	if err != nil {
-		return err
-	}
-	blsSk, err := bls.SecretKeyFromBytes(blsKeyBytes)
-	if err != nil {
-		return err
-	}
-	h.BlsSecretKey = blsSk
-	return nil
 }
 
 // ValidatePrimaryNetwork adds node as primary network validator.
@@ -69,19 +58,27 @@ func (h *Node) ValidatePrimaryNetwork(
 	if validator.NodeID == ids.EmptyNodeID {
 		return ids.Empty, subnet.ErrEmptyValidatorNodeID
 	}
+
 	if validator.Duration == 0 {
 		return ids.Empty, subnet.ErrEmptyValidatorDuration
 	}
+
 	minValStake, err := GetMinStakingAmount(network)
 	if err != nil {
 		return ids.Empty, err
 	}
 
-	if validator.Weight < minValStake {
-		return ids.Empty, fmt.Errorf("invalid weight, must be greater than or equal to %d: %d", minValStake, validator.Weight)
+	if validator.StakeAmount < minValStake {
+		return ids.Empty, fmt.Errorf("invalid weight, must be greater than or equal to %d: %d", minValStake, validator.StakeAmount)
 	}
 
-	delegationFee := network.GenesisParams().MinDelegationFee
+	if validator.DelegationFee == 0 {
+		validator.DelegationFee = network.GenesisParams().MinDelegationFee
+	}
+
+	if err = h.HandleBLSKey(); err != nil {
+		return ids.Empty, fmt.Errorf("unable to set BLS key of node due to %w", err)
+	}
 
 	wallet.SetSubnetAuthMultisig([]ids.ShortID{})
 
@@ -103,7 +100,7 @@ func (h *Node) ValidatePrimaryNetwork(
 			Validator: txs.Validator{
 				NodeID: nodeID,
 				End:    uint64(time.Now().Add(validator.Duration).Unix()),
-				Wght:   validator.Weight,
+				Wght:   validator.StakeAmount,
 			},
 			Subnet: ids.Empty,
 		},
@@ -111,7 +108,7 @@ func (h *Node) ValidatePrimaryNetwork(
 		wallet.P().Builder().Context().AVAXAssetID,
 		owner,
 		owner,
-		delegationFee,
+		validator.DelegationFee,
 	)
 	if err != nil {
 		return ids.Empty, fmt.Errorf("error building tx: %w", err)
@@ -139,4 +136,61 @@ func (h *Node) ValidatePrimaryNetwork(
 	}
 
 	return tx.ID(), nil
+}
+
+func GetMinStakingAmount(network avalanche.Network) (uint64, error) {
+	pClient := platformvm.NewClient(network.Endpoint)
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
+	minValStake, _, err := pClient.GetMinStake(ctx, ids.Empty)
+	if err != nil {
+		return 0, err
+	}
+	return minValStake, nil
+}
+
+func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
+	blsKeyBytes, err := os.ReadFile(signingKeyPath)
+	if err != nil {
+		return err
+	}
+	blsSk, err := bls.SecretKeyFromBytes(blsKeyBytes)
+	if err != nil {
+		return err
+	}
+	h.BlsSecretKey = blsSk
+	return nil
+}
+
+func RemoveTmpSDKDir() error {
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("unable to get system user %s", err)
+	}
+	return os.RemoveAll(filepath.Join(usr.HomeDir, constants.LocalTmpDir))
+}
+
+func (h *Node) GetBLSKeyFromRemoteHost() error {
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("unable to get system user %s", err)
+	}
+	filePath := filepath.Join(constants.CloudNodeStakingPath, constants.BLSKeyFileName)
+	localFilePath := filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)
+	return h.Download(filePath, localFilePath, constants.SSHFileOpsTimeout)
+}
+
+// HandleBLSKey gets BLS information from remote host and sets the BlsSecretKey value in Node object
+func (h *Node) HandleBLSKey() error {
+	if err := h.GetBLSKeyFromRemoteHost(); err != nil {
+		return err
+	}
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("unable to get system user %s", err)
+	}
+	if err := h.SetNodeBLSKey(filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)); err != nil {
+		return err
+	}
+	return RemoveTmpSDKDir()
 }
