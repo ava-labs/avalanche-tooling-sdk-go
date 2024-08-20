@@ -94,7 +94,7 @@ func InstallGithubRelease(
 	case CustomRelease:
 		version = customVersion
 	default:
-		return "", fmt.Errorf("Unsupported release kind %d", releaseKind)
+		return "", fmt.Errorf("unsupported release kind %d", releaseKind)
 	}
 	asset, err := getAssetName(version)
 	if err != nil {
