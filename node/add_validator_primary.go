@@ -165,7 +165,7 @@ func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
 func RemoveTmpSDKDir() error {
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("unable to get system user %s", err)
+		return fmt.Errorf("unable to get system user %w", err)
 	}
 	return os.RemoveAll(filepath.Join(usr.HomeDir, constants.LocalTmpDir))
 }
@@ -173,7 +173,7 @@ func RemoveTmpSDKDir() error {
 func (h *Node) GetBLSKeyFromRemoteHost() error {
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("unable to get system user %s", err)
+		return fmt.Errorf("unable to get system user %w", err)
 	}
 	filePath := filepath.Join(constants.CloudNodeStakingPath, constants.BLSKeyFileName)
 	localFilePath := filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)
@@ -187,7 +187,7 @@ func (h *Node) HandleBLSKey() error {
 	}
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("unable to get system user %s", err)
+		return fmt.Errorf("unable to get system user %w", err)
 	}
 	if err := h.SetNodeBLSKey(filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)); err != nil {
 		return err
