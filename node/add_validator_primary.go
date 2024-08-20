@@ -125,7 +125,6 @@ func (h *Node) ValidatePrimaryNetwork(
 		&tx,
 		common.WithContext(ctx),
 	)
-
 	if err != nil {
 		if ctx.Err() != nil {
 			err = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", tx.ID(), err)
