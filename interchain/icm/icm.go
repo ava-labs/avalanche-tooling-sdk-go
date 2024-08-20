@@ -14,11 +14,10 @@ import (
 )
 
 const (
-	releaseURL                     = "https://github.com/ava-labs/teleporter/releases/download/%s/"
-	messengerContractAddressURLFmt = releaseURL + "/TeleporterMessenger_Contract_Address_%s.txt"
-	messengerDeployerAddressURLFmt = releaseURL + "/TeleporterMessenger_Deployer_Address_%s.txt"
-	messengerDeployerTxURLFmt      = releaseURL + "/TeleporterMessenger_Deployment_Transaction_%s.txt"
-	registryBytecodeURLFmt         = releaseURL + "/TeleporterRegistry_Bytecode_%s.txt"
+	messengerContractAddressURLFmt = "TeleporterMessenger_Contract_Address_%s.txt"
+	messengerDeployerAddressURLFmt = "TeleporterMessenger_Deployer_Address_%s.txt"
+	messengerDeployerTxURLFmt      = "TeleporterMessenger_Deployment_Transaction_%s.txt"
+	registryBytecodeURLFmt         = "TeleporterRegistry_Bytecode_%s.txt"
 )
 
 var (
@@ -33,10 +32,30 @@ func GetLatestVersion() (string, error) {
 }
 
 func getURLs(version string) (string, string, string, string) {
-	messengerContractAddressURL := fmt.Sprintf(messengerContractAddressURLFmt, version, version)
-	messengerDeployerAddressURL := fmt.Sprintf(messengerDeployerAddressURLFmt, version, version)
-	messengerDeployerTxURL := fmt.Sprintf(messengerDeployerTxURLFmt, version, version)
-	registryBytecodeURL := fmt.Sprintf(registryBytecodeURLFmt, version, version)
+	messengerContractAddressURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(messengerContractAddressURLFmt, version),
+	)
+	messengerDeployerAddressURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(messengerDeployerAddressURLFmt, version),
+	)
+	messengerDeployerTxURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(messengerDeployerTxURLFmt, version),
+	)
+	registryBytecodeURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(registryBytecodeURLFmt, version),
+	)
 	return messengerContractAddressURL, messengerDeployerAddressURL, messengerDeployerTxURL, registryBytecodeURL
 }
 
