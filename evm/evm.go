@@ -3,10 +3,12 @@
 package evm
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/core/types"
@@ -40,26 +42,12 @@ func GetContractBytecode(
 	contractAddressStr string,
 ) ([]byte, error) {
 	contractAddress := common.HexToAddress(contractAddressStr)
-	var (
-		code []byte
-		err  error
+	return utils.Retry(
+		func(ctx context.Context) ([]byte, error) { return client.CodeAt(ctx, contractAddress, nil) },
+		constants.APIRequestTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure obtaining code for %s on %#v", contractAddressStr, client),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		code, err = client.CodeAt(ctx, contractAddress, nil)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf(
-			"failure obtaining code for %s on %#v: %w",
-			contractAddressStr,
-			client,
-			err,
-		)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return code, err
 }
 
 func GetAddressBalance(
@@ -67,6 +55,12 @@ func GetAddressBalance(
 	addressStr string,
 ) (*big.Int, error) {
 	address := common.HexToAddress(addressStr)
+	return utils.Retry(
+		func(ctx context.Context) ([]byte, error) { return client.CodeAt(ctx, contractAddress, nil) },
+		constants.APIRequestTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure obtaining code for %s on %#v", contractAddressStr, client),
+	)
 	var (
 		balance *big.Int
 		err     error

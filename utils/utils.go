@@ -5,16 +5,10 @@ package utils
 import (
 	"context"
 	"sort"
-	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
-)
-
-const (
-	APIRequestTimeout      = 30 * time.Second
-	APIRequestLargeTimeout = 2 * time.Minute
-	WriteReadUserOnlyPerms = 0o600
 )
 
 // Unique returns a new slice containing only the unique elements from the input slice.
@@ -36,12 +30,12 @@ func Uint32Sort(arr []uint32) {
 
 // Context for API requests
 func GetAPIContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), APIRequestTimeout)
+	return context.WithTimeout(context.Background(), constants.APIRequestTimeout)
 }
 
 // Context for API requests with large timeout
 func GetAPILargeContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), APIRequestLargeTimeout)
+	return context.WithTimeout(context.Background(), constants.APIRequestLargeTimeout)
 }
 
 func P(
