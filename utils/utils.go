@@ -4,7 +4,9 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanchego/ids"
@@ -48,4 +50,16 @@ func P(
 			return address.Format("P", networkHRP, addr[:])
 		},
 	)
+}
+
+func RemoveSurrounding(s string, left string, right string) (string, error) {
+	s = strings.TrimSpace(s)
+	if len(s) > 0 {
+		if len(s) < len(left)+len(right) || !strings.HasPrefix(s, left) || !strings.HasSuffix(s, right) {
+			return "", fmt.Errorf("expected esp %q to be of form '%s...%s'", s, left, right)
+		}
+		s = strings.TrimPrefix(s, left)
+		s = strings.TrimSuffix(s, right)
+	}
+	return s, nil
 }

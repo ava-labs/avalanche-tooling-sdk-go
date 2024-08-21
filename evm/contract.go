@@ -17,28 +17,6 @@ import (
 
 var ErrFailedReceiptStatus = fmt.Errorf("failed receipt status")
 
-func removeSurroundingParenthesis(s string) (string, error) {
-	s = strings.TrimSpace(s)
-	if len(s) > 0 {
-		if string(s[0]) != "(" || string(s[len(s)-1]) != ")" {
-			return "", fmt.Errorf("expected esp %q to be surrounded by parenthesis", s)
-		}
-		s = s[1 : len(s)-1]
-	}
-	return s, nil
-}
-
-func removeSurroundingBrackets(s string) (string, error) {
-	s = strings.TrimSpace(s)
-	if len(s) > 0 {
-		if string(s[0]) != "[" || string(s[len(s)-1]) != "]" {
-			return "", fmt.Errorf("expected esp %q to be surrounded by parenthesis", s)
-		}
-		s = s[1 : len(s)-1]
-	}
-	return s, nil
-}
-
 func getWords(s string) []string {
 	words := []string{}
 	word := ""
@@ -141,7 +119,7 @@ func getMap(
 		case string(t[0]) == "(":
 			// struct type
 			var err error
-			t, err = removeSurroundingParenthesis(t)
+			t, err = utils.RemoveSurrounding(t, "(", ")")
 			if err != nil {
 				return nil, err
 			}
@@ -158,12 +136,12 @@ func getMap(
 			m["name"] = name
 		case string(t[0]) == "[":
 			var err error
-			t, err = removeSurroundingBrackets(t)
+			t, err = utils.RemoveSurrounding(t, "[", "]")
 			if err != nil {
 				return nil, err
 			}
 			if string(t[0]) == "(" {
-				t, err = removeSurroundingParenthesis(t)
+				t, err = utils.RemoveSurrounding(t, "(", ")")
 				if err != nil {
 					return nil, err
 				}
@@ -224,11 +202,11 @@ func ParseEsp(
 		outputs = types[index+2:]
 	}
 	var err error
-	inputs, err = removeSurroundingParenthesis(inputs)
+	inputs, err = utils.RemoveSurrounding(inputs, "(", ")")
 	if err != nil {
 		return "", "", err
 	}
-	outputs, err = removeSurroundingParenthesis(outputs)
+	outputs, err = utils.RemoveSurrounding(outputs, "(", ")")
 	if err != nil {
 		return "", "", err
 	}
