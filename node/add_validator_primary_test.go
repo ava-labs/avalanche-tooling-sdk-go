@@ -6,15 +6,17 @@ package node
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/units"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
-	"testing"
-	"time"
 )
 
 func TestNodesValidatePrimaryNetwork(_ *testing.T) {
@@ -26,13 +28,13 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 
 	node := Node{
 		// NodeID is Avalanche Node ID of the node
-		NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
+		NodeID: "NODE_ID",
 		// IP address of the node
-		IP: "18.144.79.215",
+		IP: "NODE_IP_ADDRESS",
 		// SSH configuration for the node
 		SSHConfig: SSHConfig{
-			User:           constants.AnsibleSSHUser,
-			PrivateKeyPath: "/Users/raymondsukanto/.ssh/rs_key_pair_sdk.pem",
+			User:           constants.RemoteHostUser,
+			PrivateKeyPath: "NODE_KEYPAIR_PRIVATE_KEY_PATH",
 		},
 		// Cloud is the cloud service that the node is on
 		Cloud: AWSCloud,
@@ -42,27 +44,22 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		Roles: []SupportedRole{Validator},
 	}
 
-	//err = node.ProvideStakingCertAndKey(fmt.Sprintf("/Users/raymondsukanto/.avalanche-cli/nodes/%s", node.NodeID))
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	nodeID, err := ids.NodeIDFromString(node.NodeID)
 	if err != nil {
 		panic(err)
 	}
 
-	validator := ValidatorParams{
+	validator := PrimaryNetworkValidatorParams{
 		NodeID: nodeID,
 		// Validate Primary Network for 48 hours
-		Duration: 72 * time.Hour,
-		// 1 billion in weight is equivalent to 1 AVAX
-		Weight: 2000000000,
+		Duration: 48 * time.Hour,
+		// Stake 2 AVAX
+		StakeAmount: 2 * units.Avax,
 	}
 
 	network := avalanche.FujiNetwork()
 
-	keychain, err := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk", nil)
+	keychain, err := keychain.NewKeychain(network, "PRIVATE_KEY_FILEPATH", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -80,12 +77,7 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		panic(err)
 	}
 
-	err = node.SetNodeBLSKey(fmt.Sprintf("/Users/raymondsukanto/.avalanche-cli/nodes/%s/signer.key", node.NodeID))
-	if err != nil {
-		panic(err)
-	}
-
-	txID, err := node.AddNodeAsPrimaryNetworkValidator(avalanche.FujiNetwork(), validator, wallet)
+	txID, err := node.ValidatePrimaryNetwork(avalanche.FujiNetwork(), validator, wallet)
 	if err != nil {
 		panic(err)
 	}

@@ -13,8 +13,15 @@ import (
 	"github.com/ava-labs/avalanchego/staking"
 )
 
-func (h *Node) ProvideStakingCertAndKey(keyPath string) error {
-	if nodeID, err := GenerateNodeCertAndKeys(keyPath); err != nil {
+// ProvideStakingFiles generates the files needed to validate the primary network:
+//   - staker.crt, staker.key, more information can be found at https://docs.avax.network/nodes/validate/how-to-stake#secret-management
+//   - The file containing the node's BLS information: signer.key (more information can be found at https://docs.avax.network/cross-chain/avalanche-warp-messaging/deep-dive#bls-multi-signatures-with-public-key-aggregation)
+//
+// and stores them in the provided directory in argument in local machine
+// and subsequently uploads these files into the remote host in /home/ubuntu/.avalanchego/staking/
+// directory
+func (h *Node) ProvideStakingFiles(keyPath string) error {
+	if nodeID, err := GenerateStakingFiles(keyPath); err != nil {
 		return err
 	} else {
 		h.Logger.Infof("Generated Staking Cert and Key for NodeID: %s in folder %s", nodeID.String(), keyPath)
@@ -22,8 +29,9 @@ func (h *Node) ProvideStakingCertAndKey(keyPath string) error {
 	return h.RunSSHUploadStakingFiles(keyPath)
 }
 
-// GenerateNodeCertAndKeys generates a node certificate and keys and return nodeID
-func GenerateNodeCertAndKeys(keyPath string) (ids.NodeID, error) {
+// GenerateStakingFiles generates the following files: staker.crt, staker.key and signer.key
+// and stores them in the provided directory in argument in local machine
+func GenerateStakingFiles(keyPath string) (ids.NodeID, error) {
 	if err := os.MkdirAll(keyPath, constants.DefaultPerms755); err != nil {
 		return ids.EmptyNodeID, err
 	}
