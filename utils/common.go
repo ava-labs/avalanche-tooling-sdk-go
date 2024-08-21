@@ -4,6 +4,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"time"
@@ -139,6 +140,20 @@ func WrapContext[T any](
 		}
 		return ret, err
 	}
+}
+
+func CallWithTimeout[T any](
+	name string,
+	f func() (T, error),
+	timeout time.Duration,
+) (T, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	ret, err := WrapContext(f)(ctx)
+	if errors.Is(err, context.DeadlineExceeded) {
+		err = fmt.Errorf("%s timeout of %d seconds", name, uint(timeout.Seconds()))
+	}
+	return ret, err
 }
 
 // RandomString generates a random string of the specified length.

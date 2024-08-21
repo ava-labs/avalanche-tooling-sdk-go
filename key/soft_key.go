@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -285,7 +286,7 @@ func (m *SoftKey) PrivKeyHex() string {
 
 // Saves the private key to disk with hex encoding.
 func (m *SoftKey) Save(p string) error {
-	return os.WriteFile(p, []byte(m.PrivKeyHex()), utils.WriteReadUserOnlyPerms)
+	return os.WriteFile(p, []byte(m.PrivKeyHex()), constants.WriteReadUserOnlyPerms)
 }
 
 func (m *SoftKey) P(networkHRP string) (string, error) {

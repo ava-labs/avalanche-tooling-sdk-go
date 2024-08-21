@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -23,7 +22,6 @@ const (
 	MaxPriorityFeePerGas        = 2500000000 // 2.5 gwei
 	NativeTransferGas    uint64 = 21_000
 	repeatsOnFailure            = 3
-	sleepBetweenRepeats         = 1 * time.Second
 )
 
 func ContractAlreadyDeployed(
@@ -44,7 +42,7 @@ func GetContractBytecode(
 	contractAddress := common.HexToAddress(contractAddressStr)
 	return utils.Retry(
 		func(ctx context.Context) ([]byte, error) { return client.CodeAt(ctx, contractAddress, nil) },
-		constants.APIRequestTimeout,
+		constants.APIRequestLargeTimeout,
 		repeatsOnFailure,
 		fmt.Sprintf("failure obtaining code for %s on %#v", contractAddressStr, client),
 	)
@@ -56,26 +54,11 @@ func GetAddressBalance(
 ) (*big.Int, error) {
 	address := common.HexToAddress(addressStr)
 	return utils.Retry(
-		func(ctx context.Context) ([]byte, error) { return client.CodeAt(ctx, contractAddress, nil) },
-		constants.APIRequestTimeout,
+		func(ctx context.Context) (*big.Int, error) { return client.BalanceAt(ctx, address, nil) },
+		constants.APIRequestLargeTimeout,
 		repeatsOnFailure,
-		fmt.Sprintf("failure obtaining code for %s on %#v", contractAddressStr, client),
+		fmt.Sprintf("failure obtaining balance for %s on %#v", addressStr, client),
 	)
-	var (
-		balance *big.Int
-		err     error
-	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		balance, err = client.BalanceAt(ctx, address, nil)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure obtaining balance for %s on %#v: %w", addressStr, client, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return balance, err
 }
 
 // Returns the gasFeeCap, gasTipCap, and nonce the be used when constructing a transaction from address
@@ -105,61 +88,34 @@ func NonceAt(
 	addressStr string,
 ) (uint64, error) {
 	address := common.HexToAddress(addressStr)
-	var (
-		nonce uint64
-		err   error
+	return utils.Retry(
+		func(ctx context.Context) (uint64, error) { return client.NonceAt(ctx, address, nil) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure obtaining nonce for %s on %#v", addressStr, client),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		nonce, err = client.NonceAt(ctx, address, nil)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure obtaining nonce for %s on %#v: %w", addressStr, client, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return nonce, err
 }
 
 func SuggestGasTipCap(
 	client ethclient.Client,
 ) (*big.Int, error) {
-	var (
-		gasTipCap *big.Int
-		err       error
+	return utils.Retry(
+		func(ctx context.Context) (*big.Int, error) { return client.SuggestGasTipCap(ctx) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure obtaining gas tip cap on %#v", client),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		gasTipCap, err = client.SuggestGasTipCap(ctx)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure obtaining gas tip cap on %#v: %w", client, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return gasTipCap, err
 }
 
 func EstimateBaseFee(
 	client ethclient.Client,
 ) (*big.Int, error) {
-	var (
-		baseFee *big.Int
-		err     error
+	return utils.Retry(
+		func(ctx context.Context) (*big.Int, error) { return client.EstimateBaseFee(ctx) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure estimating base fee on %#v", client),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		baseFee, err = client.EstimateBaseFee(ctx)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure estimating base fee on %#v: %w", client, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return baseFee, err
 }
 
 func FundAddress(
@@ -230,54 +186,31 @@ func SendTransaction(
 	client ethclient.Client,
 	tx *types.Transaction,
 ) error {
-	var err error
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		err = client.SendTransaction(ctx, tx)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure sending transaction %#v to %#v: %w", tx, client, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
+	_, err := utils.Retry(
+		func(ctx context.Context) (interface{}, error) { return nil, client.SendTransaction(ctx, tx) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure sending transaction %#v to %#v", tx, client),
+	)
 	return err
 }
 
 func GetClient(rpcURL string) (ethclient.Client, error) {
-	var (
-		client ethclient.Client
-		err    error
+	return utils.Retry(
+		func(ctx context.Context) (ethclient.Client, error) { return ethclient.DialContext(ctx, rpcURL) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure connecting to %s", rpcURL),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		client, err = ethclient.DialContext(ctx, rpcURL)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure connecting to %s: %w", rpcURL, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return client, err
 }
 
 func GetChainID(client ethclient.Client) (*big.Int, error) {
-	var (
-		chainID *big.Int
-		err     error
+	return utils.Retry(
+		func(ctx context.Context) (*big.Int, error) { return client.ChainID(ctx) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure getting chain id from client %#v", client),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		chainID, err = client.ChainID(ctx)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure getting chain id from client %#v: %w", client, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return chainID, err
 }
 
 func GetTxOptsWithSigner(
@@ -299,21 +232,15 @@ func WaitForTransaction(
 	client ethclient.Client,
 	tx *types.Transaction,
 ) (*types.Receipt, bool, error) {
-	var (
-		err     error
-		receipt *types.Receipt
-		success bool
+	receipt, err := utils.Retry(
+		func(ctx context.Context) (*types.Receipt, error) { return bind.WaitMined(ctx, client, tx) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure waiting for tx %#v on client %#v", tx, client),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		receipt, err = bind.WaitMined(ctx, client, tx)
-		if err == nil {
-			success = receipt.Status == types.ReceiptStatusSuccessful
-			break
-		}
-		err = fmt.Errorf("failure waiting for tx %#v on client %#v: %w", tx, client, err)
-		time.Sleep(sleepBetweenRepeats)
+	var success bool
+	if receipt != nil {
+		success = receipt.Status == types.ReceiptStatusSuccessful
 	}
 	return receipt, success, err
 }
@@ -335,47 +262,33 @@ func GetEventFromLogs[T any](logs []*types.Log, parser func(log types.Log) (T, e
 }
 
 func GetRPCClient(rpcURL string) (*rpc.Client, error) {
-	var (
-		client *rpc.Client
-		err    error
+	return utils.Retry(
+		func(ctx context.Context) (*rpc.Client, error) { return rpc.DialContext(ctx, rpcURL) },
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure connecting to %s", rpcURL),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		client, err = rpc.DialContext(ctx, rpcURL)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure connecting to rpc client on %s: %w", rpcURL, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
-	return client, err
 }
 
 func DebugTraceTransaction(
 	client *rpc.Client,
 	txID string,
 ) (map[string]interface{}, error) {
-	var (
-		err   error
-		trace map[string]interface{}
+	var trace map[string]interface{}
+	_, err := utils.Retry(
+		func(ctx context.Context) (interface{}, error) {
+			return nil, client.CallContext(
+				ctx,
+				&trace,
+				"debug_traceTransaction",
+				txID,
+				map[string]string{"tracer": "callTracer"},
+			)
+		},
+		constants.APIRequestLargeTimeout,
+		repeatsOnFailure,
+		fmt.Sprintf("failure tracing tx %s for client %#v", txID, client),
 	)
-	for i := 0; i < repeatsOnFailure; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		err = client.CallContext(
-			ctx,
-			&trace,
-			"debug_traceTransaction",
-			txID,
-			map[string]string{"tracer": "callTracer"},
-		)
-		if err == nil {
-			break
-		}
-		err = fmt.Errorf("failure tracing tx %s for client %#v: %w", txID, client, err)
-		time.Sleep(sleepBetweenRepeats)
-	}
 	return trace, err
 }
 
