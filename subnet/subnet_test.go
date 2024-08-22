@@ -6,6 +6,8 @@ package subnet
 import (
 	"context"
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/node"
 	"math/big"
 	"testing"
 	"time"
@@ -244,24 +246,22 @@ func TestValidateSubnet(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	//
-	//node := node.Node{
-	//	// NodeID is Avalanche Node ID of the node
-	//	NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
-	//	// IP address of the node
-	//	IP: "18.144.79.215",
-	//	// SSH configuration for the node
-	//	SSHConfig: node.SSHConfig{
-	//		User:           constants.RemoteHostUser,
-	//		PrivateKeyPath: "/Users/raymondsukanto/.ssh/rs_key_pair_sdk.pem",
-	//	},
-	//	// Cloud is the cloud service that the node is on
-	//	Cloud: node.AWSCloud,
-	//	// CloudConfig is the cloud specific configuration for the node
-	//	CloudConfig: *cp,
-	//	// Role of the node can be 	Validator, API, AWMRelayer, Loadtest, or Monitor
-	//	Roles: []node.SupportedRole{node.Validator},
-	//}
+
+	_ := node.Node{
+		// NodeID is Avalanche Node ID of the node
+		NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
+		// IP address of the node
+		IP: "18.144.79.215",
+		// SSH configuration for the node
+		SSHConfig: node.SSHConfig{
+			User:           constants.RemoteHostUser,
+			PrivateKeyPath: "/Users/raymondsukanto/.ssh/rs_key_pair_sdk.pem",
+		},
+		// Cloud is the cloud service that the node is on
+		Cloud: node.AWSCloud,
+		// Role of the node can be 	Validator, API, AWMRelayer, Loadtest, or Monitor
+		Roles: []node.SupportedRole{node.Validator},
+	}
 	//
 	//subnetIDsToValidate := []string{newSubnet.SubnetID.String()}
 	//fmt.Printf("Reconfiguring node %s to track subnet %s\n", node.NodeID, subnetIDsToValidate)
