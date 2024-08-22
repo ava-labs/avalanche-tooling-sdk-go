@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/node"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
@@ -90,7 +91,7 @@ func AddSubnetValidator() {
 		panic(err)
 	}
 
-	validator := subnet.SubnetValidatorParams{
+	validator := validator.SubnetValidatorParams{
 		NodeID: nodeID,
 		// Validate Subnet for 48 hours
 		Duration: 48 * time.Hour,

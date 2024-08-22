@@ -22,12 +22,6 @@ import (
 )
 
 func TestValidateSubnet(t *testing.T) {
-	//ctx := context.Background()
-	//cp, err := node.GetDefaultCloudParams(ctx, node.AWSCloud)
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	subnetParams := SubnetParams{
 		GenesisFilePath: "/Users/raymondsukanto/.avalanche-cli/subnets/sdkSubnetNew/genesis.json",
 		Name:            "sdkSubnetNew",
@@ -37,32 +31,6 @@ func TestValidateSubnet(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-
-	//node := node.Node{
-	//	// NodeID is Avalanche Node ID of the node
-	//	NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
-	//	// IP address of the node
-	//	IP: "18.144.79.215",
-	//	// SSH configuration for the node
-	//	SSHConfig: node.SSHConfig{
-	//		User:           constants.RemoteHostUser,
-	//		PrivateKeyPath: "/Users/raymondsukanto/.ssh/rs_key_pair_sdk.pem",
-	//	},
-	//	// Cloud is the cloud service that the node is on
-	//	Cloud: node.AWSCloud,
-	//	// CloudConfig is the cloud specific configuration for the node
-	//	CloudConfig: *cp,
-	//	// Role of the node can be 	Validator, API, AWMRelayer, Loadtest, or Monitor
-	//	Roles: []node.SupportedRole{node.Validator},
-	//}
-
-	//subnetIDsToValidate := []string{newSubnet.SubnetID.String()}
-	//fmt.Printf("Reconfiguring node %s to track subnet %s\n", node.NodeID, subnetIDsToValidate)
-	//if err := node.SyncSubnets(subnetIDsToValidate); err != nil {
-	//	panic(err)
-	//}
-
-	time.Sleep(2 * time.Second)
 
 	network := avalanche.FujiNetwork()
 	keychain, err := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk", nil)
@@ -85,7 +53,6 @@ func TestValidateSubnet(t *testing.T) {
 		panic(err)
 	}
 
-	// nodeID, err := ids.NodeIDFromString(node.NodeID)
 	nodeID, err := ids.NodeIDFromString("NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPH")
 	if err != nil {
 		panic(err)
@@ -100,12 +67,25 @@ func TestValidateSubnet(t *testing.T) {
 	fmt.Printf("adding subnet validator")
 
 	newSubnet.SetSubnetID(subnetID)
+
+	// We need to set Subnet Auth Keys for this transaction since Subnet AddValidator is
+	// a Subnet-changing transaction
+	//
+	// In this example, the example Subnet was created with only 1 key as control key with a threshold of 1
+	// and the control key is the key contained in the keychain object, so we are going to use the
+	// key contained in the keychain object as the Subnet Auth Key for Subnet AddValidator tx
 	subnetAuthKeys := keychain.Addresses().List()
 	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
+
+	// In this example, we are assuming that the specified node has already tracked the Subnet
+	// which can be done in Avalanche Tooling SDK through node.Sync function
+	// For an example, head to examples/subnet_addValidator.go
 	addValidatorTx, err := newSubnet.AddValidator(wallet, validator)
 	if err != nil {
 		panic(err)
 	}
+
+	// Since it has the required signatures, we will now commit the transaction on chain
 	txID, err := newSubnet.Commit(*addValidatorTx, wallet, true)
 	if err != nil {
 		panic(err)
