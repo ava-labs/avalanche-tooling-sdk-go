@@ -231,12 +231,6 @@ func TestSubnetDeployLedger(t *testing.T) {
 }
 
 func TestValidateSubnet(t *testing.T) {
-	//ctx := context.Background()
-	//_, err := node.GetDefaultCloudParams(ctx, node.AWSCloud)
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	subnetParams := SubnetParams{
 		GenesisFilePath: "/Users/raymondsukanto/.avalanche-cli/subnets/sdkSubnetNew/genesis.json",
 		Name:            "sdkSubnetNew",
