@@ -6,11 +6,12 @@ package subnet
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
-	"time"
 )
 
 var (
