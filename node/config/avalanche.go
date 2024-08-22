@@ -75,6 +75,10 @@ func RenderAvalancheCChainConfig(config AvalancheConfigInputs) ([]byte, error) {
 	}
 }
 
+func GetRemoteBLSKeyFile() string {
+	return filepath.Join(constants.CloudNodeStakingPath, constants.BLSKeyFileName)
+}
+
 func GetRemoteAvalancheNodeConfig() string {
 	return filepath.Join(constants.CloudNodeConfigPath, "node.json")
 }

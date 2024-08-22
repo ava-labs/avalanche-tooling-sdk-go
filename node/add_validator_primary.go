@@ -6,9 +6,9 @@ package node
 import (
 	"fmt"
 	"os"
-	"os/user"
-	"path/filepath"
 	"time"
+
+	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/subnet"
@@ -76,7 +76,7 @@ func (h *Node) ValidatePrimaryNetwork(
 		validator.DelegationFee = network.GenesisParams().MinDelegationFee
 	}
 
-	if err = h.HandleBLSKey(); err != nil {
+	if err = h.GetBLSKeyFromRemoteHost(); err != nil {
 		return ids.Empty, fmt.Errorf("unable to set BLS key of node due to %w", err)
 	}
 
@@ -161,35 +161,16 @@ func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
 	return nil
 }
 
-func RemoveTmpSDKDir() error {
-	usr, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("unable to get system user %w", err)
-	}
-	return os.RemoveAll(filepath.Join(usr.HomeDir, constants.LocalTmpDir))
-}
-
+// GetBLSKeyFromRemoteHost gets BLS information from remote host and sets the BlsSecretKey value in Node object
 func (h *Node) GetBLSKeyFromRemoteHost() error {
-	usr, err := user.Current()
+	blsKeyBytes, err := h.ReadFileBytes(remoteconfig.GetRemoteBLSKeyFile(), constants.SSHFileOpsTimeout)
 	if err != nil {
-		return fmt.Errorf("unable to get system user %w", err)
-	}
-	filePath := filepath.Join(constants.CloudNodeStakingPath, constants.BLSKeyFileName)
-	localFilePath := filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)
-	return h.Download(filePath, localFilePath, constants.SSHFileOpsTimeout)
-}
-
-// HandleBLSKey gets BLS information from remote host and sets the BlsSecretKey value in Node object
-func (h *Node) HandleBLSKey() error {
-	if err := h.GetBLSKeyFromRemoteHost(); err != nil {
 		return err
 	}
-	usr, err := user.Current()
+	blsSk, err := bls.SecretKeyFromBytes(blsKeyBytes)
 	if err != nil {
-		return fmt.Errorf("unable to get system user %w", err)
-	}
-	if err := h.SetNodeBLSKey(filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)); err != nil {
 		return err
 	}
-	return RemoveTmpSDKDir()
+	h.BlsSecretKey = blsSk
+	return nil
 }
