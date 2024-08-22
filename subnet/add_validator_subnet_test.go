@@ -21,7 +21,7 @@ import (
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
-func TestValidateSubnet(t *testing.T) {
+func TestValidateSubnet(_ *testing.T) {
 	subnetParams := SubnetParams{
 		GenesisFilePath: "/Users/raymondsukanto/.avalanche-cli/subnets/sdkSubnetNew/genesis.json",
 		Name:            "sdkSubnetNew",
@@ -39,6 +39,9 @@ func TestValidateSubnet(t *testing.T) {
 	}
 
 	subnetID, err := ids.FromString("2VsqBt64W9qayKttmGTiAmtsQVnp9e9U4gSHF1yuLKHuquck5j")
+	if err != nil {
+		panic(err)
+	}
 
 	wallet, err := wallet.New(
 		context.Background(),
