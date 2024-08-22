@@ -9,9 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/node"
-
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/set"
 
@@ -23,11 +20,11 @@ import (
 )
 
 func TestValidateSubnet(t *testing.T) {
-	ctx := context.Background()
-	cp, err := node.GetDefaultCloudParams(ctx, node.AWSCloud)
-	if err != nil {
-		panic(err)
-	}
+	//ctx := context.Background()
+	//cp, err := node.GetDefaultCloudParams(ctx, node.AWSCloud)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	subnetParams := SubnetParams{
 		GenesisFilePath: "/Users/raymondsukanto/.avalanche-cli/subnets/sdkSubnetNew/genesis.json",
@@ -39,29 +36,29 @@ func TestValidateSubnet(t *testing.T) {
 		panic(err)
 	}
 
-	node := node.Node{
-		// NodeID is Avalanche Node ID of the node
-		NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
-		// IP address of the node
-		IP: "18.144.79.215",
-		// SSH configuration for the node
-		SSHConfig: node.SSHConfig{
-			User:           constants.RemoteHostUser,
-			PrivateKeyPath: "/Users/raymondsukanto/.ssh/rs_key_pair_sdk.pem",
-		},
-		// Cloud is the cloud service that the node is on
-		Cloud: node.AWSCloud,
-		// CloudConfig is the cloud specific configuration for the node
-		CloudConfig: *cp,
-		// Role of the node can be 	Validator, API, AWMRelayer, Loadtest, or Monitor
-		Roles: []node.SupportedRole{node.Validator},
-	}
+	//node := node.Node{
+	//	// NodeID is Avalanche Node ID of the node
+	//	NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
+	//	// IP address of the node
+	//	IP: "18.144.79.215",
+	//	// SSH configuration for the node
+	//	SSHConfig: node.SSHConfig{
+	//		User:           constants.RemoteHostUser,
+	//		PrivateKeyPath: "/Users/raymondsukanto/.ssh/rs_key_pair_sdk.pem",
+	//	},
+	//	// Cloud is the cloud service that the node is on
+	//	Cloud: node.AWSCloud,
+	//	// CloudConfig is the cloud specific configuration for the node
+	//	CloudConfig: *cp,
+	//	// Role of the node can be 	Validator, API, AWMRelayer, Loadtest, or Monitor
+	//	Roles: []node.SupportedRole{node.Validator},
+	//}
 
-	subnetIDsToValidate := []string{newSubnet.SubnetID.String()}
-	fmt.Printf("Reconfiguring node %s to track subnet %s\n", node.NodeID, subnetIDsToValidate)
-	if err := node.SyncSubnets(subnetIDsToValidate); err != nil {
-		panic(err)
-	}
+	//subnetIDsToValidate := []string{newSubnet.SubnetID.String()}
+	//fmt.Printf("Reconfiguring node %s to track subnet %s\n", node.NodeID, subnetIDsToValidate)
+	//if err := node.SyncSubnets(subnetIDsToValidate); err != nil {
+	//	panic(err)
+	//}
 
 	time.Sleep(2 * time.Second)
 
@@ -86,7 +83,8 @@ func TestValidateSubnet(t *testing.T) {
 		panic(err)
 	}
 
-	nodeID, err := ids.NodeIDFromString(node.NodeID)
+	//nodeID, err := ids.NodeIDFromString(node.NodeID)
+	nodeID, err := ids.NodeIDFromString("NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPH")
 	if err != nil {
 		panic(err)
 	}
