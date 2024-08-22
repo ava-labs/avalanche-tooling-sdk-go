@@ -38,6 +38,7 @@ func TestValidateSubnet(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+
 	node := node.Node{
 		// NodeID is Avalanche Node ID of the node
 		NodeID: "NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPHu",
@@ -99,6 +100,9 @@ func TestValidateSubnet(t *testing.T) {
 	fmt.Printf("adding subnet validator")
 
 	newSubnet.SetSubnetID(subnetID)
+	subnetAuthKeys := keychain.Addresses().List()
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
+
 	addValidatorTx, err := newSubnet.AddValidator(wallet, validator)
 	if err != nil {
 		panic(err)

@@ -114,12 +114,18 @@ func (c *Subnet) SetParams(controlKeys []ids.ShortID, subnetAuthKeys []ids.Short
 	}
 }
 
-func (c *Subnet) SetSubnetCreateParams(controlKeys []ids.ShortID, threshold uint32) {
+// SetSubnetControlParams sets:
+//   - control keys, which are keys that are allowed to make changes to a Subnet
+//   - threshold, which is the number of keys that need to sign a transaction that changes
+//     a Subnet
+func (c *Subnet) SetSubnetControlParams(controlKeys []ids.ShortID, threshold uint32) {
 	c.DeployInfo.ControlKeys = controlKeys
 	c.DeployInfo.Threshold = threshold
 }
 
-func (c *Subnet) SetBlockchainCreateParams(subnetAuthKeys []ids.ShortID) {
+// SetSubnetAuthKeys sets subnetAuthKeys, which are keys that are being used to sign a transaction
+// that changes a Subnet
+func (c *Subnet) SetSubnetAuthKeys(subnetAuthKeys []ids.ShortID) {
 	c.DeployInfo.SubnetAuthKeys = subnetAuthKeys
 }
 

@@ -67,7 +67,7 @@ func DeploySubnet() {
 	// can be committed on chain
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
-	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
 
 	wallet, _ := wallet.New(
 		context.Background(),
@@ -86,7 +86,7 @@ func DeploySubnet() {
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
 
-	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	// since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
@@ -139,7 +139,7 @@ func DeploySubnetWithLedger() {
 	controlKeys := addressesIDs
 	subnetAuthKeys := addressesIDs
 	threshold := 1
-	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
 
 	// Pay and Sign CreateSubnet Tx with fee paying key A using Ledger
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(walletA)
@@ -149,7 +149,7 @@ func DeploySubnetWithLedger() {
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
 
-	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 
 	// Pay and sign CreateChain Tx with fee paying key A using Ledger
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(walletA)
