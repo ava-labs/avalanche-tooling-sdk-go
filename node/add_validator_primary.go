@@ -5,8 +5,9 @@ package node
 
 import (
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 
