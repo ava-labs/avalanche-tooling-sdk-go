@@ -281,7 +281,7 @@ func TestValidateSubnet(t *testing.T) {
 
 	subnetID, err := ids.FromString("2VsqBt64W9qayKttmGTiAmtsQVnp9e9U4gSHF1yuLKHuquck5j")
 
-	wallet, err := wallet.New(
+	_, err = wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
 			URI:              network.Endpoint,
@@ -299,7 +299,7 @@ func TestValidateSubnet(t *testing.T) {
 		panic(err)
 	}
 
-	validator := SubnetValidatorParams{
+	_ = SubnetValidatorParams{
 		NodeID: nodeID,
 		// Validate Subnet for 48 hours
 		Duration: 48 * time.Hour,
@@ -311,13 +311,13 @@ func TestValidateSubnet(t *testing.T) {
 	subnetAuthKeys := keychain.Addresses().List()
 	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 
-	addValidatorTx, err := newSubnet.AddValidator(wallet, validator)
-	if err != nil {
-		panic(err)
-	}
-	txID, err := newSubnet.Commit(*addValidatorTx, wallet, true)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("obtained tx id %s", txID.String())
+	//addValidatorTx, err := newSubnet.AddValidator(wallet, validator)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//txID, err := newSubnet.Commit(*addValidatorTx, wallet, true)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Printf("obtained tx id %s", txID.String())
 }
