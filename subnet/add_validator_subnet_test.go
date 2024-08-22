@@ -90,7 +90,7 @@ func TestValidateSubnet(t *testing.T) {
 		panic(err)
 	}
 
-	validator := avalanche.SubnetValidatorParams{
+	validator := SubnetValidatorParams{
 		NodeID: nodeID,
 		// Validate Subnet for 48 hours
 		Duration: 48 * time.Hour,
