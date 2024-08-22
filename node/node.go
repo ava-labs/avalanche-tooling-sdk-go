@@ -79,7 +79,6 @@ type Node struct {
 	Logger avalanche.LeveledLogger
 
 	// BLS provides a way to aggregate signatures off chain into a single signature that can be efficiently verified on chain.
-	// To set BlsSecretKey of a node, use SetNodeBLSKey
 	// For more information about how BLS is used on the P-Chain, please head to https://docs.avax.network/cross-chain/avalanche-warp-messaging/deep-dive#bls-multi-signatures-with-public-key-aggregation
 	BlsSecretKey *bls.SecretKey
 }

@@ -45,14 +45,11 @@ const (
 	RemoteHostUser              = "ubuntu"
 
 	// node
-	CloudNodeCLIConfigBasePath  = "/home/ubuntu/.avalanche-cli/"
-	CloudNodeConfigBasePath     = "/home/ubuntu/.avalanchego/"
-	CloudNodeSubnetVMBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
-	CloudNodeStakingPath        = "/home/ubuntu/.avalanchego/staking/"
-	CloudNodeConfigPath         = "/home/ubuntu/.avalanchego/configs/"
-	ServicesDir                 = "services"
-	DashboardsDir               = "dashboards"
-	LocalTmpDir                 = ".avalanche-tooling-sdk-go"
+	CloudNodeCLIConfigBasePath = "/home/ubuntu/.avalanche-cli/"
+	CloudNodeStakingPath       = "/home/ubuntu/.avalanchego/staking/"
+	CloudNodeConfigPath        = "/home/ubuntu/.avalanchego/configs/"
+	ServicesDir                = "services"
+	DashboardsDir              = "dashboards"
 	// services
 	ServiceAvalanchego = "avalanchego"
 	ServicePromtail    = "promtail"

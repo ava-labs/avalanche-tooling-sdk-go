@@ -5,12 +5,9 @@ package node
 
 import (
 	"fmt"
-	"os"
-	"os/user"
-	"path/filepath"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
+	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/subnet"
@@ -18,7 +15,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/utils/crypto/bls"
-	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/signer"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
@@ -34,32 +30,32 @@ import (
 // and uses the wallet provided in the argument to pay for the transaction fee
 func (h *Node) ValidatePrimaryNetwork(
 	network avalanche.Network,
-	validator validator.PrimaryNetworkValidatorParams,
+	validatorParams PrimaryNetworkValidatorParams,
 	wallet wallet.Wallet,
 ) (ids.ID, error) {
-	if validator.NodeID == ids.EmptyNodeID {
+	if validatorParams.NodeID == ids.EmptyNodeID {
 		return ids.Empty, subnet.ErrEmptyValidatorNodeID
 	}
 
-	if validator.Duration == 0 {
+	if validatorParams.Duration == 0 {
 		return ids.Empty, subnet.ErrEmptyValidatorDuration
 	}
 
-	minValStake, err := GetMinStakingAmount(network)
+	minValStake, err := network.GetMinStakingAmount()
 	if err != nil {
 		return ids.Empty, err
 	}
 
-	if validator.StakeAmount < minValStake {
-		return ids.Empty, fmt.Errorf("invalid weight, must be greater than or equal to %d: %d", minValStake, validator.StakeAmount)
+	if validatorParams.StakeAmount < minValStake {
+		return ids.Empty, fmt.Errorf("invalid weight, must be greater than or equal to %d: %d", minValStake, validatorParams.StakeAmount)
 	}
 
-	if validator.DelegationFee == 0 {
-		validator.DelegationFee = network.GenesisParams().MinDelegationFee
+	if validatorParams.DelegationFee == 0 {
+		validatorParams.DelegationFee = network.GenesisParams().MinDelegationFee
 	}
 
-	if err = h.HandleBLSKey(); err != nil {
-		return ids.Empty, fmt.Errorf("unable to set BLS key of node due to %w", err)
+	if err = h.GetBLSKeyFromRemoteHost(); err != nil {
+		return ids.Empty, fmt.Errorf("unable to set BLS key of node from remote host due to %w", err)
 	}
 
 	wallet.SetSubnetAuthMultisig([]ids.ShortID{})
@@ -81,8 +77,8 @@ func (h *Node) ValidatePrimaryNetwork(
 		&txs.SubnetValidator{
 			Validator: txs.Validator{
 				NodeID: nodeID,
-				End:    uint64(time.Now().Add(validator.Duration).Unix()),
-				Wght:   validator.StakeAmount,
+				End:    uint64(time.Now().Add(validatorParams.Duration).Unix()),
+				Wght:   validatorParams.StakeAmount,
 			},
 			Subnet: ids.Empty,
 		},
@@ -90,7 +86,7 @@ func (h *Node) ValidatePrimaryNetwork(
 		wallet.P().Builder().Context().AVAXAssetID,
 		owner,
 		owner,
-		validator.DelegationFee,
+		validatorParams.DelegationFee,
 	)
 	if err != nil {
 		return ids.Empty, fmt.Errorf("error building tx: %w", err)
@@ -119,19 +115,9 @@ func (h *Node) ValidatePrimaryNetwork(
 	return tx.ID(), nil
 }
 
-func GetMinStakingAmount(network avalanche.Network) (uint64, error) {
-	pClient := platformvm.NewClient(network.Endpoint)
-	ctx, cancel := utils.GetAPIContext()
-	defer cancel()
-	minValStake, _, err := pClient.GetMinStake(ctx, ids.Empty)
-	if err != nil {
-		return 0, err
-	}
-	return minValStake, nil
-}
-
-func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
-	blsKeyBytes, err := os.ReadFile(signingKeyPath)
+// GetBLSKeyFromRemoteHost gets BLS information from remote host and sets the BlsSecretKey value in Node object
+func (h *Node) GetBLSKeyFromRemoteHost() error {
+	blsKeyBytes, err := h.ReadFileBytes(remoteconfig.GetRemoteBLSKeyFile(), constants.SSHFileOpsTimeout)
 	if err != nil {
 		return err
 	}
@@ -141,37 +127,4 @@ func (h *Node) SetNodeBLSKey(signingKeyPath string) error {
 	}
 	h.BlsSecretKey = blsSk
 	return nil
-}
-
-func RemoveTmpSDKDir() error {
-	usr, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("unable to get system user %w", err)
-	}
-	return os.RemoveAll(filepath.Join(usr.HomeDir, constants.LocalTmpDir))
-}
-
-func (h *Node) GetBLSKeyFromRemoteHost() error {
-	usr, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("unable to get system user %w", err)
-	}
-	filePath := filepath.Join(constants.CloudNodeStakingPath, constants.BLSKeyFileName)
-	localFilePath := filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)
-	return h.Download(filePath, localFilePath, constants.SSHFileOpsTimeout)
-}
-
-// HandleBLSKey gets BLS information from remote host and sets the BlsSecretKey value in Node object
-func (h *Node) HandleBLSKey() error {
-	if err := h.GetBLSKeyFromRemoteHost(); err != nil {
-		return err
-	}
-	usr, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("unable to get system user %w", err)
-	}
-	if err := h.SetNodeBLSKey(filepath.Join(usr.HomeDir, constants.LocalTmpDir, h.NodeID, constants.BLSKeyFileName)); err != nil {
-		return err
-	}
-	return RemoveTmpSDKDir()
 }
