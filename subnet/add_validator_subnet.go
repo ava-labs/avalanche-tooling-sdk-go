@@ -41,7 +41,7 @@ func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput validator.Sub
 		return nil, ErrEmptySubnetID
 	}
 
-	wallet.SetSubnetAuthMultisig([]ids.ShortID{})
+	wallet.SetSubnetAuthMultisig(c.DeployInfo.SubnetAuthKeys)
 
 	validator := &txs.SubnetValidator{
 		Validator: txs.Validator{
