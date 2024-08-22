@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
@@ -51,7 +49,7 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		panic(err)
 	}
 
-	validator := validator.PrimaryNetworkValidatorParams{
+	validator := avalanche.PrimaryNetworkValidatorParams{
 		NodeID: nodeID,
 		// Validate Primary Network for 48 hours
 		Duration: 48 * time.Hour,

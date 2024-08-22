@@ -6,7 +6,6 @@ package subnet
 import (
 	"context"
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 	"testing"
 	"time"
 
@@ -91,7 +90,7 @@ func TestValidateSubnet(t *testing.T) {
 		panic(err)
 	}
 
-	validator := validator.SubnetValidatorParams{
+	validator := avalanche.SubnetValidatorParams{
 		NodeID: nodeID,
 		// Validate Subnet for 48 hours
 		Duration: 48 * time.Hour,
