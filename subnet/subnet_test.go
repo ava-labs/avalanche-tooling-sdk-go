@@ -6,7 +6,6 @@ package subnet
 import (
 	"context"
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/node"
 	"math/big"
 	"testing"
 	"time"
@@ -230,18 +229,18 @@ func TestSubnetDeployLedger(t *testing.T) {
 }
 
 func TestValidateSubnet(t *testing.T) {
-	ctx := context.Background()
-	_, err := node.GetDefaultCloudParams(ctx, node.AWSCloud)
-	if err != nil {
-		panic(err)
-	}
+	//ctx := context.Background()
+	//_, err := node.GetDefaultCloudParams(ctx, node.AWSCloud)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	subnetParams := SubnetParams{
 		GenesisFilePath: "/Users/raymondsukanto/.avalanche-cli/subnets/sdkSubnetNew/genesis.json",
 		Name:            "sdkSubnetNew",
 	}
 
-	_, err = New(&subnetParams)
+	_, err := New(&subnetParams)
 	if err != nil {
 		panic(err)
 	}
