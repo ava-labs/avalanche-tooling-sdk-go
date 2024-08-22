@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
+
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/set"
 
@@ -83,13 +85,13 @@ func TestValidateSubnet(t *testing.T) {
 		panic(err)
 	}
 
-	//nodeID, err := ids.NodeIDFromString(node.NodeID)
+	// nodeID, err := ids.NodeIDFromString(node.NodeID)
 	nodeID, err := ids.NodeIDFromString("NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPH")
 	if err != nil {
 		panic(err)
 	}
 
-	validator := SubnetValidatorParams{
+	validator := validator.SubnetValidatorParams{
 		NodeID: nodeID,
 		// Validate Subnet for 48 hours
 		Duration: 48 * time.Hour,

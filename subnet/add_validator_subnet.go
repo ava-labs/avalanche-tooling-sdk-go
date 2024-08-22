@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
+
 	"golang.org/x/net/context"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
@@ -23,22 +25,10 @@ var (
 	ErrEmptySubnetAuth        = errors.New("no subnet auth keys is provided")
 )
 
-type SubnetValidatorParams struct {
-	// NodeID is the unique identifier of the node to be added as a validator on the specified Subnet.
-	NodeID ids.NodeID
-	// Duration is how long the node will be staking the Subnet
-	// Duration has to be less than or equal to the duration that the node will be validating the Primary
-	// Network
-	Duration time.Duration
-	// Weight is the validator's weight when sampling validators.
-	// Weight for subnet validators is set to 20 by default
-	Weight uint64
-}
-
 // AddValidator adds validator to subnet
 // Before an Avalanche Node can be added as a validator to a Subnet, the node must already be
 // tracking the subnet, which can be done by calling SyncSubnets in node package
-func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput SubnetValidatorParams) (*multisig.Multisig, error) {
+func (c *Subnet) AddValidator(wallet wallet.Wallet, validatorInput validator.SubnetValidatorParams) (*multisig.Multisig, error) {
 	if validatorInput.NodeID == ids.EmptyNodeID {
 		return nil, ErrEmptyValidatorNodeID
 	}
