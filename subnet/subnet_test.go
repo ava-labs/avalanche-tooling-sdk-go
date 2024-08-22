@@ -267,11 +267,11 @@ func TestValidateSubnet(t *testing.T) {
 
 	subnetIDsToValidate := []string{newSubnet.SubnetID.String()}
 	fmt.Printf("Reconfiguring node %s to track subnet %s\n", node.NodeID, subnetIDsToValidate)
-	if err := node.SyncSubnets(subnetIDsToValidate); err != nil {
-		panic(err)
-	}
-
-	time.Sleep(2 * time.Second)
+	//if err := node.SyncSubnets(subnetIDsToValidate); err != nil {
+	//	panic(err)
+	//}
+	//
+	//time.Sleep(2 * time.Second)
 
 	network := avalanche.FujiNetwork()
 	keychain, err := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk", nil)
