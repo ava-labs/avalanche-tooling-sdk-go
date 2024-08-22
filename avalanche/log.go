@@ -9,10 +9,6 @@ import (
 	"os"
 )
 
-//
-// Public constants
-//
-
 const (
 	// LevelNull sets a logger to show no messages at all.
 	LevelNull Level = 0
