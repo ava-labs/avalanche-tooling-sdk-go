@@ -6,8 +6,9 @@ package subnet
 import (
 	"errors"
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
