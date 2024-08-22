@@ -5,6 +5,7 @@ package node
 
 import (
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 	"time"
 
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
@@ -30,7 +31,7 @@ import (
 // and uses the wallet provided in the argument to pay for the transaction fee
 func (h *Node) ValidatePrimaryNetwork(
 	network avalanche.Network,
-	validatorParams PrimaryNetworkValidatorParams,
+	validatorParams validator.PrimaryNetworkValidatorParams,
 	wallet wallet.Wallet,
 ) (ids.ID, error) {
 	if validatorParams.NodeID == ids.EmptyNodeID {
