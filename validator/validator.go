@@ -37,5 +37,6 @@ type SubnetValidatorParams struct {
 	// Network
 	Duration time.Duration
 	// Weight is the validator's weight when sampling validators.
+	// Weight for subnet validators is set to 20 by default
 	Weight uint64
 }
