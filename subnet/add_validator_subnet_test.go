@@ -9,22 +9,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
-
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/set"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
-func TestValidateSubnet(_ *testing.T) {
+func TestValidateSubnet(t *testing.T) {
 	subnetParams := SubnetParams{
-		GenesisFilePath: "/Users/raymondsukanto/.avalanche-cli/subnets/sdkSubnetNew/genesis.json",
-		Name:            "sdkSubnetNew",
+		GenesisFilePath: "GENESIS_FILE_PATH",
+		Name:            "SUBNET_NAME",
 	}
 
 	newSubnet, err := New(&subnetParams)
@@ -32,13 +30,15 @@ func TestValidateSubnet(_ *testing.T) {
 		panic(err)
 	}
 
-	network := avalanche.FujiNetwork()
-	keychain, err := keychain.NewKeychain(network, "/Users/raymondsukanto/.avalanche-cli/key/newTestKeyNew.pk", nil)
+	// Genesis doesn't contain the deployed Subnet's SubnetID, we need to first set the Subnet ID
+	subnetID, err := ids.FromString("SUBNET_ID")
 	if err != nil {
 		panic(err)
 	}
+	newSubnet.SetSubnetID(subnetID)
 
-	subnetID, err := ids.FromString("2VsqBt64W9qayKttmGTiAmtsQVnp9e9U4gSHF1yuLKHuquck5j")
+	network := avalanche.FujiNetwork()
+	keychain, err := keychain.NewKeychain(network, "PRIVATE_KEY_FILEPATH", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +56,7 @@ func TestValidateSubnet(_ *testing.T) {
 		panic(err)
 	}
 
-	nodeID, err := ids.NodeIDFromString("NodeID-Mb3AwcUpWysCWLP6mSpzzJVgYawJWzPH")
+	nodeID, err := ids.NodeIDFromString("VALIDATOR_NODEID")
 	if err != nil {
 		panic(err)
 	}
@@ -65,11 +65,9 @@ func TestValidateSubnet(_ *testing.T) {
 		NodeID: nodeID,
 		// Validate Subnet for 48 hours
 		Duration: 48 * time.Hour,
-		Weight:   20,
+		// Setting weight of subnet validator to 20 (default value)
+		Weight: 20,
 	}
-	fmt.Printf("adding subnet validator")
-
-	newSubnet.SetSubnetID(subnetID)
 
 	// We need to set Subnet Auth Keys for this transaction since Subnet AddValidator is
 	// a Subnet-changing transaction
@@ -80,9 +78,6 @@ func TestValidateSubnet(_ *testing.T) {
 	subnetAuthKeys := keychain.Addresses().List()
 	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 
-	// In this example, we are assuming that the specified node has already tracked the Subnet
-	// which can be done in Avalanche Tooling SDK through node.Sync function
-	// For an example, head to examples/subnet_addValidator.go
 	addValidatorTx, err := newSubnet.AddValidator(wallet, validator)
 	if err != nil {
 		panic(err)
@@ -93,5 +88,6 @@ func TestValidateSubnet(_ *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+
 	fmt.Printf("obtained tx id %s", txID.String())
 }

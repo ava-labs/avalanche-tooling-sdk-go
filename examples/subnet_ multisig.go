@@ -28,9 +28,9 @@ func DeploySubnetMultiSig() {
 	// Create three keys that will be used as control keys of the subnet
 	// NewKeychain will generate a new key pair in the provided path if no .pk file currently
 	// exists in the provided path
-	keychainA, _ := keychain.NewKeychain(network, "KEY_PATH_A")
-	keychainB, _ := keychain.NewKeychain(network, "KEY_PATH_B")
-	keychainC, _ := keychain.NewKeychain(network, "KEY_PATH_C")
+	keychainA, _ := keychain.NewKeychain(network, "KEY_PATH_A", nil)
+	keychainB, _ := keychain.NewKeychain(network, "KEY_PATH_B", nil)
+	keychainC, _ := keychain.NewKeychain(network, "KEY_PATH_C", nil)
 
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key

@@ -22,12 +22,6 @@ import (
 )
 
 func TestNodesValidatePrimaryNetwork(_ *testing.T) {
-	ctx := context.Background()
-	cp, err := GetDefaultCloudParams(ctx, AWSCloud)
-	if err != nil {
-		panic(err)
-	}
-
 	node := Node{
 		// NodeID is Avalanche Node ID of the node
 		NodeID: "NODE_ID",
@@ -40,8 +34,6 @@ func TestNodesValidatePrimaryNetwork(_ *testing.T) {
 		},
 		// Cloud is the cloud service that the node is on
 		Cloud: AWSCloud,
-		// CloudConfig is the cloud specific configuration for the node
-		CloudConfig: *cp,
 		// Role of the node can be 	Validator, API, AWMRelayer, Loadtest, or Monitor
 		Roles: []SupportedRole{Validator},
 	}
