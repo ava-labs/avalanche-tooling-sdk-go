@@ -6,6 +6,7 @@ package subnet
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 
@@ -20,28 +21,24 @@ import (
 )
 
 func TestValidateSubnet(t *testing.T) {
+	require := require.New(t)
 	subnetParams := SubnetParams{
 		GenesisFilePath: "GENESIS_FILE_PATH",
 		Name:            "SUBNET_NAME",
 	}
 
 	newSubnet, err := New(&subnetParams)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	// Genesis doesn't contain the deployed Subnet's SubnetID, we need to first set the Subnet ID
 	subnetID, err := ids.FromString("SUBNET_ID")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
+
 	newSubnet.SetSubnetID(subnetID)
 
 	network := avalanche.FujiNetwork()
 	keychain, err := keychain.NewKeychain(network, "PRIVATE_KEY_FILEPATH", nil)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	wallet, err := wallet.New(
 		context.Background(),
@@ -52,14 +49,10 @@ func TestValidateSubnet(t *testing.T) {
 			PChainTxsToFetch: set.Of(subnetID),
 		},
 	)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	nodeID, err := ids.NodeIDFromString("VALIDATOR_NODEID")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	validator := validator.SubnetValidatorParams{
 		NodeID: nodeID,
@@ -79,15 +72,11 @@ func TestValidateSubnet(t *testing.T) {
 	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 
 	addValidatorTx, err := newSubnet.AddValidator(wallet, validator)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	// Since it has the required signatures, we will now commit the transaction on chain
 	txID, err := newSubnet.Commit(*addValidatorTx, wallet, true)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	fmt.Printf("obtained tx id %s", txID.String())
 }
