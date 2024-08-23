@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
+
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
@@ -25,32 +27,12 @@ import (
 	"golang.org/x/net/context"
 )
 
-type PrimaryNetworkValidatorParams struct {
-	// NodeID is the unique identifier of the node to be added as a validator on the Primary Network.
-	NodeID ids.NodeID
-
-	// Duration is how long the node will be staking the Primary Network
-	// Duration has to be greater than or equal to minimum duration for the specified network
-	// (Fuji / Mainnet)
-	Duration time.Duration
-
-	// StakeAmount is the amount of Avalanche tokens (AVAX) to stake in this validator
-	// StakeAmount is in the amount of nAVAX
-	// StakeAmount has to be greater than or equal to minimum stake required for the specified network
-	StakeAmount uint64
-
-	// DelegationFee is the percent fee this validator will charge when others delegate stake to it
-	// When DelegationFee is not set, the minimum delegation fee for the specified network will be set
-	// For more information on delegation fee, please head to https://docs.avax.network/nodes/validate/node-validator#delegation-fee-rate
-	DelegationFee uint32
-}
-
 // ValidatePrimaryNetwork adds node as primary network validator.
 // It adds the node in the specified network (Fuji / Mainnet / Devnet)
 // and uses the wallet provided in the argument to pay for the transaction fee
 func (h *Node) ValidatePrimaryNetwork(
 	network avalanche.Network,
-	validatorParams PrimaryNetworkValidatorParams,
+	validatorParams validator.PrimaryNetworkValidatorParams,
 	wallet wallet.Wallet,
 ) (ids.ID, error) {
 	if validatorParams.NodeID == ids.EmptyNodeID {
