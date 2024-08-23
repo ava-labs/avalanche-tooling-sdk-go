@@ -21,6 +21,7 @@ import (
 )
 
 func AddSubnetValidator() {
+	// We are using existing Subnet that we have already deployed on Fuji
 	subnetParams := subnet.SubnetParams{
 		GenesisFilePath: "GENESIS_FILE_PATH",
 		Name:            "SUBNET_NAME",
@@ -35,8 +36,11 @@ func AddSubnetValidator() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Genesis doesn't contain the deployed Subnet's SubnetID, we need to first set the Subnet ID
 	newSubnet.SetSubnetID(subnetID)
 
+	// We are using existing host
 	node := node.Node{
 		// NodeID is Avalanche Node ID of the node
 		NodeID: "NODE_ID",
@@ -47,9 +51,8 @@ func AddSubnetValidator() {
 			User:           constants.RemoteHostUser,
 			PrivateKeyPath: "NODE_KEYPAIR_PRIVATE_KEY_PATH",
 		},
-		// Cloud is the cloud service that the node is on
-		Cloud: node.AWSCloud,
-
+		// Role is the role that we expect the host to be (Validator, API, AWMRelayer, Loadtest or
+		// Monitor)
 		Roles: []node.SupportedRole{node.Validator},
 	}
 
