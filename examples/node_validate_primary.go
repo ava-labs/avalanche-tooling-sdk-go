@@ -22,6 +22,7 @@ import (
 )
 
 func ValidatePrimaryNetwork() {
+	// We are using existing host
 	node := node.Node{
 		// NodeID is Avalanche Node ID of the node
 		NodeID: "NODE_ID",
