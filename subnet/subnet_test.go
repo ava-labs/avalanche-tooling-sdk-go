@@ -57,7 +57,7 @@ func TestSubnetDeploy(t *testing.T) {
 	controlKeys := keychain.Addresses().List()
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
-	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
 	wallet, err := wallet.New(
 		context.Background(),
 		&primary.WalletConfig{
@@ -74,7 +74,7 @@ func TestSubnetDeploy(t *testing.T) {
 	require.NoError(err)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 	time.Sleep(2 * time.Second)
-	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 	deployChainTx, err := newSubnet.CreateBlockchainTx(wallet)
 	require.NoError(err)
 	blockchainID, err := newSubnet.Commit(*deployChainTx, wallet, true)
@@ -104,7 +104,7 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	subnetAuthKeys = append(subnetAuthKeys, keychainA.Addresses().List()[0])
 	subnetAuthKeys = append(subnetAuthKeys, keychainB.Addresses().List()[0])
 	threshold := 2
-	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
 
 	walletA, err := wallet.New(
 		context.Background(),
@@ -126,7 +126,7 @@ func TestSubnetDeployMultiSig(t *testing.T) {
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
 
-	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 	// first signature of CreateChainTx using keychain A
 	deployChainTx, err := newSubnet.CreateBlockchainTx(walletA)
 	require.NoError(err)
@@ -173,7 +173,7 @@ func TestSubnetDeployLedger(t *testing.T) {
 	subnetAuthKeys := addressesIDs
 	threshold := 1
 
-	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
 
 	walletA, err := wallet.New(
 		context.Background(),
@@ -194,7 +194,7 @@ func TestSubnetDeployLedger(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 	deployChainTx, err := newSubnet.CreateBlockchainTx(walletA)
 	require.NoError(err)
 
