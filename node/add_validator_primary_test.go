@@ -43,7 +43,7 @@ func TestNodesValidatePrimaryNetwork(t *testing.T) {
 	nodeID, err := ids.NodeIDFromString(node.NodeID)
 	require.NoError(err)
 
-	validator := validator.PrimaryNetworkValidatorParams{
+	validatorParams := validator.PrimaryNetworkValidatorParams{
 		NodeID: nodeID,
 		// Validate Primary Network for 48 hours
 		Duration: 48 * time.Hour,
@@ -66,7 +66,7 @@ func TestNodesValidatePrimaryNetwork(t *testing.T) {
 	)
 	require.NoError(err)
 
-	txID, err := node.ValidatePrimaryNetwork(avalanche.FujiNetwork(), validator, wallet)
+	txID, err := node.ValidatePrimaryNetwork(avalanche.FujiNetwork(), validatorParams, wallet)
 	require.NoError(err)
 
 	fmt.Printf("obtained tx id %s", txID.String())

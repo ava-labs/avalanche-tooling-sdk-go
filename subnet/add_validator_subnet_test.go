@@ -55,7 +55,7 @@ func TestValidateSubnet(t *testing.T) {
 	nodeID, err := ids.NodeIDFromString("VALIDATOR_NODEID")
 	require.NoError(err)
 
-	validator := validator.SubnetValidatorParams{
+	validatorParams := validator.SubnetValidatorParams{
 		NodeID: nodeID,
 		// Validate Subnet for 48 hours
 		Duration: 48 * time.Hour,
@@ -72,7 +72,7 @@ func TestValidateSubnet(t *testing.T) {
 	subnetAuthKeys := keychain.Addresses().List()
 	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 
-	addValidatorTx, err := newSubnet.AddValidator(wallet, validator)
+	addValidatorTx, err := newSubnet.AddValidator(wallet, validatorParams)
 	require.NoError(err)
 
 	// Since it has the required signatures, we will now commit the transaction on chain
