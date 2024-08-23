@@ -55,16 +55,18 @@ func DeploySubnet() {
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key
 
-	// control keys are a list of keys that are permitted to make changes to a Subnet
+	// Control keys are a list of keys that are permitted to make changes to a Subnet
 	// such as creating a blockchain in the Subnet and adding validators to the Subnet
 	controlKeys := keychain.Addresses().List()
 
-	// subnet auth keys are a subset of control keys
+	// Subnet auth keys are a subset of control keys that will be used to sign transactions that
+	// modify a Subnet (such as creating a blockchain in the Subnet and adding validators to the
+	// Subnet)
 	//
-	// they are the keys that will be used to sign transactions that modify a Subnet
-	// number of keys in subnetAuthKeys has to be more than or equal to threshold
-	// all keys in subnetAuthKeys have to sign the transaction before the transaction
-	// can be committed on chain
+	// Number of keys in subnetAuthKeys has to be equal to the threshold value provided during
+	// CreateSubnetTx.
+	//
+	// All keys in subnetAuthKeys have to sign the transaction before the transaction
 	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
 	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
@@ -79,7 +81,9 @@ func DeploySubnet() {
 		},
 	)
 
+	// Build and Sign CreateSubnetTx with our fee paying key
 	deploySubnetTx, _ := newSubnet.CreateSubnetTx(wallet)
+	// Commit our CreateSubnetTx on chain
 	subnetID, _ := newSubnet.Commit(*deploySubnetTx, wallet, true)
 	fmt.Printf("subnetID %s \n", subnetID.String())
 
@@ -87,8 +91,10 @@ func DeploySubnet() {
 	time.Sleep(2 * time.Second)
 
 	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
+	// Build and Sign CreateChainTx with our fee paying key (which is also our subnet auth key)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
-	// since we are using the fee paying key as control key too, we can commit the transaction
+	// Commit our CreateChainTx on chain
+	// Since we are using the fee paying key as control key too, we can commit the transaction
 	// on chain immediately since the number of signatures has been reached
 	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
