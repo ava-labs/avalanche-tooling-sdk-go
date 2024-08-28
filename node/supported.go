@@ -101,5 +101,8 @@ func CheckRoles(roles []SupportedRole) error {
 	if slices.Contains(roles, Monitor) && len(roles) > 1 {
 		return fmt.Errorf("%v role cannot be combined with other roles", Monitor)
 	}
+	if slices.Contains(roles, AWMRelayer) && len(roles) > 1 {
+		return fmt.Errorf("%v role cannot be combined with other roles", AWMRelayer)
+	}
 	return nil
 }
