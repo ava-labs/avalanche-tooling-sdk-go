@@ -85,9 +85,16 @@ func Execute(
 		}
 	}
 	if setupTime > 0 {
+		ch := make(chan struct{})
+		go func() {
+			_ = cmd.Wait()
+			ch <- struct{}{}
+		}()
 		time.Sleep(setupTime)
-		if b, _, _, _ := IsRunning(cmd.Process.Pid, ""); !b {
+		select {
+		case <-ch:
 			return 0, fmt.Errorf("process stopped during setup")
+		default:
 		}
 	}
 	return cmd.Process.Pid, nil
