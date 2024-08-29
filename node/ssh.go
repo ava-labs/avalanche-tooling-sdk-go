@@ -438,3 +438,43 @@ func (h *Node) RunSSHCopyMonitoringDashboards(monitoringDashboardPath string) er
 	}
 	return nil
 }
+
+// RunSSHSetupDevNet runs script to setup devnet
+func (h *Node) RunSSHSetupDevNet() error {
+	if err := h.MkdirAll(
+		constants.CloudNodeConfigPath,
+		constants.SSHDirOpsTimeout,
+	); err != nil {
+		return err
+	}
+	if err := h.UploadBytes(
+		h.DevNetInfo.GenesisBytes,
+		filepath.Join(constants.CloudNodeConfigPath, constants.GenesisFileName),
+		constants.SSHFileOpsTimeout,
+	); err != nil {
+		return err
+	}
+	if err := h.UploadBytes(
+		h.DevNetInfo.NodeConfigBytes,
+		filepath.Join(constants.CloudNodeConfigPath, constants.NodeFileName),
+		constants.SSHFileOpsTimeout,
+	); err != nil {
+		return err
+	}
+	if err := h.StopDockerCompose(constants.SSHLongRunningScriptTimeout); err != nil {
+		return err
+	}
+	if err := h.Remove("/home/ubuntu/.avalanchego/db", true); err != nil {
+		return err
+	}
+	if err := h.MkdirAll("/home/ubuntu/.avalanchego/db", constants.SSHDirOpsTimeout); err != nil {
+		return err
+	}
+	if err := h.Remove("/home/ubuntu/.avalanchego/logs", true); err != nil {
+		return err
+	}
+	if err := h.MkdirAll("/home/ubuntu/.avalanchego/logs", constants.SSHDirOpsTimeout); err != nil {
+		return err
+	}
+	return h.StartDockerCompose(constants.SSHLongRunningScriptTimeout)
+}

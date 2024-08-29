@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ava-labs/avalanchego/staking"
 	"io"
 	"net"
 	"net/http"
@@ -40,6 +41,22 @@ type SSHConfig struct {
 	// See man ssh_config(5) for more information
 	// By defalult it's StrictHostKeyChecking=no
 	Params map[string]string // additional parameters to pass to the ssh command
+}
+
+// TODO: Rename this
+type StakingFiles struct {
+	CertBytes []byte
+
+	KeyBytes []byte
+
+	BlsSignerKeyBytes []byte
+}
+
+// TODO: Rename this
+type DevNetInfo struct {
+	GenesisBytes []byte
+
+	NodeConfigBytes []byte
 }
 
 // Node is an output of CreateNodes
@@ -81,6 +98,11 @@ type Node struct {
 	// BLS provides a way to aggregate signatures off chain into a single signature that can be efficiently verified on chain.
 	// For more information about how BLS is used on the P-Chain, please head to https://docs.avax.network/cross-chain/avalanche-warp-messaging/deep-dive#bls-multi-signatures-with-public-key-aggregation
 	BlsSecretKey *bls.SecretKey
+
+	// StakingFiles contains cert file and key file bytes from which Node ID is derived
+	StakingFiles *StakingFiles
+
+	DevNetInfo *DevNetInfo
 }
 
 // NewNodeConnection creates a new SSH connection to the node
@@ -605,4 +627,40 @@ func (h *Node) HasSystemDAvailable() bool {
 		return false
 	}
 	return strings.TrimSpace(string(data)) == "systemd"
+}
+
+// CreateStakingFiles creates cert, key and bls signer key bytes for a Node
+func (h *Node) CreateStakingFiles() error {
+	certBytes, keyBytes, err := staking.NewCertAndKeyBytes()
+	if err != nil {
+		return err
+	}
+
+	blsSignerKeyBytes, err := utils.NewBlsSecretKeyBytes()
+	h.StakingFiles = &StakingFiles{
+		CertBytes:         certBytes,
+		KeyBytes:          keyBytes,
+		BlsSignerKeyBytes: blsSignerKeyBytes,
+	}
+	return nil
+}
+
+func (h *Node) SetDevnetInfo(genesisBytes, nodeConfigBytes []byte) {
+	h.DevNetInfo = &DevNetInfo{
+		GenesisBytes:    genesisBytes,
+		NodeConfigBytes: nodeConfigBytes,
+	}
+}
+
+func (h *Node) SetNodeID() error {
+	if h.StakingFiles == nil {
+		return fmt.Errorf("no staking files are found at node")
+	}
+	nodeID, err := utils.ToNodeID(h.StakingFiles.CertBytes)
+	if err != nil {
+		return err
+	}
+
+	h.NodeID = nodeID.String()
+	return nil
 }

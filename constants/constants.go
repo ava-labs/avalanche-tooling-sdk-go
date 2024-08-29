@@ -42,7 +42,9 @@ const (
 	SSHFileOpsTimeout           = 100 * time.Second
 	SSHPOSTTimeout              = 10 * time.Second
 	SSHScriptTimeout            = 2 * time.Minute
+	SSHDirOpsTimeout            = 10 * time.Second
 	RemoteHostUser              = "ubuntu"
+	DockerNodeConfigPath        = "/.avalanchego/configs/"
 
 	// node
 	CloudNodeCLIConfigBasePath = "/home/ubuntu/.avalanche-cli/"
@@ -50,6 +52,8 @@ const (
 	CloudNodeConfigPath        = "/home/ubuntu/.avalanchego/configs/"
 	ServicesDir                = "services"
 	DashboardsDir              = "dashboards"
+	GenesisFileName            = "genesis.json"
+	NodeFileName               = "node.json"
 	// services
 	ServiceAvalanchego = "avalanchego"
 	ServicePromtail    = "promtail"
