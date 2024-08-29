@@ -127,4 +127,40 @@ func main() {
 	if err := relayer.SaveRelayerConfig(relayerConfig, relayerConfigPath); err != nil {
 		panic(err)
 	}
+
+	if err := relayer.FundRelayer(
+		relayerConfig,
+		chain1BlockchainID,
+		chain1PK,
+		nil,
+		nil,
+	); err != nil {
+		panic(err)
+	}
+	if err := relayer.FundRelayer(
+		relayerConfig,
+		chain2BlockchainID,
+		chain2PK,
+		nil,
+		nil,
+	); err != nil {
+		panic(err)
+	}
+
+	binPath, err := relayer.InstallLatest(relayerDir, "")
+	if err != nil {
+		panic(err)
+	}
+
+	relayerLogPath := filepath.Join(relayerDir, "log.json")
+
+	pid, err := relayer.Execute(binPath, relayerConfigPath, relayerLogPath, "")
+	if err != nil {
+		if bs, err := os.ReadFile(relayerLogPath); err == nil {
+			fmt.Println(string(bs))
+		}
+		panic(err)
+	}
+
+	fmt.Println(pid)
 }
