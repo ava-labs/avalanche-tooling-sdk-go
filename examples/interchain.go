@@ -6,8 +6,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain/icm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain/relayer"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/utils/logging"
 )
 
 func fatal(err error) {
@@ -50,5 +55,24 @@ func main() {
 	fmt.Println(chain2MessengerAlreadyDeployed)
 	fmt.Println(chain2MessengerAddress)
 	fmt.Println(chain2RegistryAddress)
+
+	network := avalanche.FujiNetwork()
+
+	relayerDir := os.Getenv("RELAYER_DIR")
+	if relayerDir == "" {
+		fatal(fmt.Errorf("must define RELAYER_DIR env var"))
+	}
+	relayerDir = utils.ExpandHome(relayerDir)
+	if !utils.DirectoryExists(relayerDir) {
+		fatal(fmt.Errorf("relayer directory %q does not exits", relayerDir))
+	}
+
+	relayerConfig := relayer.CreateBaseRelayerConfig(
+		logging.Info.LowerString(),
+		filepath.Join(relayerDir, "storage"),
+		0,
+		network,
+	)
+	fmt.Printf("%#v\n", relayerConfig)
 
 }
