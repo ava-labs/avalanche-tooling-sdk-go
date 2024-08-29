@@ -274,9 +274,7 @@ func CreateBaseRelayerConfig(
 		ProcessMissedBlocks:    false,
 		SourceBlockchains:      []*config.SourceBlockchain{},
 		DestinationBlockchains: []*config.DestinationBlockchain{},
-	}
-	if metricsPort != 0 {
-		relayerConfig.MetricsPort = metricsPort
+		MetricsPort:            metricsPort,
 	}
 	return relayerConfig
 }
