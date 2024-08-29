@@ -99,6 +99,7 @@ func InterchainExample(
 	relayerDir string,
 ) error {
 	// Deploy ICM
+	fmt.Println("Deploying ICM")
 	chain1RegistryAddress, chain1MessengerAddress, chain2RegistryAddress, chain2MessengerAddress, err := SetupICM(
 		chain1RPC,
 		chain1PK,
@@ -141,8 +142,10 @@ func InterchainExample(
 		chain2MessengerAddress,
 		chain2RelayerKey,
 	)
+	fmt.Printf("Generated relayer conf on %s\n", relayerConfigPath)
 
 	// Fund the relayer keys with 10 TOKENS each
+	fmt.Printf("Funding relayer keys %s, %s\n", chain1RelayerKey.C(), chain2RelayerKey.C())
 	desiredRelayerBalance := big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(10))
 	if err := relayer.FundRelayer(
 		relayerConfig,
@@ -166,6 +169,7 @@ func InterchainExample(
 	// install and execute a relayer on localhost
 	// also wait for proper initialization
 	relayerLogPath := filepath.Join(relayerDir, "logs.txt")
+	fmt.Printf("Executing local relayer with logs %s\n", relayerLogPath)
 	pid, _, err := StartLocalRelayer(
 		relayerConfigPath,
 		relayerLogPath,
@@ -176,6 +180,7 @@ func InterchainExample(
 	}
 
 	// send a message from chain1 to chain2
+	fmt.Println("Verifying message delivery")
 	if err := TestMessageDelivery(
 		chain1RPC,
 		chain1PK,
@@ -189,6 +194,7 @@ func InterchainExample(
 	}
 
 	// stops the relayer and cleans up
+	fmt.Println("Cleaning up")
 	return localrelayer.Cleanup(pid, "", relayerStorageDir)
 }
 
