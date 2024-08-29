@@ -19,8 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-var defaultRequiredBalance = big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(500)) // 500 AVAX
-
 func GetSourceConfig(
 	relayerConfig *config.Config,
 	blockchainID ids.ID,
@@ -109,8 +107,8 @@ func FundRelayerAddress(
 	amount *big.Int,
 	requiredMinBalance *big.Int,
 ) error {
-	if requiredMinBalance == nil {
-		requiredMinBalance = defaultRequiredBalance
+	if amount == nil && requiredMinBalance == nil {
+		return fmt.Errorf("failure funding relayer: you must provide an amount or a required balance")
 	}
 	client, err := evm.GetClient(rpcEndpoint)
 	if err != nil {
