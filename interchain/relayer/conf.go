@@ -20,81 +20,6 @@ import (
 
 var defaultRequiredBalance = big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(500)) // 500 AVAX
 
-func GetBaseRelayerConfig(
-	logLevel string,
-	storageLocation string,
-	network avalanche.Network,
-) *config.Config {
-	return &config.Config{
-		LogLevel: logLevel,
-		PChainAPI: &config.APIConfig{
-			BaseURL: network.Endpoint,
-		},
-		InfoAPI: &config.APIConfig{
-			BaseURL: network.Endpoint,
-		},
-		StorageLocation:        storageLocation,
-		ProcessMissedBlocks:    false,
-		SourceBlockchains:      []*config.SourceBlockchain{},
-		DestinationBlockchains: []*config.DestinationBlockchain{},
-	}
-}
-
-func AddChainToRelayerConfig(
-	relayerConfig *config.Config,
-	network avalanche.Network,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	teleporterContractAddress string,
-	teleporterRegistryAddress string,
-	privateKey string,
-	rewardAddress string,
-) error {
-	rpcEndpoint := network.BlockchainEndpoint(blockchainID.String())
-	wsEndpoint := network.BlockchainWSEndpoint(blockchainID.String())
-	source := &config.SourceBlockchain{
-		SubnetID:     subnetID.String(),
-		BlockchainID: blockchainID.String(),
-		VM:           config.EVM.String(),
-		RPCEndpoint: config.APIConfig{
-			BaseURL: rpcEndpoint,
-		},
-		WSEndpoint: config.APIConfig{
-			BaseURL: wsEndpoint,
-		},
-		MessageContracts: map[string]config.MessageProtocolConfig{
-			teleporterContractAddress: {
-				MessageFormat: config.TELEPORTER.String(),
-				Settings: map[string]interface{}{
-					"reward-address": rewardAddress,
-				},
-			},
-			offchainregistry.OffChainRegistrySourceAddress.Hex(): {
-				MessageFormat: config.OFF_CHAIN_REGISTRY.String(),
-				Settings: map[string]interface{}{
-					"teleporter-registry-address": teleporterRegistryAddress,
-				},
-			},
-		},
-	}
-	destination := &config.DestinationBlockchain{
-		SubnetID:     subnetID.String(),
-		BlockchainID: blockchainID.String(),
-		VM:           config.EVM.String(),
-		RPCEndpoint: config.APIConfig{
-			BaseURL: rpcEndpoint,
-		},
-		AccountPrivateKey: privateKey,
-	}
-	if GetSourceConfig(relayerConfig, network, subnetID, blockchainID) == nil {
-		relayerConfig.SourceBlockchains = append(relayerConfig.SourceBlockchains, source)
-	}
-	if GetDestinationConfig(relayerConfig, network, subnetID, blockchainID) == nil {
-		relayerConfig.DestinationBlockchains = append(relayerConfig.DestinationBlockchains, destination)
-	}
-	return nil
-}
-
 func GetSourceConfig(
 	relayerConfig *config.Config,
 	network avalanche.Network,
@@ -220,53 +145,226 @@ func FundRelayerAddress(
 	)
 }
 
-// add a blockchain both as source and as destination into the file at [relayerConfigPath]
-func AddChainToRelayerConfigFile(
-	logLevel string,
-	relayerConfigPath string,
-	relayerStorageDir string,
-	network avalanche.Network,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	teleporterContractAddress string,
-	teleporterRegistryAddress string,
-	privateKey string,
-	rewardAddress string,
-) error {
-	awmRelayerConfig := &config.Config{}
-	if utils.FileExists(relayerConfigPath) {
-		bs, err := os.ReadFile(relayerConfigPath)
-		if err != nil {
-			return err
-		}
-		if err := json.Unmarshal(bs, &awmRelayerConfig); err != nil {
-			return err
-		}
-	} else {
-		awmRelayerConfig = GetBaseRelayerConfig(
-			logLevel,
-			relayerStorageDir,
-			network,
-		)
+func LoadRelayerConfig(relayerConfigPath string) (*config.Config, error) {
+	relayerConfig := config.Config{}
+	bs, err := os.ReadFile(relayerConfigPath)
+	if err != nil {
+		return nil, err
 	}
-	if err := AddChainToRelayerConfig(
-		awmRelayerConfig,
-		network,
-		subnetID,
-		blockchainID,
-		teleporterContractAddress,
-		teleporterRegistryAddress,
-		privateKey,
-		rewardAddress,
-	); err != nil {
-		return err
+	if err := json.Unmarshal(bs, &relayerConfig); err != nil {
+		return nil, err
 	}
-	bs, err := json.MarshalIndent(awmRelayerConfig, "", "  ")
+	return &relayerConfig, nil
+}
+
+func SaveRelayerConfig(relayerConfig *config.Config, relayerConfigPath string) error {
+	bs, err := json.MarshalIndent(relayerConfig, "", "  ")
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(relayerConfigPath, bs, constants.WriteReadReadPerms); err != nil {
+	return os.WriteFile(relayerConfigPath, bs, constants.WriteReadReadPerms)
+}
+
+func CreateBaseRelayerConfigFile(
+	relayerConfigPath string,
+	logLevel string,
+	storageLocation string,
+	metricsPort uint16,
+	network avalanche.Network,
+) error {
+	relayerConfig := CreateBaseRelayerConfig(
+		logLevel,
+		storageLocation,
+		metricsPort,
+		network,
+	)
+	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
+}
+
+func AddSourceToRelayerConfigFile(
+	relayerConfigPath string,
+	network avalanche.Network,
+	subnetID ids.ID,
+	blockchainID ids.ID,
+	icmRegistryAddress string,
+	icmMessengerAddress string,
+	relayerRewardAddress string,
+) error {
+	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
+	if err != nil {
 		return err
 	}
-	return nil
+	AddSourceToRelayerConfig(
+		relayerConfig,
+		network,
+		subnetID,
+		blockchainID,
+		icmRegistryAddress,
+		icmMessengerAddress,
+		relayerRewardAddress,
+	)
+	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
+}
+
+func AddDestinationToRelayerConfigFile(
+	relayerConfigPath string,
+	network avalanche.Network,
+	subnetID ids.ID,
+	blockchainID ids.ID,
+	relayerPrivateKey string,
+) error {
+	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
+	if err != nil {
+		return err
+	}
+	AddDestinationToRelayerConfig(
+		relayerConfig,
+		network,
+		subnetID,
+		blockchainID,
+		relayerPrivateKey,
+	)
+	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
+}
+
+func AddBlockchainToRelayerConfigFile(
+	relayerConfigPath string,
+	network avalanche.Network,
+	subnetID ids.ID,
+	blockchainID ids.ID,
+	icmRegistryAddress string,
+	icmMessengerAddress string,
+	relayerRewardAddress string,
+	relayerPrivateKey string,
+) error {
+	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
+	if err != nil {
+		return err
+	}
+	AddBlockchainToRelayerConfig(
+		relayerConfig,
+		network,
+		subnetID,
+		blockchainID,
+		icmRegistryAddress,
+		icmMessengerAddress,
+		relayerRewardAddress,
+		relayerPrivateKey,
+	)
+	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
+}
+
+func CreateBaseRelayerConfig(
+	logLevel string,
+	storageLocation string,
+	metricsPort uint16,
+	network avalanche.Network,
+) *config.Config {
+	relayerConfig := &config.Config{
+		LogLevel: logLevel,
+		PChainAPI: &config.APIConfig{
+			BaseURL:     network.Endpoint,
+			QueryParams: map[string]string{},
+		},
+		InfoAPI: &config.APIConfig{
+			BaseURL:     network.Endpoint,
+			QueryParams: map[string]string{},
+		},
+		StorageLocation:        storageLocation,
+		ProcessMissedBlocks:    false,
+		SourceBlockchains:      []*config.SourceBlockchain{},
+		DestinationBlockchains: []*config.DestinationBlockchain{},
+	}
+	if metricsPort != 0 {
+		relayerConfig.MetricsPort = metricsPort
+	}
+	return relayerConfig
+}
+
+func AddSourceToRelayerConfig(
+	relayerConfig *config.Config,
+	network avalanche.Network,
+	subnetID ids.ID,
+	blockchainID ids.ID,
+	icmRegistryAddress string,
+	icmMessengerAddress string,
+	relayerRewardAddress string,
+) {
+	source := &config.SourceBlockchain{
+		SubnetID:     subnetID.String(),
+		BlockchainID: blockchainID.String(),
+		VM:           config.EVM.String(),
+		RPCEndpoint: config.APIConfig{
+			BaseURL: network.BlockchainEndpoint(blockchainID.String()),
+		},
+		WSEndpoint: config.APIConfig{
+			BaseURL: network.BlockchainWSEndpoint(blockchainID.String()),
+		},
+		MessageContracts: map[string]config.MessageProtocolConfig{
+			icmMessengerAddress: {
+				MessageFormat: config.TELEPORTER.String(),
+				Settings: map[string]interface{}{
+					"reward-address": relayerRewardAddress,
+				},
+			},
+			offchainregistry.OffChainRegistrySourceAddress.Hex(): {
+				MessageFormat: config.OFF_CHAIN_REGISTRY.String(),
+				Settings: map[string]interface{}{
+					"teleporter-registry-address": icmRegistryAddress,
+				},
+			},
+		},
+	}
+	if GetSourceConfig(relayerConfig, network, subnetID, blockchainID) == nil {
+		relayerConfig.SourceBlockchains = append(relayerConfig.SourceBlockchains, source)
+	}
+}
+
+func AddDestinationToRelayerConfig(
+	relayerConfig *config.Config,
+	network avalanche.Network,
+	subnetID ids.ID,
+	blockchainID ids.ID,
+	relayerFundedAddressKey string,
+) {
+	destination := &config.DestinationBlockchain{
+		SubnetID:     subnetID.String(),
+		BlockchainID: blockchainID.String(),
+		VM:           config.EVM.String(),
+		RPCEndpoint: config.APIConfig{
+			BaseURL: network.BlockchainEndpoint(blockchainID.String()),
+		},
+		AccountPrivateKey: relayerFundedAddressKey,
+	}
+	if GetDestinationConfig(relayerConfig, network, subnetID, blockchainID) == nil {
+		relayerConfig.DestinationBlockchains = append(relayerConfig.DestinationBlockchains, destination)
+	}
+}
+
+func AddBlockchainToRelayerConfig(
+	relayerConfig *config.Config,
+	network avalanche.Network,
+	subnetID ids.ID,
+	blockchainID ids.ID,
+	icmRegistryAddress string,
+	icmMessengerAddress string,
+	relayerRewardAddress string,
+	relayerPrivateKey string,
+) {
+	AddSourceToRelayerConfig(
+		relayerConfig,
+		network,
+		subnetID,
+		blockchainID,
+		icmRegistryAddress,
+		icmMessengerAddress,
+		relayerRewardAddress,
+	)
+	AddDestinationToRelayerConfig(
+		relayerConfig,
+		network,
+		subnetID,
+		blockchainID,
+		relayerPrivateKey,
+	)
 }
