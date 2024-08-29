@@ -1,6 +1,6 @@
 // Copyright (C) 2022, Ava Labs, Inc. All rights reserved
 // See the file LICENSE for licensing terms.
-package relayer
+package localrelayer
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/install"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain/relayer"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/process"
 )
 
@@ -82,7 +83,7 @@ func WaitForInitialization(
 	checkInterval time.Duration,
 	checkTimeout time.Duration,
 ) error {
-	config, err := LoadRelayerConfig(configPath)
+	config, err := relayer.LoadRelayerConfig(configPath)
 	if err != nil {
 		return err
 	}

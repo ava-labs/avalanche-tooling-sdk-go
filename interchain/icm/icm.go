@@ -138,32 +138,22 @@ func (t *Deployer) DownloadAssets(version string) error {
 }
 
 // Deploys messenger and registry
-// If messenger is already deployed, will avoid deploying registry
-// (to force, set deployMessenger to false)
+// If messenger is already deployed, will avoid deploying registry,
+// unless [forceRegistryDeploy] is set
 func (t *Deployer) Deploy(
 	rpcURL string,
 	privateKey string,
-	deployMessenger bool,
-	deployRegistry bool,
+	forceRegistryDeploy bool,
 ) (bool, string, string, error) {
-	var (
-		messengerAddress         string
-		registryAddress          string
-		messengerAlreadyDeployed bool
-		err                      error
+	var registryAddress string
+	messengerAlreadyDeployed, messengerAddress, err := t.DeployMessenger(
+		rpcURL,
+		privateKey,
 	)
-	if deployMessenger {
-		messengerAlreadyDeployed, messengerAddress, err = t.DeployMessenger(
-			rpcURL,
-			privateKey,
-		)
+	if !messengerAlreadyDeployed || forceRegistryDeploy {
+		registryAddress, err = t.DeployRegistry(rpcURL, privateKey)
 	}
-	if err == nil && deployRegistry {
-		if !deployMessenger || !messengerAlreadyDeployed {
-			registryAddress, err = t.DeployRegistry(rpcURL, privateKey)
-		}
-	}
-	return messengerAlreadyDeployed, messengerAddress, registryAddress, err
+	return messengerAlreadyDeployed, registryAddress, messengerAddress, err
 }
 
 func (t *Deployer) DeployMessenger(
