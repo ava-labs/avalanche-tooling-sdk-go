@@ -268,6 +268,7 @@ func CreateBaseRelayerConfig(
 		SourceBlockchains:      []*config.SourceBlockchain{},
 		DestinationBlockchains: []*config.DestinationBlockchain{},
 		MetricsPort:            metricsPort,
+		DBWriteIntervalSeconds: 1,
 	}
 	return relayerConfig
 }
