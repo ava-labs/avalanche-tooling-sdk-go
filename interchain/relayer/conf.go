@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strings"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
@@ -22,15 +23,12 @@ var defaultRequiredBalance = big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(500)
 
 func GetSourceConfig(
 	relayerConfig *config.Config,
-	network avalanche.Network,
-	subnetID ids.ID,
 	blockchainID ids.ID,
 ) *config.SourceBlockchain {
-	rpcEndpoint := network.BlockchainEndpoint(blockchainID.String())
 	p := utils.Find(
 		relayerConfig.SourceBlockchains,
 		func(s *config.SourceBlockchain) bool {
-			return s.BlockchainID == blockchainID.String() && s.SubnetID == subnetID.String() && s.RPCEndpoint.BaseURL == rpcEndpoint
+			return s.BlockchainID == blockchainID.String()
 		},
 	)
 	if p != nil {
@@ -41,15 +39,12 @@ func GetSourceConfig(
 
 func GetDestinationConfig(
 	relayerConfig *config.Config,
-	network avalanche.Network,
-	subnetID ids.ID,
 	blockchainID ids.ID,
 ) *config.DestinationBlockchain {
-	rpcEndpoint := network.BlockchainEndpoint(blockchainID.String())
 	p := utils.Find(
 		relayerConfig.DestinationBlockchains,
 		func(s *config.DestinationBlockchain) bool {
-			return s.BlockchainID == blockchainID.String() && s.SubnetID == subnetID.String() && s.RPCEndpoint.BaseURL == rpcEndpoint
+			return s.BlockchainID == blockchainID.String()
 		},
 	)
 	if p != nil {
@@ -58,26 +53,23 @@ func GetDestinationConfig(
 	return nil
 }
 
-// fund the relayer private key associated to [network]/[subnetID]/[blockchainID]
+// fund the relayer private key associated to [blockchainID]
 // at [relayerConfig]. if [amount] > 0 transfers it to the account. if,
 // afterwards, balance < [requiredMinBalance], transfers remaining amount for that
 // if [requiredMinBalance] is nil, uses [defaultRequiredBalance]
 func FundRelayer(
 	relayerConfig *config.Config,
-	network avalanche.Network,
-	subnetID ids.ID,
 	blockchainID ids.ID,
 	privateKey string,
 	amount *big.Int,
 	requiredMinBalance *big.Int,
 ) error {
-	destinationConfig := GetDestinationConfig(relayerConfig, network, subnetID, blockchainID)
+	destinationConfig := GetDestinationConfig(relayerConfig, blockchainID)
 	if destinationConfig == nil {
-		return fmt.Errorf("relayer destination not found for network %s, subnet %s, blockchain %s", network.Kind.String(), subnetID.String(), blockchainID.String())
+		return fmt.Errorf("relayer destination not found for blockchain %s", blockchainID.String())
 	}
 	return FundRelayerPrivateKey(
-		network,
-		blockchainID,
+		destinationConfig.RPCEndpoint.BaseURL,
 		privateKey,
 		destinationConfig.AccountPrivateKey,
 		amount,
@@ -85,11 +77,10 @@ func FundRelayer(
 	)
 }
 
-// fund [relayerPrivateKey] at [network]/[blockchainID]
+// fund [relayerPrivateKey] at [rpcEndpoint]
 // see FundRelayer for [amount]/[requiredMinBalance] logic
 func FundRelayerPrivateKey(
-	network avalanche.Network,
-	blockchainID ids.ID,
+	rpcEndpoint string,
 	privateKey string,
 	relayerPrivateKey string,
 	amount *big.Int,
@@ -101,8 +92,7 @@ func FundRelayerPrivateKey(
 	}
 	relayerAddress := crypto.PubkeyToAddress(relayerPK.PublicKey)
 	return FundRelayerAddress(
-		network,
-		blockchainID,
+		rpcEndpoint,
 		privateKey,
 		relayerAddress.Hex(),
 		amount,
@@ -110,11 +100,10 @@ func FundRelayerPrivateKey(
 	)
 }
 
-// fund [relayerAddress] at [network]/[blockchainID]
+// fund [relayerAddress] at [rpcEndpoint]
 // see FundRelayer for [amount]/[requiredMinBalance] logic
 func FundRelayerAddress(
-	network avalanche.Network,
-	blockchainID ids.ID,
+	rpcEndpoint string,
 	privateKey string,
 	relayerAddress string,
 	amount *big.Int,
@@ -123,7 +112,7 @@ func FundRelayerAddress(
 	if requiredMinBalance == nil {
 		requiredMinBalance = defaultRequiredBalance
 	}
-	client, err := evm.GetClient(network.BlockchainEndpoint(blockchainID.String()))
+	client, err := evm.GetClient(rpcEndpoint)
 	if err != nil {
 		return err
 	}
@@ -183,7 +172,8 @@ func CreateBaseRelayerConfigFile(
 
 func AddSourceToRelayerConfigFile(
 	relayerConfigPath string,
-	network avalanche.Network,
+	rpcEndpoint string,
+	wsEndpoint string,
 	subnetID ids.ID,
 	blockchainID ids.ID,
 	icmRegistryAddress string,
@@ -196,7 +186,8 @@ func AddSourceToRelayerConfigFile(
 	}
 	AddSourceToRelayerConfig(
 		relayerConfig,
-		network,
+		rpcEndpoint,
+		wsEndpoint,
 		subnetID,
 		blockchainID,
 		icmRegistryAddress,
@@ -208,7 +199,7 @@ func AddSourceToRelayerConfigFile(
 
 func AddDestinationToRelayerConfigFile(
 	relayerConfigPath string,
-	network avalanche.Network,
+	rpcEndpoint string,
 	subnetID ids.ID,
 	blockchainID ids.ID,
 	relayerPrivateKey string,
@@ -219,7 +210,7 @@ func AddDestinationToRelayerConfigFile(
 	}
 	AddDestinationToRelayerConfig(
 		relayerConfig,
-		network,
+		rpcEndpoint,
 		subnetID,
 		blockchainID,
 		relayerPrivateKey,
@@ -229,7 +220,8 @@ func AddDestinationToRelayerConfigFile(
 
 func AddBlockchainToRelayerConfigFile(
 	relayerConfigPath string,
-	network avalanche.Network,
+	rpcEndpoint string,
+	wsEndpoint string,
 	subnetID ids.ID,
 	blockchainID ids.ID,
 	icmRegistryAddress string,
@@ -243,7 +235,8 @@ func AddBlockchainToRelayerConfigFile(
 	}
 	AddBlockchainToRelayerConfig(
 		relayerConfig,
-		network,
+		rpcEndpoint,
+		wsEndpoint,
 		subnetID,
 		blockchainID,
 		icmRegistryAddress,
@@ -281,22 +274,29 @@ func CreateBaseRelayerConfig(
 
 func AddSourceToRelayerConfig(
 	relayerConfig *config.Config,
-	network avalanche.Network,
+	rpcEndpoint string,
+	wsEndpoint string,
 	subnetID ids.ID,
 	blockchainID ids.ID,
 	icmRegistryAddress string,
 	icmMessengerAddress string,
 	relayerRewardAddress string,
 ) {
+	if wsEndpoint == "" {
+		wsEndpoint = strings.TrimPrefix(rpcEndpoint, "https")
+		wsEndpoint = strings.TrimPrefix(wsEndpoint, "http")
+		wsEndpoint = strings.TrimSuffix(wsEndpoint, "rpc")
+		wsEndpoint = fmt.Sprintf("%s%s%s", "ws", wsEndpoint, "ws")
+	}
 	source := &config.SourceBlockchain{
 		SubnetID:     subnetID.String(),
 		BlockchainID: blockchainID.String(),
 		VM:           config.EVM.String(),
 		RPCEndpoint: config.APIConfig{
-			BaseURL: network.BlockchainEndpoint(blockchainID.String()),
+			BaseURL: rpcEndpoint,
 		},
 		WSEndpoint: config.APIConfig{
-			BaseURL: network.BlockchainWSEndpoint(blockchainID.String()),
+			BaseURL: wsEndpoint,
 		},
 		MessageContracts: map[string]config.MessageProtocolConfig{
 			icmMessengerAddress: {
@@ -313,14 +313,14 @@ func AddSourceToRelayerConfig(
 			},
 		},
 	}
-	if GetSourceConfig(relayerConfig, network, subnetID, blockchainID) == nil {
+	if GetSourceConfig(relayerConfig, blockchainID) == nil {
 		relayerConfig.SourceBlockchains = append(relayerConfig.SourceBlockchains, source)
 	}
 }
 
 func AddDestinationToRelayerConfig(
 	relayerConfig *config.Config,
-	network avalanche.Network,
+	rpcEndpoint string,
 	subnetID ids.ID,
 	blockchainID ids.ID,
 	relayerFundedAddressKey string,
@@ -330,18 +330,19 @@ func AddDestinationToRelayerConfig(
 		BlockchainID: blockchainID.String(),
 		VM:           config.EVM.String(),
 		RPCEndpoint: config.APIConfig{
-			BaseURL: network.BlockchainEndpoint(blockchainID.String()),
+			BaseURL: rpcEndpoint,
 		},
 		AccountPrivateKey: relayerFundedAddressKey,
 	}
-	if GetDestinationConfig(relayerConfig, network, subnetID, blockchainID) == nil {
+	if GetDestinationConfig(relayerConfig, blockchainID) == nil {
 		relayerConfig.DestinationBlockchains = append(relayerConfig.DestinationBlockchains, destination)
 	}
 }
 
 func AddBlockchainToRelayerConfig(
 	relayerConfig *config.Config,
-	network avalanche.Network,
+	rpcEndpoint string,
+	wsEndpoint string,
 	subnetID ids.ID,
 	blockchainID ids.ID,
 	icmRegistryAddress string,
@@ -351,7 +352,8 @@ func AddBlockchainToRelayerConfig(
 ) {
 	AddSourceToRelayerConfig(
 		relayerConfig,
-		network,
+		rpcEndpoint,
+		wsEndpoint,
 		subnetID,
 		blockchainID,
 		icmRegistryAddress,
@@ -360,7 +362,7 @@ func AddBlockchainToRelayerConfig(
 	)
 	AddDestinationToRelayerConfig(
 		relayerConfig,
-		network,
+		rpcEndpoint,
 		subnetID,
 		blockchainID,
 		relayerPrivateKey,
