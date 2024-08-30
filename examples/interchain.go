@@ -5,6 +5,7 @@ package examples
 
 import (
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -32,48 +33,48 @@ import (
 // relayer conf
 //
 // All relayer data is saved into an existing RELAYER_DIR
-//func Interchain() error {
-//	chain1RPC := os.Getenv("CHAIN1_RPC")
-//	chain1PK := os.Getenv("CHAIN1_PK")
-//	chain1SubnetID, err := ids.FromString(os.Getenv("CHAIN1_SUBNET_ID"))
-//	if err != nil {
-//		return err
-//	}
-//	chain1BlockchainID, err := ids.FromString(os.Getenv("CHAIN1_BLOCKCHAIN_ID"))
-//	if err != nil {
-//		return err
-//	}
-//	chain2RPC := os.Getenv("CHAIN2_RPC")
-//	chain2PK := os.Getenv("CHAIN2_PK")
-//	chain2SubnetID, err := ids.FromString(os.Getenv("CHAIN2_SUBNET_ID"))
-//	if err != nil {
-//		return err
-//	}
-//	chain2BlockchainID, err := ids.FromString(os.Getenv("CHAIN2_BLOCKCHAIN_ID"))
-//	if err != nil {
-//		return err
-//	}
-//	relayerDir := os.Getenv("RELAYER_DIR")
-//	if relayerDir == "" {
-//		return fmt.Errorf("must define RELAYER_DIR env var")
-//	}
-//	relayerDir = utils.ExpandHome(relayerDir)
-//	if !utils.DirectoryExists(relayerDir) {
-//		return fmt.Errorf("relayer directory %q must exist", relayerDir)
-//	}
-//	return InterchainExample(
-//		avalanche.FujiNetwork(),
-//		chain1RPC,
-//		chain1PK,
-//		chain1SubnetID,
-//		chain1BlockchainID,
-//		chain2RPC,
-//		chain2PK,
-//		chain2SubnetID,
-//		chain2BlockchainID,
-//		relayerDir,
-//	)
-//}
+func Interchain() error {
+	chain1RPC := os.Getenv("CHAIN1_RPC")
+	chain1PK := os.Getenv("CHAIN1_PK")
+	chain1SubnetID, err := ids.FromString(os.Getenv("CHAIN1_SUBNET_ID"))
+	if err != nil {
+		return err
+	}
+	chain1BlockchainID, err := ids.FromString(os.Getenv("CHAIN1_BLOCKCHAIN_ID"))
+	if err != nil {
+		return err
+	}
+	chain2RPC := os.Getenv("CHAIN2_RPC")
+	chain2PK := os.Getenv("CHAIN2_PK")
+	chain2SubnetID, err := ids.FromString(os.Getenv("CHAIN2_SUBNET_ID"))
+	if err != nil {
+		return err
+	}
+	chain2BlockchainID, err := ids.FromString(os.Getenv("CHAIN2_BLOCKCHAIN_ID"))
+	if err != nil {
+		return err
+	}
+	relayerDir := os.Getenv("RELAYER_DIR")
+	if relayerDir == "" {
+		return fmt.Errorf("must define RELAYER_DIR env var")
+	}
+	relayerDir = utils.ExpandHome(relayerDir)
+	if !utils.DirectoryExists(relayerDir) {
+		return fmt.Errorf("relayer directory %q must exist", relayerDir)
+	}
+	return InterchainExample(
+		avalanche.FujiNetwork(),
+		chain1RPC,
+		chain1PK,
+		chain1SubnetID,
+		chain1BlockchainID,
+		chain2RPC,
+		chain2PK,
+		chain2SubnetID,
+		chain2BlockchainID,
+		relayerDir,
+	)
+}
 
 // Deploys ICM in two chains
 // Deploys a relayes to interconnect them
