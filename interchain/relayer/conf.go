@@ -51,8 +51,8 @@ func GetDestinationConfig(
 	return nil
 }
 
-// fund the relayer private key associated to [blockchainID]
-// at [relayerConfig]. if [amount] > 0 transfers it to the account. if,
+// FundRelayer funds the relayer private key associated to [blockchainID] specified in
+// [relayerConfig]. If [amount] > 0 transfers it to the account. if,
 // afterwards, balance < [requiredMinBalance], transfers remaining amount for that
 // if [requiredMinBalance] is nil, uses [defaultRequiredBalance]
 func FundRelayer(
@@ -75,7 +75,7 @@ func FundRelayer(
 	)
 }
 
-// fund [relayerPrivateKey] at [rpcEndpoint]
+// FundRelayerPrivateKey funds [relayerPrivateKey] at [rpcEndpoint]
 // see FundRelayer for [amount]/[requiredMinBalance] logic
 func FundRelayerPrivateKey(
 	rpcEndpoint string,
@@ -98,7 +98,7 @@ func FundRelayerPrivateKey(
 	)
 }
 
-// fund [relayerAddress] at [rpcEndpoint]
+// FundRelayerAddress funds [relayerAddress] at [rpcEndpoint]
 // see FundRelayer for [amount]/[requiredMinBalance] logic
 func FundRelayerAddress(
 	rpcEndpoint string,
