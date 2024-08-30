@@ -179,9 +179,12 @@ func InterchainExample(
 		return err
 	}
 
+	// defer stopping relayer and cleaning up
+	defer localrelayer.Cleanup(pid, "", relayerStorageDir)
+
 	// send a message from chain1 to chain2
 	fmt.Println("Verifying message delivery")
-	if err := TestMessageDelivery(
+	return TestMessageDelivery(
 		chain1RPC,
 		chain1PK,
 		chain1MessengerAddress,
@@ -189,13 +192,7 @@ func InterchainExample(
 		chain2RPC,
 		chain2MessengerAddress,
 		[]byte("hello world"),
-	); err != nil {
-		return err
-	}
-
-	// stops the relayer and cleans up
-	fmt.Println("Cleaning up")
-	return localrelayer.Cleanup(pid, "", relayerStorageDir)
+	)
 }
 
 func SetupICM(
