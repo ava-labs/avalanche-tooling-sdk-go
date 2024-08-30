@@ -82,6 +82,8 @@ const (
 	BLSKeyFileName     = "signer.key"
 
 	// github
-	AvaLabsOrg         = "ava-labs"
-	TeleporterRepoName = "teleporter"
+	AvaLabsOrg      = "ava-labs"
+	ICMRepoName     = "teleporter"
+	RelayerRepoName = "awm-relayer"
+	RelayerBinName  = "awm-relayer"
 )

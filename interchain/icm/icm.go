@@ -1,6 +1,6 @@
 // Copyright (C) 2022, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package teleporter
+package icm
 
 import (
 	"fmt"
@@ -14,11 +14,10 @@ import (
 )
 
 const (
-	releaseURL                     = "https://github.com/ava-labs/teleporter/releases/download/%s/"
-	messengerContractAddressURLFmt = releaseURL + "/TeleporterMessenger_Contract_Address_%s.txt"
-	messengerDeployerAddressURLFmt = releaseURL + "/TeleporterMessenger_Deployer_Address_%s.txt"
-	messengerDeployerTxURLFmt      = releaseURL + "/TeleporterMessenger_Deployment_Transaction_%s.txt"
-	registryBytecodeURLFmt         = releaseURL + "/TeleporterRegistry_Bytecode_%s.txt"
+	messengerContractAddressURLFmt = "TeleporterMessenger_Contract_Address_%s.txt"
+	messengerDeployerAddressURLFmt = "TeleporterMessenger_Deployer_Address_%s.txt"
+	messengerDeployerTxURLFmt      = "TeleporterMessenger_Deployment_Transaction_%s.txt"
+	registryBytecodeURLFmt         = "TeleporterRegistry_Bytecode_%s.txt"
 )
 
 var (
@@ -29,14 +28,34 @@ var (
 )
 
 func GetLatestVersion() (string, error) {
-	return utils.GetLatestGithubReleaseVersion(constants.AvaLabsOrg, constants.TeleporterRepoName, "")
+	return utils.GetLatestGithubReleaseVersion(constants.AvaLabsOrg, constants.ICMRepoName, "")
 }
 
 func getURLs(version string) (string, string, string, string) {
-	messengerContractAddressURL := fmt.Sprintf(messengerContractAddressURLFmt, version, version)
-	messengerDeployerAddressURL := fmt.Sprintf(messengerDeployerAddressURLFmt, version, version)
-	messengerDeployerTxURL := fmt.Sprintf(messengerDeployerTxURLFmt, version, version)
-	registryBytecodeURL := fmt.Sprintf(registryBytecodeURLFmt, version, version)
+	messengerContractAddressURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(messengerContractAddressURLFmt, version),
+	)
+	messengerDeployerAddressURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(messengerDeployerAddressURLFmt, version),
+	)
+	messengerDeployerTxURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(messengerDeployerTxURLFmt, version),
+	)
+	registryBytecodeURL := utils.GetGithubReleaseAssetURL(
+		constants.AvaLabsOrg,
+		constants.ICMRepoName,
+		version,
+		fmt.Sprintf(registryBytecodeURLFmt, version),
+	)
 	return messengerContractAddressURL, messengerDeployerAddressURL, messengerDeployerTxURL, registryBytecodeURL
 }
 
@@ -49,7 +68,7 @@ type Deployer struct {
 
 func (t *Deployer) CheckAssets() error {
 	if len(t.messengerContractAddress) == 0 || len(t.messengerDeployerAddress) == 0 || len(t.messengerDeployerTx) == 0 || len(t.registryBytecode) == 0 {
-		return fmt.Errorf("teleporter assets has not been initialized")
+		return fmt.Errorf("interchain messaging assets has not been initialized")
 	}
 	return nil
 }
@@ -163,23 +182,13 @@ func (t *Deployer) DeployMessenger(
 	} else if messengerAlreadyDeployed {
 		return true, string(t.messengerContractAddress), nil
 	}
-	messengerDeployerBalance, err := evm.GetAddressBalance(
+	if err := evm.SetMinBalance(
 		client,
+		privateKey,
 		string(t.messengerDeployerAddress),
-	)
-	if err != nil {
+		messengerDeployerRequiredBalance,
+	); err != nil {
 		return false, "", err
-	}
-	if messengerDeployerBalance.Cmp(messengerDeployerRequiredBalance) < 0 {
-		toFund := big.NewInt(0).Sub(messengerDeployerRequiredBalance, messengerDeployerBalance)
-		if err := evm.FundAddress(
-			client,
-			privateKey,
-			string(t.messengerDeployerAddress),
-			toFund,
-		); err != nil {
-			return false, "", err
-		}
 	}
 	if err := evm.IssueTx(client, string(t.messengerDeployerTx)); err != nil {
 		return false, "", err
