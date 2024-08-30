@@ -343,7 +343,7 @@ func TestMessageDelivery(
 		return err
 	}
 	messageID := event.MessageID
-	// also veryfies some input params
+	// also verifies some input params
 	if chain2BlockchainID != ids.ID(event.DestinationBlockchainID[:]) {
 		return fmt.Errorf("invalid destination blockchain id at source event, expected %s, got %s", chain2BlockchainID, ids.ID(event.DestinationBlockchainID[:]))
 	}
