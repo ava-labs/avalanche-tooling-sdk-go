@@ -4,6 +4,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"time"
@@ -82,63 +83,77 @@ func AppendSlices[T any](slices ...[]T) []T {
 	return result
 }
 
-// RetryFunction retries the given function until it succeeds or the maximum number of attempts is reached.
-func RetryFunction(fn func() (interface{}, error), maxAttempts int, retryInterval time.Duration) (
-	interface{},
-	error,
-) {
-	var err error
-	var result interface{}
-	const defaultRetryInterval = 2 * time.Second
-	if retryInterval == 0 {
-		retryInterval = defaultRetryInterval
+// Retry retries the given function until it succeeds or the maximum number of attempts is reached.
+func Retry[T any](
+	fn func(context.Context) (T, error),
+	attempTimeout time.Duration,
+	maxAttempts int,
+	errMsg string,
+) (T, error) {
+	const defaultAttempTimeout = 2 * time.Second
+	if attempTimeout == 0 {
+		attempTimeout = defaultAttempTimeout
 	}
+	var (
+		result T
+		err    error
+	)
 	for attempt := 0; attempt < maxAttempts; attempt++ {
-		result, err = fn()
+		start := time.Now()
+		ctx, cancel := context.WithTimeout(context.Background(), attempTimeout)
+		defer cancel()
+		result, err = fn(ctx)
 		if err == nil {
 			return result, nil
 		}
-		time.Sleep(retryInterval)
+		elapsed := time.Since(start)
+		if elapsed < attempTimeout {
+			time.Sleep(attempTimeout - elapsed)
+		}
 	}
-	return nil, fmt.Errorf("maximum retry attempts reached: %w", err)
+	return result, fmt.Errorf(
+		"%s: maximum retry attempts %d reached: last err = %w",
+		errMsg,
+		maxAttempts,
+		err,
+	)
 }
 
-// TimedFunction is a function that executes the given function `f` within a specified timeout duration.
-func TimedFunction(
-	f func() (interface{}, error),
+// WrapContext adds a context based timeout to a given function
+func WrapContext[T any](
+	f func() (T, error),
+) func(context.Context) (T, error) {
+	return func(ctx context.Context) (T, error) {
+		var (
+			ret T
+			err error
+		)
+		ch := make(chan struct{})
+		go func() {
+			ret, err = f()
+			close(ch)
+		}()
+		select {
+		case <-ctx.Done():
+			return ret, ctx.Err()
+		case <-ch:
+		}
+		return ret, err
+	}
+}
+
+func CallWithTimeout[T any](
 	name string,
+	f func() (T, error),
 	timeout time.Duration,
-) (interface{}, error) {
-	var (
-		ret interface{}
-		err error
-	)
-	ch := make(chan struct{})
+) (T, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	go func() {
-		ret, err = f()
-		close(ch)
-	}()
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("%s timeout of %d seconds", name, uint(timeout.Seconds()))
-	case <-ch:
+	ret, err := WrapContext(f)(ctx)
+	if errors.Is(err, context.DeadlineExceeded) {
+		err = fmt.Errorf("%s timeout of %d seconds", name, uint(timeout.Seconds()))
 	}
 	return ret, err
-}
-
-// TimedFunctionWithRetry is a function that executes the given function `f` within a specified timeout duration.
-func TimedFunctionWithRetry(
-	f func() (interface{}, error),
-	name string,
-	timeout time.Duration,
-	maxAttempts int,
-	retryInterval time.Duration,
-) (interface{}, error) {
-	return RetryFunction(func() (interface{}, error) {
-		return TimedFunction(f, name, timeout)
-	}, maxAttempts, retryInterval)
 }
 
 // RandomString generates a random string of the specified length.

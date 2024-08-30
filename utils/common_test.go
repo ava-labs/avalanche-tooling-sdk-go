@@ -53,11 +53,11 @@ func mockFunction() (interface{}, error) {
 	return nil, errors.New("error occurred")
 }
 
-// TestRetryFunction tests the RetryFunction.
-func TestRetryFunction(t *testing.T) {
+// TestRetry tests Retry.
+func TestRetry(t *testing.T) {
 	success := "success"
 	// Test with a function that always returns an error.
-	result, err := RetryFunction(mockFunction, 3, 100*time.Millisecond)
+	result, err := Retry(WrapContext(mockFunction), 100*time.Millisecond, 3, "")
 	if err == nil {
 		t.Errorf("Expected an error, got nil")
 	}
@@ -69,7 +69,7 @@ func TestRetryFunction(t *testing.T) {
 	fn := func() (interface{}, error) {
 		return success, nil
 	}
-	result, err = RetryFunction(fn, 3, 100*time.Millisecond)
+	result, err = Retry(WrapContext(fn), 100*time.Millisecond, 3, "")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -86,7 +86,7 @@ func TestRetryFunction(t *testing.T) {
 		}
 		return success, nil
 	}
-	result, err = RetryFunction(fn, 5, 100*time.Millisecond)
+	result, err = Retry(WrapContext(fn), 100*time.Millisecond, 5, "")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -95,7 +95,7 @@ func TestRetryFunction(t *testing.T) {
 	}
 
 	// Test with invalid retry interval.
-	result, err = RetryFunction(mockFunction, 3, 0)
+	result, err = Retry(WrapContext(mockFunction), 0, 3, "")
 	if err == nil {
 		t.Errorf("Expected an error, got nil")
 	}
