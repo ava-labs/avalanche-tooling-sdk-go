@@ -4,7 +4,11 @@
 package avalanche
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+
 	"github.com/ava-labs/avalanchego/genesis"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/constants"
@@ -103,4 +107,15 @@ func (n Network) GetMinStakingAmount() (uint64, error) {
 		return 0, err
 	}
 	return minValStake, nil
+}
+
+func (n Network) BlockchainEndpoint(blockchainID string) string {
+	return fmt.Sprintf("%s/ext/bc/%s/rpc", n.Endpoint, blockchainID)
+}
+
+func (n Network) BlockchainWSEndpoint(blockchainID string) string {
+	trimmedURI := n.Endpoint
+	trimmedURI = strings.TrimPrefix(trimmedURI, "http://")
+	trimmedURI = strings.TrimPrefix(trimmedURI, "https://")
+	return fmt.Sprintf("ws://%s/ext/bc/%s/ws", trimmedURI, blockchainID)
 }

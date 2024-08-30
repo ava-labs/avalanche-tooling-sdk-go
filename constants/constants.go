@@ -76,4 +76,10 @@ const (
 	StakerCertFileName = "staker.crt"
 	StakerKeyFileName  = "staker.key"
 	BLSKeyFileName     = "signer.key"
+
+	// github
+	AvaLabsOrg      = "ava-labs"
+	ICMRepoName     = "teleporter"
+	RelayerRepoName = "awm-relayer"
+	RelayerBinName  = "awm-relayer"
 )

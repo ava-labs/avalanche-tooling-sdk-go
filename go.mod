@@ -1,11 +1,12 @@
 module github.com/ava-labs/avalanche-tooling-sdk-go
 
-go 1.21.10
+go 1.21.11
 
-toolchain go1.22.1
+toolchain go1.22.6
 
 require (
 	github.com/ava-labs/avalanchego v1.11.5
+	github.com/ava-labs/awm-relayer v1.3.3
 	github.com/ava-labs/coreth v0.13.3-rc.2
 	github.com/ava-labs/subnet-evm v0.6.4
 	github.com/aws/aws-sdk-go-v2 v1.30.0
@@ -16,13 +17,24 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.24.0
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
+	golang.org/x/mod v0.20.0
+	golang.org/x/net v0.26.0
 	golang.org/x/sync v0.7.0
 	google.golang.org/api v0.182.0
 )
 
 require (
-	github.com/onsi/gomega v1.33.1 // indirect
-	golang.org/x/net v0.26.0 // indirect
+	github.com/ava-labs/teleporter v1.0.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/kms v1.32.1 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
+	github.com/spf13/afero v1.9.5 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/viper v1.16.0 // indirect
+	github.com/subosito/gotenv v1.4.2 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
 )
 
 require (
