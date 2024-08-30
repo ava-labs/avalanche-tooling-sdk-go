@@ -184,7 +184,7 @@ func InterchainExample(
 
 	// send a message from chain1 to chain2
 	fmt.Println("Verifying message delivery")
-	return TestMessageDelivery(
+	if err := TestMessageDelivery(
 		chain1RPC,
 		chain1PK,
 		chain1MessengerAddress,
@@ -192,7 +192,13 @@ func InterchainExample(
 		chain2RPC,
 		chain2MessengerAddress,
 		[]byte("hello world"),
-	)
+	); err != nil {
+		return err
+	}
+
+	fmt.Println("Message succesfully delivered")
+
+	return nil
 }
 
 func SetupICM(
