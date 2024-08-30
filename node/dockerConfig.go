@@ -4,11 +4,19 @@
 package node
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
+	"slices"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain/relayer"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/awm-relayer/config"
 )
 
 // PrepareAvalanchegoConfig creates the config files for the AvalancheGo
@@ -101,4 +109,68 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 	return grafanaConfigFile.Name(), grafanaDashboardsFile.Name(), grafanaDataSourceFile.Name(), grafanaPromDataSourceFile.Name(), nil
+}
+
+func (h *Node) GetAMWRelayerConfig() (*config.Config, error) {
+	remoteAWMConf := remoteconfig.GetRemoteAMWRelayerConfig()
+	if slices.Contains(h.Roles, AWMRelayer) {
+		if configExists, err := h.FileExists(); err != nil || !configExists {
+			return nil, fmt.Errorf("%s: config file %s does not exist or not available", h.NodeID, remoteAWMConf)
+		}
+		if c, err := h.ReadFileBytes(remoteAWMConf, constants.SSHFileOpsTimeout); err != nil {
+			return nil, fmt.Errorf("%s: failed to read config file %s: %w", h.NodeID, remoteAWMConf, err)
+		} else {
+			awmConfig := &config.Config{}
+			if json.Unmarshal(c, &awmConfig) != nil {
+				return nil, fmt.Errorf("%s: failed to parse config file %s", remoteAWMConf)
+			} else {
+				return awmConfig, nil
+			}
+		}
+	} else {
+		return nil, errors.New("node is not a AWM Relayer")
+	}
+}
+
+// AddBlockchainToRelayerConfig adds a blockchain to the AWM relayer config
+func (h *Node) AddBlockchainToRelayerConfig(
+	rpcEndpoint string,
+	wsEndoint string,
+	subnetID ids.ID,
+	blockchainID ids.ID,
+	registryAddress string,
+	messengerAddress string,
+	relayerKey *key.SoftKey,
+) error {
+	if !slices.Contains(h.Roles, AWMRelayer) {
+		return errors.New("node is not a AWM Relayer")
+	}
+	awmConfig, err := h.GetAMWRelayerConfig()
+	if err != nil {
+		return err
+	}
+	relayer.AddBlockchainToRelayerConfig(
+		awmConfig,
+		rpcEndpoint,
+		wsEndoint,
+		subnetID,
+		blockchainID,
+		registryAddress,
+		messengerAddress,
+		relayerKey.C(),
+		relayerKey.PrivKeyHex(),
+	)
+	tmpRelayerConfig, err := os.CreateTemp("", "avalancecli-awm-relayer-config-*.yml")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpRelayerConfig.Name())
+	if relayer.SaveRelayerConfig(awmConfig, tmpRelayerConfig.Name()) != nil {
+		return err
+	}
+
+	if err := h.Upload(tmpRelayerConfig.Name(), remoteconfig.GetRemoteAMWRelayerConfig(), constants.SSHFileOpsTimeout); err != nil {
+		return err
+	}
+	return h.RestartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)
 }

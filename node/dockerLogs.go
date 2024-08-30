@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
 func (h *Node) GetContainerLogs(containerName string, tailLines uint, timeout time.Duration) ([]string, error) {
@@ -25,9 +27,9 @@ func (h *Node) GetContainerLogs(containerName string, tailLines uint, timeout ti
 }
 
 func (h *Node) GetAvalanchegoLogs(tailLines uint, timeout time.Duration) ([]string, error) {
-	return h.GetContainerLogs("avalanchego", tailLines, timeout)
+	return h.GetContainerLogs(constants.ServiceAvalanchego, tailLines, timeout)
 }
 
 func (h *Node) GetAWMRelayerLogs(tailLines uint, timeout time.Duration) ([]string, error) {
-	return h.GetContainerLogs("awm-relayer", tailLines, timeout)
+	return h.GetContainerLogs(constants.ServiceAWMRelayer, tailLines, timeout)
 }
