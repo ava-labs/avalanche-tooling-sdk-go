@@ -322,9 +322,6 @@ func TestMessageDelivery(
 		common.Address{},
 		message,
 	)
-	if err != nil {
-		return err
-	}
 	if err == evm.ErrFailedReceiptStatus {
 		txHash := tx.Hash().String()
 		trace, err := evm.GetTrace(chain1RPC, txHash)
@@ -334,6 +331,9 @@ func TestMessageDelivery(
 			fmt.Printf("trace: %#v\n", trace)
 		}
 		return fmt.Errorf("source receipt status for tx %s is not ReceiptStatusSuccessful", txHash)
+	}
+	if err != nil {
+		return err
 	}
 
 	// get from chain1 event logs the message id
