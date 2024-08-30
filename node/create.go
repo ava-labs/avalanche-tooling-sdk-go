@@ -187,7 +187,7 @@ func createCloudInstances(ctx context.Context, cp CloudParams, count int, useSta
 				Cloud:       cp.Cloud(),
 				CloudConfig: cp,
 				SSHConfig: SSHConfig{
-					User:           constants.AnsibleSSHUser,
+					User:           constants.RemoteHostUser,
 					PrivateKeyPath: sshPrivateKeyPath,
 				},
 				Roles: nil,
@@ -233,7 +233,7 @@ func createCloudInstances(ctx context.Context, cp CloudParams, count int, useSta
 				Cloud:       cp.Cloud(),
 				CloudConfig: cp,
 				SSHConfig: SSHConfig{
-					User:           constants.AnsibleSSHUser,
+					User:           constants.RemoteHostUser,
 					PrivateKeyPath: sshPrivateKeyPath,
 				},
 				Roles: nil,

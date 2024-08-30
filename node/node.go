@@ -17,6 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ava-labs/avalanchego/utils/crypto/bls"
+
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 
@@ -75,6 +77,10 @@ type Node struct {
 
 	// Logger for node
 	Logger avalanche.LeveledLogger
+
+	// BLS provides a way to aggregate signatures off chain into a single signature that can be efficiently verified on chain.
+	// For more information about how BLS is used on the P-Chain, please head to https://docs.avax.network/cross-chain/avalanche-warp-messaging/deep-dive#bls-multi-signatures-with-public-key-aggregation
+	BlsSecretKey *bls.SecretKey
 }
 
 // NewNodeConnection creates a new SSH connection to the node
@@ -171,11 +177,11 @@ func (h *Node) Upload(localFile string, remoteFile string, timeout time.Duration
 			return err
 		}
 	}
-	_, err := utils.TimedFunction(
+	_, err := utils.CallWithTimeout(
+		"upload",
 		func() (interface{}, error) {
 			return nil, h.connection.Upload(localFile, remoteFile)
 		},
-		"upload",
 		timeout,
 	)
 	if err != nil {
@@ -210,11 +216,11 @@ func (h *Node) Download(remoteFile string, localFile string, timeout time.Durati
 	if err := os.MkdirAll(filepath.Dir(localFile), os.ModePerm); err != nil {
 		return err
 	}
-	_, err := utils.TimedFunction(
+	_, err := utils.CallWithTimeout(
+		"download",
 		func() (interface{}, error) {
 			return nil, h.connection.Download(remoteFile, localFile)
 		},
-		"download",
 		timeout,
 	)
 	if err != nil {
@@ -256,11 +262,11 @@ func (h *Node) MkdirAll(remoteDir string, timeout time.Duration) error {
 			return err
 		}
 	}
-	_, err := utils.TimedFunction(
+	_, err := utils.CallWithTimeout(
+		"mkdir",
 		func() (interface{}, error) {
 			return nil, h.UntimedMkdirAll(remoteDir)
 		},
-		"mkdir",
 		timeout,
 	)
 	if err != nil {
@@ -327,23 +333,16 @@ func (h *Node) Forward(httpRequest string, timeout time.Duration) ([]byte, error
 			return nil, err
 		}
 	}
-	retI, err := utils.TimedFunctionWithRetry(
-		func() (interface{}, error) {
-			return h.UntimedForward(httpRequest)
-		},
-		"post over ssh",
+	return utils.Retry(
+		utils.WrapContext(
+			func() ([]byte, error) {
+				return h.UntimedForward(httpRequest)
+			},
+		),
 		timeout,
 		3,
-		2*time.Second,
+		fmt.Sprintf("failure on node %s post over ssh", h.IP),
 	)
-	if err != nil {
-		err = fmt.Errorf("%w for node %s", err, h.IP)
-	}
-	ret := []byte(nil)
-	if retI != nil {
-		ret = retI.([]byte)
-	}
-	return ret, err
 }
 
 // UntimedForward forwards the TCP connection to a remote address.

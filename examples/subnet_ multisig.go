@@ -28,9 +28,9 @@ func DeploySubnetMultiSig() {
 	// Create three keys that will be used as control keys of the subnet
 	// NewKeychain will generate a new key pair in the provided path if no .pk file currently
 	// exists in the provided path
-	keychainA, _ := keychain.NewKeychain(network, "KEY_PATH_A")
-	keychainB, _ := keychain.NewKeychain(network, "KEY_PATH_B")
-	keychainC, _ := keychain.NewKeychain(network, "KEY_PATH_C")
+	keychainA, _ := keychain.NewKeychain(network, "KEY_PATH_A", nil)
+	keychainB, _ := keychain.NewKeychain(network, "KEY_PATH_B", nil)
+	keychainC, _ := keychain.NewKeychain(network, "KEY_PATH_C", nil)
 
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key
@@ -55,7 +55,7 @@ func DeploySubnetMultiSig() {
 	// at least two signatures are required to be able to send the CreateChain transaction on-chain
 	// note that threshold does not apply to CreateSubnet transaction
 	threshold := 2
-	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
 
 	// Key A will be used for paying the transaction fees of CreateSubnetTx and CreateChainTx
 	walletA, _ := wallet.New(
@@ -75,7 +75,7 @@ func DeploySubnetMultiSig() {
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
 
-	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 	deployChainTx, err := newSubnet.CreateBlockchainTx(walletA)
 	if err != nil {
 		fmt.Errorf("error signing tx walletA: %w", err)

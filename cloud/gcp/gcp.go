@@ -238,7 +238,7 @@ func (c *GcpCloud) SetupInstances(
 	}
 	instances := make([]*compute.Instance, numNodes)
 	instancesChan := make(chan *compute.Instance, numNodes)
-	sshKey := fmt.Sprintf("%s:%s", constants.AnsibleSSHUser, strings.TrimSuffix(sshPublicKey, "\n"))
+	sshKey := fmt.Sprintf("%s:%s", constants.RemoteHostUser, strings.TrimSuffix(sshPublicKey, "\n"))
 	automaticRestart := true
 
 	instancePrefix := utils.RandomString(5)
