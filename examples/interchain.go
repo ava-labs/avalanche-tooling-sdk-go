@@ -1,7 +1,7 @@
 // Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package main
+package examples
 
 import (
 	"fmt"
@@ -22,12 +22,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func main() {
-	if err := CallInterchainExample(); err != nil {
-		panic(err)
-	}
-}
-
 // Fuji ICM Example
 //
 // Deploys ICM into CHAIN1_RPC and CHAIN2_RPC,
@@ -38,9 +32,8 @@ func main() {
 // Subnet IDs and Blockchain IDs are provided to fullfill
 // relayer conf
 //
-// All relayer data is saved into RELAYER_DIR, that must
-// exist beforehand
-func CallInterchainExample() error {
+// All relayer data is saved into an existing RELAYER_DIR
+func Interchain() error {
 	chain1RPC := os.Getenv("CHAIN1_RPC")
 	chain1PK := os.Getenv("CHAIN1_PK")
 	chain1SubnetID, err := ids.FromString(os.Getenv("CHAIN1_SUBNET_ID"))
