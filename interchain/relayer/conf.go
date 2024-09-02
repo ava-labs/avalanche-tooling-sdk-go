@@ -52,9 +52,11 @@ func GetDestinationConfig(
 }
 
 // FundRelayer funds the relayer private key associated to [blockchainID] specified in
-// [relayerConfig]. If [amount] > 0 transfers it to the account. if,
-// afterwards, balance < [requiredMinBalance], transfers remaining amount for that
-// if [requiredMinBalance] is nil, uses [defaultRequiredBalance]
+// [relayerConfig]. Receives one of two amount specs:
+// 1) if [amount] > 0, transfers it to the account.
+// 2) if [requiredMinBalance] > 0, checks the balance in the account, and
+// if balance < [requiredMinBalance], transfers the amount needed so as
+// balance == [requiredMinBalance]
 func FundRelayer(
 	relayerConfig *config.Config,
 	blockchainID ids.ID,
@@ -245,6 +247,7 @@ func AddBlockchainToRelayerConfigFile(
 	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
 }
 
+// Creates a base relayer config
 func CreateBaseRelayerConfig(
 	logLevel string,
 	storageLocation string,
@@ -271,6 +274,9 @@ func CreateBaseRelayerConfig(
 	return relayerConfig
 }
 
+// Adds  blockchain to the relayer config, setting it as source.
+// So the relayer will listed for new messages in it,
+// sending those to other blockchains.
 func AddSourceToRelayerConfig(
 	relayerConfig *config.Config,
 	rpcEndpoint string,
@@ -317,6 +323,9 @@ func AddSourceToRelayerConfig(
 	}
 }
 
+// Adds a blockchain to the relayer config,
+// setting it as destination.
+// So the relayer will send to it new messages from other blockchains.
 func AddDestinationToRelayerConfig(
 	relayerConfig *config.Config,
 	rpcEndpoint string,
@@ -338,6 +347,10 @@ func AddDestinationToRelayerConfig(
 	}
 }
 
+// Adds a blockchain to the relayer config,
+// setting it both as source and as destination.
+// So the relayer will both listed for new messages in it,
+// and send to it new messages from other blockchains.
 func AddBlockchainToRelayerConfig(
 	relayerConfig *config.Config,
 	rpcEndpoint string,
