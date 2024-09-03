@@ -9,34 +9,34 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	awsAPI "github.com/ava-labs/avalanche-tooling-sdk-go/cloud/aws"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
-func TestCreateNodes(_ *testing.T) {
+func TestCreateNodes(t *testing.T) {
+	require := require.New(t)
 	ctx := context.Background()
 	// Get the default cloud parameters for AWS
 	cp, err := GetDefaultCloudParams(ctx, AWSCloud)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	securityGroupName := "SECURITY_GROUP_NAME"
 	sgID, err := awsAPI.CreateSecurityGroup(ctx, securityGroupName, cp.AWSConfig.AWSProfile, cp.Region)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
+
 	// Set the security group we are using when creating our Avalanche Nodes
 	cp.AWSConfig.AWSSecurityGroupID = sgID
 	cp.AWSConfig.AWSSecurityGroupName = securityGroupName
 
 	keyPairName := "KEY_PAIR_NAME"
 	sshPrivateKeyPath := utils.ExpandHome("PRIVATE_KEY_FILEPATH")
-	if err := awsAPI.CreateSSHKeyPair(ctx, cp.AWSConfig.AWSProfile, cp.Region, keyPairName, sshPrivateKeyPath); err != nil {
-		panic(err)
-	}
+	err = awsAPI.CreateSSHKeyPair(ctx, cp.AWSConfig.AWSProfile, cp.Region, keyPairName, sshPrivateKeyPath)
+	require.NoError(err)
+
 	// Set the key pair we are using when creating our Avalanche Nodes
 	cp.AWSConfig.AWSKeyPair = keyPairName
 
@@ -64,9 +64,7 @@ func TestCreateNodes(_ *testing.T) {
 			UseStaticIP:        false,
 			SSHPrivateKeyPath:  sshPrivateKeyPath,
 		})
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	fmt.Println("Successfully created Avalanche Validators")
 
@@ -80,12 +78,12 @@ func TestCreateNodes(_ *testing.T) {
 		// Wait for the host to be ready (only needs to be done once for newly created nodes)
 		fmt.Println("Waiting for SSH shell")
 		if err := h.WaitForSSHShell(sshTimeout); err != nil {
-			panic(err)
+			require.NoError(err)
 		}
 		fmt.Println("SSH shell ready to execute commands")
 		// Run a command on the host
 		if output, err := h.Commandf(nil, sshCommandTimeout, "echo 'Hello, %s!'", "World"); err != nil {
-			panic(err)
+			require.NoError(err)
 		} else {
 			fmt.Println(string(output))
 		}
@@ -93,7 +91,7 @@ func TestCreateNodes(_ *testing.T) {
 		time.Sleep(10 * time.Second)
 		// check if avalanchego is running
 		if output, err := h.Commandf(nil, sshCommandTimeout, "docker ps"); err != nil {
-			panic(err)
+			require.NoError(err)
 		} else {
 			fmt.Println(string(output))
 		}
@@ -112,30 +110,23 @@ func TestCreateNodes(_ *testing.T) {
 			UseStaticIP:       false,
 			SSHPrivateKeyPath: sshPrivateKeyPath,
 		})
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	fmt.Println("Successfully created monitoring node")
 	fmt.Println("Linking monitoring node with Avalanche Validator nodes ...")
 	// Link the 2 validator nodes previously created with the monitoring host so that
 	// the monitoring host can start tracking the validator nodes metrics and collecting their logs
-	if err := monitoringHosts[0].MonitorNodes(ctx, hosts, ""); err != nil {
-		panic(err)
-	}
+	err = monitoringHosts[0].MonitorNodes(ctx, hosts, "")
+	require.NoError(err)
 	fmt.Println("Successfully linked monitoring node with Avalanche Validator nodes")
 
 	fmt.Println("Terminating all created nodes ...")
 	// Destroy all created nodes
 	for _, h := range hosts {
 		err = h.Destroy(ctx)
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(err)
 	}
 	err = monitoringHosts[0].Destroy(ctx)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 	fmt.Println("All nodes terminated")
 }

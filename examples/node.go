@@ -102,15 +102,6 @@ func CreateNodes() {
 		}
 	}
 
-	// examle of how to reconfigure the created nodes to track a subnet
-	subnetIDsToValidate := []string{"xxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyzzzzzzzzzzzzzzz"}
-	for _, h := range hosts {
-		fmt.Println("Reconfiguring node %s to track subnet %s", h.NodeID, subnetIDsToValidate)
-		if err := h.SyncSubnets(subnetIDsToValidate); err != nil {
-			panic(err)
-		}
-	}
-
 	// Create a monitoring node.
 	// Monitoring node enables you to have a centralized Grafana Dashboard where you can view
 	// metrics relevant to any Validator & API nodes that the monitoring node is linked to as well

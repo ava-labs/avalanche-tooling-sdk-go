@@ -20,7 +20,7 @@ func GetSCPTargetPath(ip, path string) string {
 	if ip == "" {
 		return path
 	}
-	return fmt.Sprintf("%s@%s:%s", constants.AnsibleSSHUser, ip, path)
+	return fmt.Sprintf("%s@%s:%s", constants.RemoteHostUser, ip, path)
 }
 
 // SplitSCPPath splits the given path into node and path.

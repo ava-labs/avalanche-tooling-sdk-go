@@ -5,19 +5,21 @@ The official Avalanche Tooling Go SDK library.
 *** Please note that this SDK is in experimental mode, major changes to the SDK are to be expected
 in between releases ***
 
-Current version (v0.2.0) currently supports: 
+Current version (v0.3.0) currently supports: 
 - Create Subnet and Create Blockchain in a Subnet in Fuji / Mainnet. 
 - Create Avalanche Node (Validator / API / Monitoring / Load Test Node) & install all required
 dependencies (AvalancheGo, gcc, Promtail, Grafana, etc).
+- Enable Avalanche nodes to validate Primary Network
+- Adding Validators to a Subnet
+- Ledger SDK
 
 Currently, only stored keys are supported for transaction building and signing, ledger support is 
 coming soon.
 
 Future SDK releases will contain the following features (in order of priority): 
-- Additional Nodes SDK features (Have Avalanche nodes validate a Subnet & Primary Network)
-- Additional Subnet SDK features (i.e. Adding Validators to a Subnet, Custom Subnets)
+- Additional Nodes SDK features (Devnet)
+- Additional Subnet SDK features (Custom Subnets)
 - Teleporter SDK
-- Ledger SDK
 
 ## Getting Started
 
@@ -40,6 +42,8 @@ a blockchain in the Subnet.
 This examples also shows how to create a key pair to pay for transactions, how to create a Wallet
 object that will be used to build and sign CreateSubnetTx and CreateChainTx and how to commit these 
 transactions on chain.
+
+More examples can be found at examples directory.
 
 ```go
 package main
@@ -74,7 +78,7 @@ func DeploySubnet() {
 	// Key that will be used for paying the transaction fees of CreateSubnetTx and CreateChainTx
 	// NewKeychain will generate a new key pair in the provided path if no .pk file currently
 	// exists in the provided path
-	keychain, _ := keychain.NewKeychain(network, "KEY_PATH")
+	keychain, _ := keychain.NewKeychain(network, "KEY_PATH", nil)
 
 	// In this example, we are using the fee-paying key generated above also as control key
 	// and subnet auth key
@@ -91,10 +95,9 @@ func DeploySubnet() {
 	// CreateSubnetTx.
 	//
 	// All keys in subnetAuthKeys have to sign the transaction before the transaction
-	// can be committed on chain
-	subnetAuthKeys := controlKeys
+	subnetAuthKeys := keychain.Addresses().List()
 	threshold := 1
-	newSubnet.SetSubnetCreateParams(controlKeys, uint32(threshold))
+	newSubnet.SetSubnetControlParams(controlKeys, uint32(threshold))
 
 	wallet, _ := wallet.New(
 		context.Background(),
@@ -115,7 +118,7 @@ func DeploySubnet() {
 	// we need to wait to allow the transaction to reach other nodes in Fuji
 	time.Sleep(2 * time.Second)
 
-	newSubnet.SetBlockchainCreateParams(subnetAuthKeys)
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
 	// Build and Sign CreateChainTx with our fee paying key (which is also our subnet auth key)
 	deployChainTx, _ := newSubnet.CreateBlockchainTx(wallet)
 	// Commit our CreateChainTx on chain
@@ -123,6 +126,111 @@ func DeploySubnet() {
 	// on chain immediately since the number of signatures has been reached
 	blockchainID, _ := newSubnet.Commit(*deployChainTx, wallet, true)
 	fmt.Printf("blockchainID %s \n", blockchainID.String())
+}
+
+// Add a validator to Subnet
+func AddSubnetValidator() {
+	// We are using existing Subnet that we have already deployed on Fuji
+	subnetParams := subnet.SubnetParams{
+		GenesisFilePath: "GENESIS_FILE_PATH",
+		Name:            "SUBNET_NAME",
+	}
+
+	newSubnet, err := subnet.New(&subnetParams)
+	if err != nil {
+		panic(err)
+	}
+
+	subnetID, err := ids.FromString("SUBNET_ID")
+	if err != nil {
+		panic(err)
+	}
+
+	// Genesis doesn't contain the deployed Subnet's SubnetID, we need to first set the Subnet ID
+	newSubnet.SetSubnetID(subnetID)
+
+	// We are using existing host
+	node := node.Node{
+		// NodeID is Avalanche Node ID of the node
+		NodeID: "NODE_ID",
+		// IP address of the node
+		IP: "NODE_IP_ADDRESS",
+		// SSH configuration for the node
+		SSHConfig: node.SSHConfig{
+			User:           constants.RemoteHostUser,
+			PrivateKeyPath: "NODE_KEYPAIR_PRIVATE_KEY_PATH",
+		},
+		// Role is the role that we expect the host to be (Validator, API, AWMRelayer, Loadtest or
+		// Monitor)
+		Roles: []node.SupportedRole{node.Validator},
+	}
+
+	// Here we are assuming that the node is currently validating the Primary Network, which is
+	// a requirement before the node can start validating a Subnet.
+	// To have a node validate the Primary Network, call node.ValidatePrimaryNetwork
+	// Now we are calling the node to start tracking the Subnet
+	subnetIDsToValidate := []string{newSubnet.SubnetID.String()}
+	if err := node.SyncSubnets(subnetIDsToValidate); err != nil {
+		panic(err)
+	}
+
+	// Node is now tracking the Subnet
+
+	// Key that will be used for paying the transaction fees of Subnet AddValidator Tx
+	//
+	// In our example, this Key is also the control Key to the Subnet, so we are going to use
+	// this key to also sign the Subnet AddValidator tx
+	network := avalanche.FujiNetwork()
+	keychain, err := keychain.NewKeychain(network, "PRIVATE_KEY_FILEPATH", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	wallet, err := wallet.New(
+		context.Background(),
+		&primary.WalletConfig{
+			URI:              network.Endpoint,
+			AVAXKeychain:     keychain.Keychain,
+			EthKeychain:      secp256k1fx.NewKeychain(),
+			PChainTxsToFetch: set.Of(subnetID),
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	nodeID, err := ids.NodeIDFromString(node.NodeID)
+	if err != nil {
+		panic(err)
+	}
+
+	validatorParams := validator.SubnetValidatorParams{
+		NodeID: nodeID,
+		// Validate Subnet for 48 hours
+		Duration: 48 * time.Hour,
+		Weight:   20,
+	}
+
+	// We need to set Subnet Auth Keys for this transaction since Subnet AddValidator is
+	// a Subnet-changing transaction
+	//
+	// In this example, the example Subnet was created with only 1 key as control key with a threshold of 1
+	// and the control key is the key contained in the keychain object, so we are going to use the
+	// key contained in the keychain object as the Subnet Auth Key for Subnet AddValidator tx
+	subnetAuthKeys := keychain.Addresses().List()
+	newSubnet.SetSubnetAuthKeys(subnetAuthKeys)
+
+	addValidatorTx, err := newSubnet.AddValidator(wallet, validatorParams)
+	if err != nil {
+		panic(err)
+	}
+
+	// Since it has the required signatures, we will now commit the transaction on chain
+	txID, err := newSubnet.Commit(*addValidatorTx, wallet, true)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("obtained tx id %s", txID.String())
 }
 
 func getDefaultSubnetEVMGenesis() subnet.SubnetParams {
@@ -152,6 +260,8 @@ This examples also shows how to create an Avalanche Monitoring Node, which enabl
 centralized Grafana Dashboard where you can view metrics relevant to any Validator & API nodes that
 the monitoring node is linked to as well as a centralized logs for the X/P/C Chain and Subnet logs 
 for the Validator & API nodes. An example on how the dashboard and logs look like can be found at https://docs.avax.network/tooling/cli-create-nodes/create-a-validator-aws
+
+More examples can be found at examples directory.
 
 ```go
 package main
@@ -278,4 +388,61 @@ func CreateNodes() {
 		panic(err)
 	}
 }
+
+func ValidatePrimaryNetwork() {
+	// We are using existing host
+	node := node.Node{
+		// NodeID is Avalanche Node ID of the node
+		NodeID: "NODE_ID",
+		// IP address of the node
+		IP: "NODE_IP_ADDRESS",
+		// SSH configuration for the node
+		SSHConfig: node.SSHConfig{
+			User:           constants.RemoteHostUser,
+			PrivateKeyPath: "NODE_KEYPAIR_PRIVATE_KEY_PATH",
+		},
+		// Role of the node can be 	Validator, API, AWMRelayer, Loadtest, or Monitor
+		Roles: []node.SupportedRole{node.Validator},
+	}
+
+	nodeID, err := ids.NodeIDFromString(node.NodeID)
+	if err != nil {
+		panic(err)
+	}
+
+	validatorParams := validator.PrimaryNetworkValidatorParams{
+		NodeID: nodeID,
+		// Validate Primary Network for 48 hours
+		Duration: 48 * time.Hour,
+		// Stake 2 AVAX
+		StakeAmount: 2 * units.Avax,
+	}
+
+	// Key that will be used for paying the transaction fee of AddValidator Tx
+	network := avalanche.FujiNetwork()
+	keychain, err := keychain.NewKeychain(network, "PRIVATE_KEY_FILEPATH", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	wallet, err := wallet.New(
+		context.Background(),
+		&primary.WalletConfig{
+			URI:              network.Endpoint,
+			AVAXKeychain:     keychain.Keychain,
+			EthKeychain:      secp256k1fx.NewKeychain(),
+			PChainTxsToFetch: nil,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	txID, err := node.ValidatePrimaryNetwork(avalanche.FujiNetwork(), validatorParams, wallet)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("obtained tx id %s", txID.String())
+}
+
 ```

@@ -36,23 +36,24 @@ const (
 	AvalanchegoMachineMetricsPort = 9100
 	AvalanchegoLoadTestPort       = 8082
 
+	// http
+	APIRequestTimeout      = 30 * time.Second
+	APIRequestLargeTimeout = 2 * time.Minute
+
 	// ssh
 	SSHSleepBetweenChecks       = 1 * time.Second
 	SSHLongRunningScriptTimeout = 10 * time.Minute
 	SSHFileOpsTimeout           = 100 * time.Second
 	SSHPOSTTimeout              = 10 * time.Second
 	SSHScriptTimeout            = 2 * time.Minute
-	AnsibleSSHUser              = "ubuntu"
+	RemoteHostUser              = "ubuntu"
 
 	// node
-	CloudNodeCLIConfigBasePath  = "/home/ubuntu/.avalanche-cli/"
-	CloudNodeConfigBasePath     = "/home/ubuntu/.avalanchego/"
-	CloudNodeSubnetVMBinaryPath = "/home/ubuntu/.avalanchego/plugins/%s"
-	CloudNodeStakingPath        = "/home/ubuntu/.avalanchego/staking/"
-	CloudNodeConfigPath         = "/home/ubuntu/.avalanchego/configs/"
-	ServicesDir                 = "services"
-	DashboardsDir               = "dashboards"
-
+	CloudNodeCLIConfigBasePath = "/home/ubuntu/.avalanche-cli/"
+	CloudNodeStakingPath       = "/home/ubuntu/.avalanchego/staking/"
+	CloudNodeConfigPath        = "/home/ubuntu/.avalanchego/configs/"
+	ServicesDir                = "services"
+	DashboardsDir              = "dashboards"
 	// services
 	ServiceAvalanchego = "avalanchego"
 	ServicePromtail    = "promtail"

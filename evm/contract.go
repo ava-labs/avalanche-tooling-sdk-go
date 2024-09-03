@@ -17,29 +17,36 @@ import (
 
 var ErrFailedReceiptStatus = fmt.Errorf("failed receipt status")
 
-func removeSurroundingParenthesis(s string) (string, error) {
-	s = strings.TrimSpace(s)
-	if len(s) > 0 {
-		if string(s[0]) != "(" || string(s[len(s)-1]) != ")" {
-			return "", fmt.Errorf("expected esp %q to be surrounded by parenthesis", s)
-		}
-		s = s[1 : len(s)-1]
-	}
-	return s, nil
-}
+type SignatureKind int64
 
-func removeSurroundingBrackets(s string) (string, error) {
-	s = strings.TrimSpace(s)
-	if len(s) > 0 {
-		if string(s[0]) != "[" || string(s[len(s)-1]) != "]" {
-			return "", fmt.Errorf("expected esp %q to be surrounded by parenthesis", s)
-		}
-		s = s[1 : len(s)-1]
-	}
-	return s, nil
-}
+const (
+	Constructor SignatureKind = iota
+	Method
+	Event
+)
 
-func getWords(s string) []string {
+type PaymentKind int64
+
+const (
+	View PaymentKind = iota
+	Payable
+	NonPayable
+)
+
+// splitTypes splits a string of comma separated type esps into a slice of type esps:
+// - considering a list of types esps surrounded by (nested) parenthesis as one struct type esp
+// - considering a type esp surrounded by brackets as one array type esp
+// note: it just parses the first level of type esps: parsing of nested subtypes is called recursively by getABIMaps
+//
+// ie:
+// "bool,int" maps to ["bool", "int"]  - 2 primitive types bool and int
+// "(bool,int)" maps to ["(bool,int)"] - 1 struct type (bool,int)
+// "(bool,int),bool" maps to ["(bool,int)","bool"] - 1 struct type (bool,int) + 1 primitive type bool
+// "[(bool,int)],[bool]" maps to ["[(bool,int)]","[bool]"] - 1 array of structs (bool,int) type + 1 array of bools
+//
+// TODO: manage all recursion here, returning a list of types, not strings, where compound types are supported
+// (so, returning a tree)
+func splitTypes(s string) []string {
 	words := []string{}
 	word := ""
 	parenthesisCount := 0
@@ -92,60 +99,66 @@ func getWords(s string) []string {
 	return words
 }
 
-func getMap(
+// for a list of strings that specifie types, it generates
+// a list of ethereum ABI descriptions,
+// compatible with the subnet-evm bind library
+//
+// note: as, for structs, bind calls check ABI field names against golang struct field
+// names, input [values] are passed, so as to get appropriate ABI names
+func getABIMaps(
 	types []string,
-	params interface{},
+	values interface{},
 ) ([]map[string]interface{}, error) {
 	r := []map[string]interface{}{}
 	for i, t := range types {
 		var (
-			param      interface{}
+			value      interface{}
 			name       string
 			structName string
 		)
-		rt := reflect.ValueOf(params)
+		rt := reflect.ValueOf(values)
 		if rt.Kind() == reflect.Ptr {
 			rt = rt.Elem()
 		}
 		if rt.Kind() == reflect.Slice {
 			if rt.Len() != len(types) {
 				if rt.Len() == 1 {
-					return getMap(types, rt.Index(0).Interface())
+					return getABIMaps(types, rt.Index(0).Interface())
 				} else {
 					return nil, fmt.Errorf(
-						"inconsistency in slice len between method esp %q and given params %#v: expected %d got %d",
+						"inconsistency in slice len between method esp %q and given values %#v: expected %d got %d",
 						types,
-						params,
+						values,
 						len(types),
 						rt.Len(),
 					)
 				}
 			}
-			param = rt.Index(i).Interface()
+			value = rt.Index(i).Interface()
 		} else if rt.Kind() == reflect.Struct {
 			if rt.NumField() < len(types) {
 				return nil, fmt.Errorf(
-					"inconsistency in struct len between method esp %q and given params %#v: expected %d got %d",
+					"inconsistency in struct len between method esp %q and given values %#v: expected %d got %d",
 					types,
-					params,
+					values,
 					len(types),
 					rt.NumField(),
 				)
 			}
 			name = rt.Type().Field(i).Name
 			structName = rt.Type().Field(i).Type.Name()
-			param = rt.Field(i).Interface()
+			value = rt.Field(i).Interface()
 		}
 		m := map[string]interface{}{}
 		switch {
 		case string(t[0]) == "(":
 			// struct type
 			var err error
-			t, err = removeSurroundingParenthesis(t)
+			t, err = utils.RemoveSurrounding(t, "(", ")")
 			if err != nil {
 				return nil, err
 			}
-			m["components"], err = getMap(getWords(t), param)
+			m["components"], err = getABIMaps(splitTypes(t), value)
 			if err != nil {
 				return nil, err
 			}
@@ -158,22 +171,22 @@ func getMap(
 			m["name"] = name
 		case string(t[0]) == "[":
 			var err error
-			t, err = removeSurroundingBrackets(t)
+			t, err = utils.RemoveSurrounding(t, "[", "]")
 			if err != nil {
 				return nil, err
 			}
 			if string(t[0]) == "(" {
-				t, err = removeSurroundingParenthesis(t)
+				t, err = utils.RemoveSurrounding(t, "(", ")")
 				if err != nil {
 					return nil, err
 				}
-				rt := reflect.ValueOf(param)
+				rt := reflect.ValueOf(value)
 				if rt.Kind() != reflect.Slice {
-					return nil, fmt.Errorf("expected param for field %d of esp %q to be an slice", i, types)
+					return nil, fmt.Errorf("expected value for field %d of esp %q to be an slice", i, types)
 				}
-				param = reflect.Zero(rt.Type().Elem()).Interface()
+				value = reflect.Zero(rt.Type().Elem()).Interface()
 				structName = rt.Type().Elem().Name()
-				m["components"], err = getMap(getWords(t), param)
+				m["components"], err = getABIMaps(splitTypes(t), value)
 				if err != nil {
 					return nil, err
 				}
@@ -199,82 +212,94 @@ func getMap(
 	return r, nil
 }
 
-func ParseEsp(
-	esp string,
+// ParseMethodSignature parses method/event [signature]
+// of format "name(inputs)->(outputs)", where:
+//   - name is optional
+//   - ->(outputs) is optional
+//   - inputs and outputs are a comma separated list of type esps that follow the
+//     format of splitTypes
+//
+// generates a ethereum ABI especification
+// that can be used in the subnet-evm bind library.
+//
+// note: as, for structs, bind calls check ABI field names against golang struct field
+// names, input [values] are passed, so as to get appropriate ABI names
+func ParseMethodSignature(
+	signature string,
+	kind SignatureKind,
 	indexedFields []int,
-	constructor bool,
-	event bool,
-	paid bool,
-	view bool,
-	params ...interface{},
+	paymentKind PaymentKind,
+	values ...interface{},
 ) (string, string, error) {
-	index := strings.Index(esp, "(")
-	if index == -1 {
-		return esp, "", nil
+	inputsOutputsIndex := strings.Index(signature, "(")
+	if inputsOutputsIndex == -1 {
+		return signature, "", nil
 	}
-	name := esp[:index]
-	types := esp[index:]
-	inputs := ""
-	outputs := ""
-	index = strings.Index(types, "->")
-	if index == -1 {
-		inputs = types
+	name := signature[:inputsOutputsIndex]
+	typesSignature := signature[inputsOutputsIndex:]
+	inputTypesSignature := ""
+	outputTypesSignature := ""
+	arrowIndex := strings.Index(typesSignature, "->")
+	if arrowIndex == -1 {
+		inputTypesSignature = typesSignature
 	} else {
-		inputs = types[:index]
-		outputs = types[index+2:]
+		inputTypesSignature = typesSignature[:arrowIndex]
+		outputTypesSignature = typesSignature[arrowIndex+2:]
 	}
 	var err error
-	inputs, err = removeSurroundingParenthesis(inputs)
+	inputTypesSignature, err = utils.RemoveSurrounding(inputTypesSignature, "(", ")")
 	if err != nil {
 		return "", "", err
 	}
-	outputs, err = removeSurroundingParenthesis(outputs)
+	outputTypesSignature, err = utils.RemoveSurrounding(outputTypesSignature, "(", ")")
 	if err != nil {
 		return "", "", err
 	}
-	inputTypes := getWords(inputs)
-	outputTypes := getWords(outputs)
-	inputsMaps, err := getMap(inputTypes, params)
+	inputTypes := splitTypes(inputTypesSignature)
+	outputTypes := splitTypes(outputTypesSignature)
+	inputsMaps, err := getABIMaps(inputTypes, values)
 	if err != nil {
 		return "", "", err
 	}
-	outputsMaps, err := getMap(outputTypes, nil)
+	outputsMaps, err := getABIMaps(outputTypes, nil)
 	if err != nil {
 		return "", "", err
 	}
-	if event {
+	abiMap := map[string]interface{}{
+		"inputs": inputsMaps,
+	}
+	switch kind {
+	case Constructor:
+		abiMap["type"] = "constructor"
+		abiMap["stateMutability"] = "nonpayable"
+	case Method:
+		abiMap["type"] = "function"
+		abiMap["name"] = name
+		abiMap["outputs"] = outputsMaps
+		switch paymentKind {
+		case Payable:
+			abiMap["stateMutability"] = "payable"
+		case View:
+			abiMap["stateMutability"] = "view"
+		case NonPayable:
+			abiMap["stateMutability"] = "nonpayable"
+		default:
+			return "", "", fmt.Errorf("unsupported payment kind %d", paymentKind)
+		}
+	case Event:
+		abiMap["type"] = "event"
+		abiMap["name"] = name
 		for i := range inputsMaps {
 			if utils.Belongs(indexedFields, i) {
 				inputsMaps[i]["indexed"] = true
 			}
 		}
-	}
-	abiMap := []map[string]interface{}{
-		{
-			"inputs": inputsMaps,
-		},
-	}
-	switch {
-	case paid:
-		abiMap[0]["stateMutability"] = "payable"
-	case view:
-		abiMap[0]["stateMutability"] = "view"
 	default:
-		abiMap[0]["stateMutability"] = "nonpayable"
+		return "", "", fmt.Errorf("unsupported signature kind %d", kind)
 	}
-	switch {
-	case constructor:
-		abiMap[0]["type"] = "constructor"
-	case event:
-		abiMap[0]["type"] = "event"
-		abiMap[0]["name"] = name
-		delete(abiMap[0], "stateMutability")
-	default:
-		abiMap[0]["type"] = "function"
-		abiMap[0]["outputs"] = outputsMaps
-		abiMap[0]["name"] = name
-	}
-	abiBytes, err := json.MarshalIndent(abiMap, "", "  ")
+	abiMap["inputs"] = inputsMaps
+	abiSlice := []map[string]interface{}{abiMap}
+	abiBytes, err := json.MarshalIndent(abiSlice, "", "  ")
 	if err != nil {
 		return "", "", err
 	}
@@ -286,10 +311,14 @@ func TxToMethod(
 	privateKey string,
 	contractAddress common.Address,
 	payment *big.Int,
-	methodEsp string,
+	methodSignature string,
 	params ...interface{},
 ) (*types.Transaction, *types.Receipt, error) {
-	methodName, methodABI, err := ParseEsp(methodEsp, nil, false, false, payment != nil, false, params...)
+	paymentKind := NonPayable
+	if payment != nil {
+		paymentKind = Payable
+	}
+	methodName, methodABI, err := ParseMethodSignature(methodSignature, Method, nil, paymentKind, params...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -330,7 +359,7 @@ func CallToMethod(
 	methodEsp string,
 	params ...interface{},
 ) ([]interface{}, error) {
-	methodName, methodABI, err := ParseEsp(methodEsp, nil, false, false, false, true, params...)
+	methodName, methodABI, err := ParseMethodSignature(methodEsp, Method, nil, View, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +391,7 @@ func DeployContract(
 	methodEsp string,
 	params ...interface{},
 ) (common.Address, error) {
-	_, methodABI, err := ParseEsp(methodEsp, nil, true, false, false, false, params...)
+	_, methodABI, err := ParseMethodSignature(methodEsp, Constructor, nil, NonPayable, params...)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -402,7 +431,7 @@ func UnpackLog(
 	log types.Log,
 	event interface{},
 ) error {
-	eventName, eventABI, err := ParseEsp(eventEsp, indexedFields, false, true, false, false, event)
+	eventName, eventABI, err := ParseMethodSignature(eventEsp, Event, indexedFields, NonPayable, event)
 	if err != nil {
 		return err
 	}
