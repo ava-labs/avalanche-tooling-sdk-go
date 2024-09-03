@@ -6,11 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"os"
 	"strings"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
@@ -18,8 +16,6 @@ import (
 	offchainregistry "github.com/ava-labs/awm-relayer/messages/off-chain-registry"
 	"github.com/ethereum/go-ethereum/crypto"
 )
-
-var defaultRequiredBalance = big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(500)) // 500 AVAX
 
 func GetSourceConfig(
 	relayerConfig *config.Config,
@@ -53,10 +49,12 @@ func GetDestinationConfig(
 	return nil
 }
 
-// fund the relayer private key associated to [blockchainID]
-// at [relayerConfig]. if [amount] > 0 transfers it to the account. if,
-// afterwards, balance < [requiredMinBalance], transfers remaining amount for that
-// if [requiredMinBalance] is nil, uses [defaultRequiredBalance]
+// FundRelayer funds the relayer private key associated to [blockchainID] specified in
+// [relayerConfig]. Receives one of two amount specs:
+// 1) if [amount] > 0, transfers it to the account.
+// 2) if [requiredMinBalance] > 0, checks the balance in the account, and
+// if balance < [requiredMinBalance], transfers the amount needed so as
+// balance == [requiredMinBalance]
 func FundRelayer(
 	relayerConfig *config.Config,
 	blockchainID ids.ID,
@@ -77,7 +75,7 @@ func FundRelayer(
 	)
 }
 
-// fund [relayerPrivateKey] at [rpcEndpoint]
+// FundRelayerPrivateKey funds [relayerPrivateKey] at [rpcEndpoint]
 // see FundRelayer for [amount]/[requiredMinBalance] logic
 func FundRelayerPrivateKey(
 	rpcEndpoint string,
@@ -100,7 +98,7 @@ func FundRelayerPrivateKey(
 	)
 }
 
-// fund [relayerAddress] at [rpcEndpoint]
+// FundRelayerAddress funds [relayerAddress] at [rpcEndpoint]
 // see FundRelayer for [amount]/[requiredMinBalance] logic
 func FundRelayerAddress(
 	rpcEndpoint string,
@@ -109,8 +107,8 @@ func FundRelayerAddress(
 	amount *big.Int,
 	requiredMinBalance *big.Int,
 ) error {
-	if requiredMinBalance == nil {
-		requiredMinBalance = defaultRequiredBalance
+	if amount == nil && requiredMinBalance == nil {
+		return fmt.Errorf("failure funding relayer: you must provide an amount or a required balance")
 	}
 	client, err := evm.GetClient(rpcEndpoint)
 	if err != nil {
@@ -134,119 +132,19 @@ func FundRelayerAddress(
 	)
 }
 
-func LoadRelayerConfig(relayerConfigPath string) (*config.Config, error) {
+func UnserializeRelayerConfig(relayerConfigBytes []byte) (*config.Config, error) {
 	relayerConfig := config.Config{}
-	bs, err := os.ReadFile(relayerConfigPath)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(bs, &relayerConfig); err != nil {
+	if err := json.Unmarshal(relayerConfigBytes, &relayerConfig); err != nil {
 		return nil, err
 	}
 	return &relayerConfig, nil
 }
 
-func SaveRelayerConfig(relayerConfig *config.Config, relayerConfigPath string) error {
-	bs, err := json.MarshalIndent(relayerConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(relayerConfigPath, bs, constants.WriteReadReadPerms)
+func SerializeRelayerConfig(relayerConfig *config.Config) ([]byte, error) {
+	return json.MarshalIndent(relayerConfig, "", "  ")
 }
 
-func CreateBaseRelayerConfigFile(
-	relayerConfigPath string,
-	logLevel string,
-	storageLocation string,
-	metricsPort uint16,
-	network avalanche.Network,
-) error {
-	relayerConfig := CreateBaseRelayerConfig(
-		logLevel,
-		storageLocation,
-		metricsPort,
-		network,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
-}
-
-func AddSourceToRelayerConfigFile(
-	relayerConfigPath string,
-	rpcEndpoint string,
-	wsEndpoint string,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	icmRegistryAddress string,
-	icmMessengerAddress string,
-	relayerRewardAddress string,
-) error {
-	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
-	if err != nil {
-		return err
-	}
-	AddSourceToRelayerConfig(
-		relayerConfig,
-		rpcEndpoint,
-		wsEndpoint,
-		subnetID,
-		blockchainID,
-		icmRegistryAddress,
-		icmMessengerAddress,
-		relayerRewardAddress,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
-}
-
-func AddDestinationToRelayerConfigFile(
-	relayerConfigPath string,
-	rpcEndpoint string,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	relayerPrivateKey string,
-) error {
-	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
-	if err != nil {
-		return err
-	}
-	AddDestinationToRelayerConfig(
-		relayerConfig,
-		rpcEndpoint,
-		subnetID,
-		blockchainID,
-		relayerPrivateKey,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
-}
-
-func AddBlockchainToRelayerConfigFile(
-	relayerConfigPath string,
-	rpcEndpoint string,
-	wsEndpoint string,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	icmRegistryAddress string,
-	icmMessengerAddress string,
-	relayerRewardAddress string,
-	relayerPrivateKey string,
-) error {
-	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
-	if err != nil {
-		return err
-	}
-	AddBlockchainToRelayerConfig(
-		relayerConfig,
-		rpcEndpoint,
-		wsEndpoint,
-		subnetID,
-		blockchainID,
-		icmRegistryAddress,
-		icmMessengerAddress,
-		relayerRewardAddress,
-		relayerPrivateKey,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
-}
-
+// Creates a base relayer config
 func CreateBaseRelayerConfig(
 	logLevel string,
 	storageLocation string,
@@ -273,6 +171,9 @@ func CreateBaseRelayerConfig(
 	return relayerConfig
 }
 
+// Adds  blockchain to the relayer config, setting it as source.
+// So the relayer will listed for new messages in it,
+// sending those to other blockchains.
 func AddSourceToRelayerConfig(
 	relayerConfig *config.Config,
 	rpcEndpoint string,
@@ -319,6 +220,9 @@ func AddSourceToRelayerConfig(
 	}
 }
 
+// Adds a blockchain to the relayer config,
+// setting it as destination.
+// So the relayer will send to it new messages from other blockchains.
 func AddDestinationToRelayerConfig(
 	relayerConfig *config.Config,
 	rpcEndpoint string,
@@ -340,6 +244,10 @@ func AddDestinationToRelayerConfig(
 	}
 }
 
+// Adds a blockchain to the relayer config,
+// setting it both as source and as destination.
+// So the relayer will both listed for new messages in it,
+// and send to it new messages from other blockchains.
 func AddBlockchainToRelayerConfig(
 	relayerConfig *config.Config,
 	rpcEndpoint string,
