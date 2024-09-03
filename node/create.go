@@ -272,7 +272,7 @@ func provisionHost(node Node, nodeParams *NodeParams) error {
 				return err
 			}
 		case AWMRelayer:
-			if err := provisionAWMRelayerHost(node); err != nil {
+			if err := provisionAWMRelayerHost(node, nodeParams.Network); err != nil {
 				return err
 			}
 		default:
@@ -329,8 +329,8 @@ func provisionMonitoringHost(node Node) error {
 	return nil
 }
 
-func provisionAWMRelayerHost(node Node) error { // stub
-	if err := node.ComposeSSHSetupAWMRelayer(); err != nil {
+func provisionAWMRelayerHost(node Node, network avalanche.Network) error { // stub
+	if err := node.ComposeSSHSetupAWMRelayer(network); err != nil {
 		return err
 	}
 	return node.StartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)

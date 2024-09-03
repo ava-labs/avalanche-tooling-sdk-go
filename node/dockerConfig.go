@@ -114,7 +114,7 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 func (h *Node) GetAMWRelayerConfig() (*config.Config, error) {
 	remoteAWMConf := remoteconfig.GetRemoteAMWRelayerConfig()
 	if slices.Contains(h.Roles, AWMRelayer) {
-		if configExists, err := h.FileExists(); err != nil || !configExists {
+		if configExists, err := h.FileExists(remoteAWMConf); err != nil || !configExists {
 			return nil, fmt.Errorf("%s: config file %s does not exist or not available", h.NodeID, remoteAWMConf)
 		}
 		if c, err := h.ReadFileBytes(remoteAWMConf, constants.SSHFileOpsTimeout); err != nil {
