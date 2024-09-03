@@ -122,7 +122,7 @@ func (h *Node) GetAMWRelayerConfig() (*config.Config, error) {
 		} else {
 			awmConfig := &config.Config{}
 			if json.Unmarshal(c, &awmConfig) != nil {
-				return nil, fmt.Errorf("%s: failed to parse config file %s", remoteAWMConf)
+				return nil, fmt.Errorf("%s: failed to parse config file %s", h.NodeID, remoteAWMConf)
 			} else {
 				return awmConfig, nil
 			}
