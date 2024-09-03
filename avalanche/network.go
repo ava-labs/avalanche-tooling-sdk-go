@@ -98,17 +98,6 @@ func (n Network) GenesisParams() *genesis.Params {
 	return nil
 }
 
-func (n Network) GetMinStakingAmount() (uint64, error) {
-	pClient := platformvm.NewClient(n.Endpoint)
-	ctx, cancel := utils.GetAPIContext()
-	defer cancel()
-	minValStake, _, err := pClient.GetMinStake(ctx, ids.Empty)
-	if err != nil {
-		return 0, err
-	}
-	return minValStake, nil
-}
-
 func (n Network) BlockchainEndpoint(blockchainID string) string {
 	return fmt.Sprintf("%s/ext/bc/%s/rpc", n.Endpoint, blockchainID)
 }
@@ -118,4 +107,15 @@ func (n Network) BlockchainWSEndpoint(blockchainID string) string {
 	trimmedURI = strings.TrimPrefix(trimmedURI, "http://")
 	trimmedURI = strings.TrimPrefix(trimmedURI, "https://")
 	return fmt.Sprintf("ws://%s/ext/bc/%s/ws", trimmedURI, blockchainID)
+}
+
+func (n Network) GetMinStakingAmount() (uint64, error) {
+	pClient := platformvm.NewClient(n.Endpoint)
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
+	minValStake, _, err := pClient.GetMinStake(ctx, ids.Empty)
+	if err != nil {
+		return 0, err
+	}
+	return minValStake, nil
 }

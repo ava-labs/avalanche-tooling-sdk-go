@@ -83,7 +83,11 @@ func WaitForInitialization(
 	checkInterval time.Duration,
 	checkTimeout time.Duration,
 ) error {
-	config, err := relayer.LoadRelayerConfig(configPath)
+	configBytes, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+	config, err := relayer.UnserializeRelayerConfig(configBytes)
 	if err != nil {
 		return err
 	}

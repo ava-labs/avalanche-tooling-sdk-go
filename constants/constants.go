@@ -36,6 +36,10 @@ const (
 	AvalanchegoMachineMetricsPort = 9100
 	AvalanchegoLoadTestPort       = 8082
 
+	// http
+	APIRequestTimeout      = 30 * time.Second
+	APIRequestLargeTimeout = 2 * time.Minute
+
 	// ssh
 	SSHSleepBetweenChecks       = 1 * time.Second
 	SSHLongRunningScriptTimeout = 10 * time.Minute
