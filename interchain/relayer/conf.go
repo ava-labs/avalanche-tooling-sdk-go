@@ -6,11 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"os"
 	"strings"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
@@ -134,117 +132,16 @@ func FundRelayerAddress(
 	)
 }
 
-func LoadRelayerConfig(relayerConfigPath string) (*config.Config, error) {
+func UnserializeRelayerConfig(relayerConfigBytes []byte) (*config.Config, error) {
 	relayerConfig := config.Config{}
-	bs, err := os.ReadFile(relayerConfigPath)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(bs, &relayerConfig); err != nil {
+	if err := json.Unmarshal(relayerConfigBytes, &relayerConfig); err != nil {
 		return nil, err
 	}
 	return &relayerConfig, nil
 }
 
-func SaveRelayerConfig(relayerConfig *config.Config, relayerConfigPath string) error {
-	bs, err := json.MarshalIndent(relayerConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(relayerConfigPath, bs, constants.WriteReadReadPerms)
-}
-
-func CreateBaseRelayerConfigFile(
-	relayerConfigPath string,
-	logLevel string,
-	storageLocation string,
-	metricsPort uint16,
-	network avalanche.Network,
-) error {
-	relayerConfig := CreateBaseRelayerConfig(
-		logLevel,
-		storageLocation,
-		metricsPort,
-		network,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
-}
-
-func AddSourceToRelayerConfigFile(
-	relayerConfigPath string,
-	rpcEndpoint string,
-	wsEndpoint string,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	icmRegistryAddress string,
-	icmMessengerAddress string,
-	relayerRewardAddress string,
-) error {
-	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
-	if err != nil {
-		return err
-	}
-	AddSourceToRelayerConfig(
-		relayerConfig,
-		rpcEndpoint,
-		wsEndpoint,
-		subnetID,
-		blockchainID,
-		icmRegistryAddress,
-		icmMessengerAddress,
-		relayerRewardAddress,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
-}
-
-func AddDestinationToRelayerConfigFile(
-	relayerConfigPath string,
-	rpcEndpoint string,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	relayerPrivateKey string,
-) error {
-	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
-	if err != nil {
-		return err
-	}
-	AddDestinationToRelayerConfig(
-		relayerConfig,
-		rpcEndpoint,
-		subnetID,
-		blockchainID,
-		relayerPrivateKey,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
-}
-
-func AddBlockchainToRelayerConfigFile(
-	relayerConfigPath string,
-	rpcEndpoint string,
-	wsEndpoint string,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	icmRegistryAddress string,
-	icmMessengerAddress string,
-	relayerRewardAddress string,
-	relayerPrivateKey string,
-) error {
-	relayerConfig, err := LoadRelayerConfig(relayerConfigPath)
-	if err != nil {
-		return err
-	}
-	AddBlockchainToRelayerConfig(
-		relayerConfig,
-		rpcEndpoint,
-		wsEndpoint,
-		subnetID,
-		blockchainID,
-		icmRegistryAddress,
-		icmMessengerAddress,
-		relayerRewardAddress,
-		relayerPrivateKey,
-	)
-	return SaveRelayerConfig(relayerConfig, relayerConfigPath)
+func SerializeRelayerConfig(relayerConfig *config.Config) ([]byte, error) {
+	return json.MarshalIndent(relayerConfig, "", "  ")
 }
 
 // Creates a base relayer config
