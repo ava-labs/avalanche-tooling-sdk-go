@@ -332,9 +332,13 @@ func provisionMonitoringHost(node Node) error {
 	return nil
 }
 
-func provisionAWMRelayerHost(node Node, nodeParams *NodeParams) error { // stub
+func provisionAWMRelayerHost(node Node, nodeParams *NodeParams) error {
+	if err := node.RunSSHSetupDockerService(); err != nil {
+		return err
+	}
 	if err := node.ComposeSSHSetupAWMRelayer(nodeParams.Network, nodeParams.AWMRelayerVersion); err != nil {
 		return err
 	}
-	return node.StartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)
+
+	return node.StartDockerCompose(constants.SSHScriptTimeout)
 }

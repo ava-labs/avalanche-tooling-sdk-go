@@ -123,6 +123,7 @@ func (h *Node) ComposeSSHSetupAWMRelayer(network avalanche.Network, awmRelayerVe
 			return fmt.Errorf("error creating folder %s on node %s", folder, h.NodeID)
 		}
 	}
+
 	// provide basic configuration for AWM Relayer
 	tmpRelayerConfig, err := os.CreateTemp("", "avalancecli-awm-relayer-config-*.yml")
 	if err != nil {
