@@ -135,12 +135,12 @@ func (h *Node) RunSSHUpgradeAvalanchego(avalancheGoVersion string) error {
 		constants.SSHScriptTimeout,
 		"templates/avalanchego.docker-compose.yml",
 		dockerComposeInputs{
-			AvalanchegoVersion: avalancheGoVersion,
-			WithMonitoring:     withMonitoring,
-			WithAvalanchego:    true,
-			E2E:                utils.IsE2E(),
-			E2EIP:              utils.E2EConvertIP(h.IP),
-			E2ESuffix:          utils.E2ESuffix(h.IP),
+			Version:         avalancheGoVersion,
+			WithMonitoring:  withMonitoring,
+			WithAvalanchego: true,
+			E2E:             utils.IsE2E(),
+			E2EIP:           utils.E2EConvertIP(h.IP),
+			E2ESuffix:       utils.E2ESuffix(h.IP),
 		}); err != nil {
 		return err
 	}

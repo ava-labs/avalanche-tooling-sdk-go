@@ -43,6 +43,9 @@ type NodeParams struct {
 	// AvalancheGoVersion is the version of Avalanche Go to install in the created node
 	AvalancheGoVersion string
 
+	// AWMRelayerVersion is the version of AWM Relayer to install in the created node
+	AWMRelayerVersion string
+
 	// UseStaticIP is whether the created node should have static IP attached to it. Note that
 	// assigning Static IP to a node may incur additional charges on AWS / GCP. There could also be
 	// a limit to how many Static IPs you can have in a region in AWS & GCP.
@@ -272,7 +275,7 @@ func provisionHost(node Node, nodeParams *NodeParams) error {
 				return err
 			}
 		case AWMRelayer:
-			if err := provisionAWMRelayerHost(node, nodeParams.Network); err != nil {
+			if err := provisionAWMRelayerHost(node, nodeParams); err != nil {
 				return err
 			}
 		default:
@@ -329,8 +332,8 @@ func provisionMonitoringHost(node Node) error {
 	return nil
 }
 
-func provisionAWMRelayerHost(node Node, network avalanche.Network) error { // stub
-	if err := node.ComposeSSHSetupAWMRelayer(network); err != nil {
+func provisionAWMRelayerHost(node Node, nodeParams *NodeParams) error { // stub
+	if err := node.ComposeSSHSetupAWMRelayer(nodeParams.Network, nodeParams.AWMRelayerVersion); err != nil {
 		return err
 	}
 	return node.StartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)

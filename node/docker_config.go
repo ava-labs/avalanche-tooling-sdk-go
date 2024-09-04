@@ -113,23 +113,25 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 
 func (h *Node) GetAMWRelayerConfig() (*config.Config, error) {
 	remoteAWMConf := remoteconfig.GetRemoteAMWRelayerConfig()
-	if slices.Contains(h.Roles, AWMRelayer) {
-		if configExists, err := h.FileExists(remoteAWMConf); err != nil || !configExists {
-			return nil, fmt.Errorf("%s: config file %s does not exist or not available", h.NodeID, remoteAWMConf)
-		}
-		if c, err := h.ReadFileBytes(remoteAWMConf, constants.SSHFileOpsTimeout); err != nil {
-			return nil, fmt.Errorf("%s: failed to read config file %s: %w", h.NodeID, remoteAWMConf, err)
-		} else {
-			awmConfig := &config.Config{}
-			if json.Unmarshal(c, &awmConfig) != nil {
-				return nil, fmt.Errorf("%s: failed to parse config file %s", h.NodeID, remoteAWMConf)
-			} else {
-				return awmConfig, nil
-			}
-		}
-	} else {
-		return nil, errors.New("node is not a AWM Relayer")
+	if !slices.Contains(h.Roles, AWMRelayer) {
+		return nil, errors.New("node is not an AWM Relayer")
 	}
+
+	if configExists, err := h.FileExists(remoteAWMConf); err != nil || !configExists {
+		return nil, fmt.Errorf("%s: config file %s does not exist or not available", h.NodeID, remoteAWMConf)
+	}
+
+	c, err := h.ReadFileBytes(remoteAWMConf, constants.SSHFileOpsTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to read config file %s: %w", h.NodeID, remoteAWMConf, err)
+	}
+
+	awmConfig := &config.Config{}
+	if err := json.Unmarshal(c, &awmConfig); err != nil {
+		return nil, fmt.Errorf("%s: failed to parse config file %s", h.NodeID, remoteAWMConf)
+	}
+
+	return awmConfig, nil
 }
 
 // AddBlockchainToRelayerConfig adds a blockchain to the AWM relayer config
@@ -165,10 +167,13 @@ func (h *Node) AddBlockchainToRelayerConfig(
 		return err
 	}
 	defer os.Remove(tmpRelayerConfig.Name())
-	if relayer.SaveRelayerConfig(awmConfig, tmpRelayerConfig.Name()) != nil {
+	configData, err := relayer.SerializeRelayerConfig(awmConfig)
+	if err != nil {
 		return err
 	}
-
+	if _, err := tmpRelayerConfig.Write(configData); err != nil {
+		return err
+	}
 	if err := h.Upload(tmpRelayerConfig.Name(), remoteconfig.GetRemoteAMWRelayerConfig(), constants.SSHFileOpsTimeout); err != nil {
 		return err
 	}

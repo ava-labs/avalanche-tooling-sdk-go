@@ -49,12 +49,12 @@ func (h *Node) ComposeSSHSetupNode(networkID string, subnetsToTrack []string, av
 		constants.SSHScriptTimeout,
 		"templates/avalanchego.docker-compose.yml",
 		dockerComposeInputs{
-			AvalanchegoVersion: avalancheGoVersion,
-			WithMonitoring:     withMonitoring,
-			WithAvalanchego:    true,
-			E2E:                utils.IsE2E(),
-			E2EIP:              utils.E2EConvertIP(h.IP),
-			E2ESuffix:          utils.E2ESuffix(h.IP),
+			Version:         avalancheGoVersion,
+			WithMonitoring:  withMonitoring,
+			WithAvalanchego: true,
+			E2E:             utils.IsE2E(),
+			E2EIP:           utils.E2EConvertIP(h.IP),
+			E2ESuffix:       utils.E2ESuffix(h.IP),
 		})
 }
 
@@ -117,7 +117,7 @@ func (h *Node) ComposeSSHSetupMonitoring() error {
 		dockerComposeInputs{})
 }
 
-func (h *Node) ComposeSSHSetupAWMRelayer(network avalanche.Network) error {
+func (h *Node) ComposeSSHSetupAWMRelayer(network avalanche.Network, awmRelayerVersion string) error {
 	for _, folder := range remoteconfig.AWMRelayerFoldersToCreate() {
 		if h.MkdirAll(folder, constants.SSHFileOpsTimeout) != nil {
 			return fmt.Errorf("error creating folder %s on node %s", folder, h.NodeID)
@@ -129,8 +129,12 @@ func (h *Node) ComposeSSHSetupAWMRelayer(network avalanche.Network) error {
 		return err
 	}
 	defer os.Remove(tmpRelayerConfig.Name())
-	config := relayer.CreateBaseRelayerConfig(logging.Info.LowerString(), remoteconfig.GetDockerAWMRelayerFolder(), 0, network)
-	if relayer.SaveRelayerConfig(config, tmpRelayerConfig.Name()) != nil {
+	awmConfig := relayer.CreateBaseRelayerConfig(logging.Info.LowerString(), remoteconfig.GetDockerAWMRelayerFolder(), 0, network)
+	configData, err := relayer.SerializeRelayerConfig(awmConfig)
+	if err != nil {
+		return err
+	}
+	if _, err := tmpRelayerConfig.Write(configData); err != nil {
 		return err
 	}
 	// upload the configuration file to the remote node
@@ -140,5 +144,7 @@ func (h *Node) ComposeSSHSetupAWMRelayer(network avalanche.Network) error {
 	return h.ComposeOverSSH("Setup AWM Relayer",
 		constants.SSHScriptTimeout,
 		"templates/awmrelayer.docker-compose.yml",
-		dockerComposeInputs{})
+		dockerComposeInputs{
+			Version: awmRelayerVersion,
+		})
 }
