@@ -12,10 +12,8 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain/relayer"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/awm-relayer/config"
 )
 
@@ -135,33 +133,10 @@ func (h *Node) GetAMWRelayerConfig() (*config.Config, error) {
 }
 
 // AddBlockchainToRelayerConfig adds a blockchain to the AWM relayer config
-func (h *Node) AddBlockchainToRelayerConfig(
-	rpcEndpoint string,
-	wsEndoint string,
-	subnetID ids.ID,
-	blockchainID ids.ID,
-	registryAddress string,
-	messengerAddress string,
-	relayerKey *key.SoftKey,
-) error {
+func (h *Node) SetAMWRelayerConfig(awmConfig *config.Config) error {
 	if !slices.Contains(h.Roles, AWMRelayer) {
 		return errors.New("node is not a AWM Relayer")
 	}
-	awmConfig, err := h.GetAMWRelayerConfig()
-	if err != nil {
-		return err
-	}
-	relayer.AddBlockchainToRelayerConfig(
-		awmConfig,
-		rpcEndpoint,
-		wsEndoint,
-		subnetID,
-		blockchainID,
-		registryAddress,
-		messengerAddress,
-		relayerKey.C(),
-		relayerKey.PrivKeyHex(),
-	)
 	tmpRelayerConfig, err := os.CreateTemp("", "avalancecli-awm-relayer-config-*.yml")
 	if err != nil {
 		return err
