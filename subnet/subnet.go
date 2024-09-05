@@ -25,8 +25,6 @@ import (
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
-	"github.com/ava-labs/subnet-evm/precompile/contracts/txallowlist"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type SubnetParams struct {
@@ -221,21 +219,8 @@ func createEvmGenesis(
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
 	}
 
-	if conf != nil && conf.GenesisPrecompiles[txallowlist.ConfigKey] != nil {
-		allowListCfg, ok := conf.GenesisPrecompiles[txallowlist.ConfigKey].(*txallowlist.Config)
-		if !ok {
-			return nil, fmt.Errorf(
-				"expected config of type txallowlist.AllowListConfig, but got %T",
-				allowListCfg,
-			)
-		}
-
-		if err := ensureAdminsHaveBalance(
-			allowListCfg.AdminAddresses,
-			allocation); err != nil {
-			return nil, err
-		}
-	}
+	conf.FeeConfig = subnetEVMParams.FeeConfig
+	conf.GenesisPrecompiles = subnetEVMParams.Precompiles
 
 	conf.ChainID = subnetEVMParams.ChainID
 
@@ -256,24 +241,6 @@ func createEvmGenesis(
 	}
 
 	return prettyJSON.Bytes(), nil
-}
-
-func ensureAdminsHaveBalance(admins []common.Address, alloc core.GenesisAlloc) error {
-	if len(admins) < 1 {
-		return nil
-	}
-
-	for _, admin := range admins {
-		// we can break at the first admin who has a non-zero balance
-		if bal, ok := alloc[admin]; ok &&
-			bal.Balance != nil &&
-			bal.Balance.Uint64() > uint64(0) {
-			return nil
-		}
-	}
-	return errors.New(
-		"none of the addresses in the transaction allow list precompile have any tokens allocated to them. Currently, no address can transact on the network. Airdrop some funds to one of the allow list addresses to continue",
-	)
 }
 
 func vmID(vmName string) (ids.ID, error) {
