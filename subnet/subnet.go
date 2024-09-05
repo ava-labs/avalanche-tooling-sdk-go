@@ -25,7 +25,6 @@ import (
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
-	"github.com/ava-labs/subnet-evm/precompile/contracts/txallowlist"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -221,21 +220,8 @@ func createEvmGenesis(
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
 	}
 
-	if conf != nil && conf.GenesisPrecompiles[txallowlist.ConfigKey] != nil {
-		allowListCfg, ok := conf.GenesisPrecompiles[txallowlist.ConfigKey].(*txallowlist.Config)
-		if !ok {
-			return nil, fmt.Errorf(
-				"expected config of type txallowlist.AllowListConfig, but got %T",
-				allowListCfg,
-			)
-		}
-
-		if err := ensureAdminsHaveBalance(
-			allowListCfg.AdminAddresses,
-			allocation); err != nil {
-			return nil, err
-		}
-	}
+	conf.FeeConfig = subnetEVMParams.FeeConfig
+	conf.GenesisPrecompiles = subnetEVMParams.Precompiles
 
 	conf.ChainID = subnetEVMParams.ChainID
 
