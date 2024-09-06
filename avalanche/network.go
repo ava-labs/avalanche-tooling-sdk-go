@@ -21,6 +21,8 @@ const (
 	Mainnet
 	Fuji
 	Devnet
+	DevnetAPIEndpoint = ""
+	DevnetNetworkID   = 1338
 )
 
 const (
@@ -83,6 +85,16 @@ func FujiNetwork() Network {
 
 func MainnetNetwork() Network {
 	return NewNetwork(Mainnet, constants.MainnetID, MainnetAPIEndpoint)
+}
+
+func DevnetNetwork(endpoint string, id uint32) Network {
+	if endpoint == "" {
+		endpoint = DevnetAPIEndpoint
+	}
+	if id == 0 {
+		id = DevnetNetworkID
+	}
+	return NewNetwork(Devnet, id, endpoint)
 }
 
 func (n Network) GenesisParams() *genesis.Params {
