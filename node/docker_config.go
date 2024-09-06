@@ -4,11 +4,17 @@
 package node
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
+	"slices"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain/relayer"
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/awm-relayer/config"
 )
 
 // PrepareAvalanchegoConfig creates the config files for the AvalancheGo
@@ -101,4 +107,50 @@ func prepareGrafanaConfig() (string, string, string, string, error) {
 		return "", "", "", "", err
 	}
 	return grafanaConfigFile.Name(), grafanaDashboardsFile.Name(), grafanaDataSourceFile.Name(), grafanaPromDataSourceFile.Name(), nil
+}
+
+func (h *Node) GetAMWRelayerConfig() (*config.Config, error) {
+	remoteAWMConf := remoteconfig.GetRemoteAMWRelayerConfig()
+	if !slices.Contains(h.Roles, AWMRelayer) {
+		return nil, errors.New("node is not an AWM Relayer")
+	}
+
+	if configExists, err := h.FileExists(remoteAWMConf); err != nil || !configExists {
+		return nil, fmt.Errorf("%s: config file %s does not exist or not available", h.NodeID, remoteAWMConf)
+	}
+
+	c, err := h.ReadFileBytes(remoteAWMConf, constants.SSHFileOpsTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to read config file %s: %w", h.NodeID, remoteAWMConf, err)
+	}
+
+	awmConfig := &config.Config{}
+	if err := json.Unmarshal(c, &awmConfig); err != nil {
+		return nil, fmt.Errorf("%s: failed to parse config file %s", h.NodeID, remoteAWMConf)
+	}
+
+	return awmConfig, nil
+}
+
+// AddBlockchainToRelayerConfig adds a blockchain to the AWM relayer config
+func (h *Node) SetAMWRelayerConfig(awmConfig *config.Config) error {
+	if !slices.Contains(h.Roles, AWMRelayer) {
+		return errors.New("node is not a AWM Relayer")
+	}
+	tmpRelayerConfig, err := os.CreateTemp("", "avalancecli-awm-relayer-config-*.yml")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpRelayerConfig.Name())
+	configData, err := relayer.SerializeRelayerConfig(awmConfig)
+	if err != nil {
+		return err
+	}
+	if _, err := tmpRelayerConfig.Write(configData); err != nil {
+		return err
+	}
+	if err := h.Upload(tmpRelayerConfig.Name(), remoteconfig.GetRemoteAMWRelayerConfig(), constants.SSHFileOpsTimeout); err != nil {
+		return err
+	}
+	return h.RestartDockerComposeService(utils.GetRemoteComposeFile(), constants.ServiceAWMRelayer, constants.SSHLongRunningScriptTimeout)
 }

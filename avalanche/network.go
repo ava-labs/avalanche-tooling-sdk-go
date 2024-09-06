@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+
 	"github.com/ava-labs/avalanchego/genesis"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/constants"

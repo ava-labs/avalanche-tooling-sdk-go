@@ -9,9 +9,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain/relayer"
 	remoteconfig "github.com/ava-labs/avalanche-tooling-sdk-go/node/config"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/utils/logging"
 )
 
 // ValidateComposeFile validates a docker-compose file on a remote node.
@@ -46,12 +49,12 @@ func (h *Node) ComposeSSHSetupNode(networkID string, subnetsToTrack []string, av
 		constants.SSHScriptTimeout,
 		"templates/avalanchego.docker-compose.yml",
 		dockerComposeInputs{
-			AvalanchegoVersion: avalancheGoVersion,
-			WithMonitoring:     withMonitoring,
-			WithAvalanchego:    true,
-			E2E:                utils.IsE2E(),
-			E2EIP:              utils.E2EConvertIP(h.IP),
-			E2ESuffix:          utils.E2ESuffix(h.IP),
+			Version:         avalancheGoVersion,
+			WithMonitoring:  withMonitoring,
+			WithAvalanchego: true,
+			E2E:             utils.IsE2E(),
+			E2EIP:           utils.E2EConvertIP(h.IP),
+			E2ESuffix:       utils.E2ESuffix(h.IP),
 		})
 }
 
@@ -114,9 +117,35 @@ func (h *Node) ComposeSSHSetupMonitoring() error {
 		dockerComposeInputs{})
 }
 
-func (h *Node) ComposeSSHSetupAWMRelayer() error {
+func (h *Node) ComposeSSHSetupAWMRelayer(network avalanche.Network, awmRelayerVersion string) error {
+	for _, folder := range remoteconfig.AWMRelayerFoldersToCreate() {
+		if h.MkdirAll(folder, constants.SSHFileOpsTimeout) != nil {
+			return fmt.Errorf("error creating folder %s on node %s", folder, h.NodeID)
+		}
+	}
+
+	// provide basic configuration for AWM Relayer
+	tmpRelayerConfig, err := os.CreateTemp("", "avalancecli-awm-relayer-config-*.yml")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpRelayerConfig.Name())
+	awmConfig := relayer.CreateBaseRelayerConfig(logging.Info.LowerString(), remoteconfig.GetDockerAWMRelayerFolder(), 0, network)
+	configData, err := relayer.SerializeRelayerConfig(awmConfig)
+	if err != nil {
+		return err
+	}
+	if _, err := tmpRelayerConfig.Write(configData); err != nil {
+		return err
+	}
+	// upload the configuration file to the remote node
+	if err := h.Upload(tmpRelayerConfig.Name(), remoteconfig.GetRemoteAMWRelayerConfig(), constants.SSHFileOpsTimeout); err != nil {
+		return err
+	}
 	return h.ComposeOverSSH("Setup AWM Relayer",
 		constants.SSHScriptTimeout,
 		"templates/awmrelayer.docker-compose.yml",
-		dockerComposeInputs{})
+		dockerComposeInputs{
+			Version: awmRelayerVersion,
+		})
 }

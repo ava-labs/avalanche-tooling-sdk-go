@@ -19,12 +19,12 @@ import (
 )
 
 type dockerComposeInputs struct {
-	WithMonitoring     bool
-	WithAvalanchego    bool
-	AvalanchegoVersion string
-	E2E                bool
-	E2EIP              string
-	E2ESuffix          string
+	WithMonitoring  bool
+	WithAvalanchego bool
+	Version         string
+	E2E             bool
+	E2EIP           string
+	E2ESuffix       string
 }
 
 //go:embed templates/*.docker-compose.yml

@@ -74,6 +74,7 @@ const (
 	AvalancheGoGitRepo     = "https://github.com/ava-labs/avalanchego"
 	SubnetEVMRepoName      = "subnet-evm"
 
+	CloudNodeAWMRelayerPath  = "/home/ubuntu/.awm-relayer"
 	AWMRelayerInstallDir     = "awm-relayer"
 	AWMRelayerConfigFilename = "awm-relayer-config.json"
 
