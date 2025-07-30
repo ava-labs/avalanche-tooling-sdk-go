@@ -1,4 +1,4 @@
-// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package utils
 
@@ -6,69 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
-
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"golang.org/x/exp/slices"
 )
-
-func Any[T any](input []T, f func(T) bool) bool {
-	for _, e := range input {
-		if f(e) {
-			return true
-		}
-	}
-	return false
-}
-
-func Find[T any](input []T, f func(T) bool) *T {
-	for _, e := range input {
-		if f(e) {
-			return &e
-		}
-	}
-	return nil
-}
-
-func Belongs[T comparable](input []T, elem T) bool {
-	for _, e := range input {
-		if e == elem {
-			return true
-		}
-	}
-	return false
-}
-
-func Filter[T any](input []T, f func(T) bool) []T {
-	output := make([]T, 0, len(input))
-	for _, e := range input {
-		if f(e) {
-			output = append(output, e)
-		}
-	}
-	return output
-}
-
-func Map[T, U any](input []T, f func(T) U) []U {
-	output := make([]U, 0, len(input))
-	for _, e := range input {
-		output = append(output, f(e))
-	}
-	return output
-}
-
-func MapWithError[T, U any](input []T, f func(T) (U, error)) ([]U, error) {
-	output := make([]U, 0, len(input))
-	for _, e := range input {
-		o, err := f(e)
-		if err != nil {
-			return nil, err
-		}
-		output = append(output, o)
-	}
-	return output, nil
-}
 
 // AppendSlices appends multiple slices into a single slice.
 func AppendSlices[T any](slices ...[]T) []T {
@@ -85,38 +24,48 @@ func AppendSlices[T any](slices ...[]T) []T {
 
 // Retry retries the given function until it succeeds or the maximum number of attempts is reached.
 func Retry[T any](
-	fn func(context.Context) (T, error),
-	attempTimeout time.Duration,
+	fn func() (T, error),
 	maxAttempts int,
-	errMsg string,
+	retryInterval time.Duration,
 ) (T, error) {
-	const defaultAttempTimeout = 2 * time.Second
-	if attempTimeout == 0 {
-		attempTimeout = defaultAttempTimeout
+	const defaultRetryInterval = 2 * time.Second
+	if retryInterval == 0 {
+		retryInterval = defaultRetryInterval
 	}
 	var (
 		result T
-		err    error
+		cumErr error
 	)
 	for attempt := 0; attempt < maxAttempts; attempt++ {
-		start := time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), attempTimeout)
-		defer cancel()
-		result, err = fn(ctx)
+		var err error
+		result, err = fn()
 		if err == nil {
 			return result, nil
 		}
-		elapsed := time.Since(start)
-		if elapsed < attempTimeout {
-			time.Sleep(attempTimeout - elapsed)
-		}
+		cumErr = errors.Join(cumErr, err)
+		time.Sleep(retryInterval)
 	}
 	return result, fmt.Errorf(
-		"%s: maximum retry attempts %d reached: last err = %w",
-		errMsg,
+		"maximum retry attempts %d reached: cumulated err = %w",
 		maxAttempts,
-		err,
+		cumErr,
 	)
+}
+
+// RetryWithContext retries the given function until it succeeds or the maximum number of attempts is reached.
+// For each retry, it generates a fresh context to be used on the call
+func RetryWithContextGen[T any](
+	ctxGen func() (context.Context, context.CancelFunc),
+	fn func(context.Context) (T, error),
+	maxAttempts int,
+	retryInterval time.Duration,
+) (T, error) {
+	newfn := func() (T, error) {
+		ctx, cancel := ctxGen()
+		defer cancel()
+		return fn(ctx)
+	}
+	return Retry(newfn, maxAttempts, retryInterval)
 }
 
 // WrapContext adds a context based timeout to a given function
@@ -140,37 +89,4 @@ func WrapContext[T any](
 		}
 		return ret, err
 	}
-}
-
-func CallWithTimeout[T any](
-	name string,
-	f func() (T, error),
-	timeout time.Duration,
-) (T, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	ret, err := WrapContext(f)(ctx)
-	if errors.Is(err, context.DeadlineExceeded) {
-		err = fmt.Errorf("%s timeout of %d seconds", name, uint(timeout.Seconds()))
-	}
-	return ret, err
-}
-
-// RandomString generates a random string of the specified length.
-func RandomString(length int) string {
-	randG := rand.New(rand.NewSource(time.Now().UnixNano())) // #nosec G404
-	chars := "abcdefghijklmnopqrstuvwxyz"
-	result := make([]byte, length)
-	for i := 0; i < length; i++ {
-		result[i] = chars[randG.Intn(len(chars))]
-	}
-	return string(result)
-}
-
-func SupportedAvagoArch() []string {
-	return []string{string(types.ArchitectureTypeArm64), string(types.ArchitectureTypeX8664)}
-}
-
-func ArchSupported(arch string) bool {
-	return slices.Contains(SupportedAvagoArch(), arch)
 }

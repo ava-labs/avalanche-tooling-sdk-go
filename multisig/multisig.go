@@ -1,17 +1,15 @@
-// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package multisig
 
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
-	"github.com/ava-labs/avalanchego/utils/formatting"
 	"github.com/ava-labs/avalanchego/vms/components/verify"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
@@ -68,30 +66,6 @@ func (ms *Multisig) ToBytes() ([]byte, error) {
 	return txBytes, nil
 }
 
-func (ms *Multisig) ToFile(txPath string) error {
-	if ms.Undefined() {
-		return ErrUndefinedTx
-	}
-	txBytes, err := ms.ToBytes()
-	if err != nil {
-		return err
-	}
-	txStr, err := formatting.Encode(formatting.Hex, txBytes)
-	if err != nil {
-		return fmt.Errorf("couldn't encode signed tx: %w", err)
-	}
-	f, err := os.Create(txPath)
-	if err != nil {
-		return fmt.Errorf("couldn't create file to write tx to: %w", err)
-	}
-	defer f.Close()
-	_, err = f.WriteString(txStr)
-	if err != nil {
-		return fmt.Errorf("couldn't write tx into file: %w", err)
-	}
-	return nil
-}
-
 func (ms *Multisig) FromBytes(txBytes []byte) error {
 	var tx txs.Tx
 	if _, err := txs.Codec.Unmarshal(txBytes, &tx); err != nil {
@@ -102,18 +76,6 @@ func (ms *Multisig) FromBytes(txBytes []byte) error {
 	}
 	ms.PChainTx = &tx
 	return nil
-}
-
-func (ms *Multisig) FromFile(txPath string) error {
-	txEncodedBytes, err := os.ReadFile(txPath)
-	if err != nil {
-		return err
-	}
-	txBytes, err := formatting.Decode(formatting.Hex, string(txEncodedBytes))
-	if err != nil {
-		return fmt.Errorf("couldn't decode signed tx: %w", err)
-	}
-	return ms.FromBytes(txBytes)
 }
 
 func (ms *Multisig) IsReadyToCommit() (bool, error) {
@@ -285,19 +247,19 @@ func (ms *Multisig) GetNetworkID() (uint32, error) {
 }
 
 // get network model associated to tx
-func (ms *Multisig) GetNetwork() (avalanche.Network, error) {
+func (ms *Multisig) GetNetwork() (network.Network, error) {
 	if ms.Undefined() {
-		return avalanche.UndefinedNetwork, ErrUndefinedTx
+		return network.UndefinedNetwork, ErrUndefinedTx
 	}
 	networkID, err := ms.GetNetworkID()
 	if err != nil {
-		return avalanche.UndefinedNetwork, err
+		return network.UndefinedNetwork, err
 	}
-	network := avalanche.NetworkFromNetworkID(networkID)
-	if network.Kind == avalanche.Undefined {
-		return avalanche.UndefinedNetwork, fmt.Errorf("undefined network model for tx")
+	newNetwork := network.NetworkFromNetworkID(networkID)
+	if newNetwork.Kind == network.Undefined {
+		return network.UndefinedNetwork, fmt.Errorf("undefined network model for tx")
 	}
-	return network, nil
+	return newNetwork, nil
 }
 
 func (ms *Multisig) GetBlockchainID() (ids.ID, error) {
@@ -375,7 +337,7 @@ func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 	return ms.controlKeys, ms.threshold, nil
 }
 
-func GetOwners(network avalanche.Network, subnetID ids.ID) ([]ids.ShortID, uint32, error) {
+func GetOwners(network network.Network, subnetID ids.ID) ([]ids.ShortID, uint32, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
 	ctx := context.Background()
 	subnetResponse, err := pClient.GetSubnet(ctx, subnetID)

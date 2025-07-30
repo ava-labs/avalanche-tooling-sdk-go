@@ -1,11 +1,11 @@
-// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package ledger
 
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
@@ -32,14 +32,6 @@ func New() (*LedgerDevice, error) {
 		Ledger: avagoDev,
 	}
 	return &dev, nil
-}
-
-func (dev *LedgerDevice) P(network avalanche.Network, indices []uint32) ([]string, error) {
-	addresses, err := dev.Addresses(indices)
-	if err != nil {
-		return nil, err
-	}
-	return utils.P(network.HRP(), addresses)
 }
 
 func (dev *LedgerDevice) FindAddresses(addresses []string, maxIndex uint32) (map[string]uint32, error) {
@@ -71,9 +63,9 @@ func (dev *LedgerDevice) FindAddresses(addresses []string, maxIndex uint32) (map
 	return indices, nil
 }
 
-// search for a set of indices that pay a given amount
+// FindFunds searches for a set of indices that pay a given amount
 func (dev *LedgerDevice) FindFunds(
-	network avalanche.Network,
+	network network.Network,
 	amount uint64,
 	maxIndex uint32,
 ) ([]uint32, error) {

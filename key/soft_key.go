@@ -52,8 +52,6 @@ const (
 	EwoqPrivateKey = privKeyEncPfx + rawEwoqPk
 )
 
-var ewoqKeyBytes = []byte("56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027")
-
 type SOp struct {
 	privKey        *secp256k1.PrivateKey
 	privKeyEncoded string
@@ -156,10 +154,6 @@ func LoadSoftOrCreate(keyPath string) (*SoftKey, error) {
 		}
 		return k, nil
 	}
-}
-
-func LoadEwoq() (*SoftKey, error) {
-	return LoadSoftFromBytes(ewoqKeyBytes)
 }
 
 // LoadSoftFromBytes loads the private key from bytes and creates the corresponding SoftKey.
@@ -286,7 +280,7 @@ func (m *SoftKey) PrivKeyHex() string {
 
 // Saves the private key to disk with hex encoding.
 func (m *SoftKey) Save(p string) error {
-	return os.WriteFile(p, []byte(m.PrivKeyHex()), constants.WriteReadUserOnlyPerms)
+	return os.WriteFile(p, []byte(m.PrivKeyHex()), constants.UserOnlyWriteReadPerms)
 }
 
 func (m *SoftKey) P(networkHRP string) (string, error) {
