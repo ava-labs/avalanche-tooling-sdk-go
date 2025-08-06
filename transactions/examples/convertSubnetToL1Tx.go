@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package examples
+package main
 
 import (
 	"context"
@@ -24,27 +24,27 @@ func ConvertL1() error {
 	// Configuration - Replace these with your actual values
 	const (
 		// Your private key file path
-		privateKeyFilePath = "/path/to/your/private/key.pem"
+		privateKeyFilePath = ""
 
 		// Subnet and Chain IDs
-		subnetIDStr = "2bRCr6B4MiEfSjidDwxDpdCyviwnZUVhBVBgj6tVXf2qrbE9u"
-		chainIDStr  = "2bRCr6B4MiEfSjidDwxDpdCyviwnZUVhBVBgj6tVXf2qrbE9u"
+		subnetIDStr = ""
+		chainIDStr  = ""
 
 		// Validator information
-		nodeIDStr            = "NodeID-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-		BLSPublicKey         = "0x..."                                            // Replace with actual BLS public key
-		BLSProofOfPossession = "0x..."                                            // Replace with actual BLS proof
-		ChangeOwnerAddr      = "P-fuji1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" // Address to receive remaining balance
-		Weight               = 1000000                                            // Validator weight
-		Balance              = 2000000000000                                      // Validator balance in nAVAX
+		nodeIDStr            = ""
+		BLSPublicKey         = "0x..."     // Replace with actual BLS public key
+		BLSProofOfPossession = "0x..."     // Replace with actual BLS proof
+		ChangeOwnerAddr      = "P-fujixxx" // Address to receive remaining balance
+		Weight               = 100         // Validator weight
+		Balance              = 1000000000  // Validator balance in nAVAX
 
 		// Validator manager contract address
-		validatorManagerAddr = "0x..." // Replace with actual contract address
+		validatorManagerAddr = "0x0FEEDC0DE0000000000000000000000000000000" // Replace with actual contract address
 	)
 
 	// Subnet auth keys (addresses that can sign the conversion tx)
 	subnetAuthKeysStrs := []string{
-		"P-fuji1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // Replace with actual addresses
+		"P-fujixxx", // Replace with actual addresses
 	}
 
 	network := network.FujiNetwork()
@@ -145,5 +145,4 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Println("Convert Subnet To Tx completed successfully!")
 }

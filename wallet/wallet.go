@@ -4,7 +4,6 @@ package wallet
 
 import (
 	"context"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanchego/ids"
 	avagokeychain "github.com/ava-labs/avalanchego/utils/crypto/keychain"
@@ -26,7 +25,7 @@ func New(ctx context.Context, uri string, avaxKeychain avagokeychain.Keychain, c
 		ctx,
 		uri,
 		avaxKeychain,
-		nil,
+		secp256k1fx.NewKeychain(),
 		config,
 	)
 	return Wallet{
