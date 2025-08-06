@@ -5,6 +5,7 @@ package blockchain
 
 import (
 	"encoding/json"
+
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/signer"
 
