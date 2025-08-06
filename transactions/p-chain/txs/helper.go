@@ -3,48 +3,16 @@
 package txs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	utilsSDK "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
-
-	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
-
-func (d *PublicDeployer) loadCacheWallet(preloadTxs ...ids.ID) (*primary.Wallet, error) {
-	var err error
-	if d.wallet == nil {
-		d.wallet, err = d.loadWallet(preloadTxs...)
-	}
-	return d.wallet, err
-}
-
-func (d *PublicDeployer) loadWallet(subnetIDs ...ids.ID) (*primary.Wallet, error) {
-	ctx := context.Background()
-	// filter out ids.Empty txs
-	filteredTxs := utils.Filter(subnetIDs, func(e ids.ID) bool { return e != ids.Empty })
-	wallet, err := primary.MakeWallet(
-		ctx,
-		d.network.Endpoint,
-		d.kc.Keychain,
-		secp256k1fx.NewKeychain(),
-		primary.WalletConfig{
-			SubnetIDs: filteredTxs,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return wallet, nil
-}
 
 func (d *PublicDeployer) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
 	if ms.Undefined() {
