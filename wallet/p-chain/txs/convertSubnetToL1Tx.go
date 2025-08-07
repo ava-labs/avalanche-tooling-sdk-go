@@ -29,8 +29,8 @@ type ConvertSubnetToL1TxParams struct {
 	Wallet *wallet.Wallet
 }
 
-func (d *PublicDeployer) NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*multisig.Multisig, error) {
-	options := d.getMultisigTxOptions(params.SubnetAuthKeys)
+func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*multisig.Multisig, error) {
+	options := params.Wallet.GetMultisigTxOptions(params.SubnetAuthKeys)
 	unsignedTx, err := params.Wallet.P().Builder().NewConvertSubnetToL1Tx(
 		params.SubnetID,
 		params.ChainID,
