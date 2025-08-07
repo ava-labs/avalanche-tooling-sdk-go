@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	utilsSDK "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -16,7 +18,6 @@ import (
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
-	"time"
 )
 
 type Wallet struct {
