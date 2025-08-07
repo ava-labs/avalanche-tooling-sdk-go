@@ -10,8 +10,8 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/blockchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/transactions/p-chain/txs"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/p-chain/txs"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
@@ -63,8 +63,6 @@ func ConvertL1() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse chain ID: %w", err)
 	}
-
-	deployer := txs.NewPublicDeployer(keychain, network)
 
 	wallet, err := wallet.New(
 		context.Background(),
@@ -126,13 +124,13 @@ func ConvertL1() error {
 		Wallet: &wallet, // Use the wallet wrapper
 	}
 
-	tx, err := deployer.NewConvertSubnetToL1Tx(convertSubnetParams)
+	tx, err := txs.NewConvertSubnetToL1Tx(convertSubnetParams)
 	if err != nil {
 		return fmt.Errorf("failed to create convert subnet tx: %w", err)
 	}
 
 	// Since it has the required signatures, we will now commit the transaction on chain
-	txID, err := deployer.Commit(*tx, wallet, true)
+	txID, err := wallet.Commit(*tx, true)
 	if err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
