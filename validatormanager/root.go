@@ -14,8 +14,7 @@ import (
 	warpMessage "github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
 	warpPayload "github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/contract"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager/validatormanagertypes"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
@@ -70,6 +69,9 @@ const (
 	SpecializationProxyContractAddress      = "0x100C0DE1C0FFEE00000000000000000000000000"
 	SpecializationProxyAdminContractAddress = "0x97A35a4A2A8a56256de7A32160819c7B3F4C9DA6"
 	RewardCalculatorAddress                 = "0x0DEADC0DE0000000000000000000000000000000"
+
+	MaximumChurnPercentage = 20 // 20% of the validator set can be churned per churn period
+	ChurnPeriodSeconds     = 0  // no churn period
 
 	DefaultPoSMinimumStakeAmount     = 1
 	DefaultPoSMaximumStakeAmount     = 1000
@@ -312,7 +314,7 @@ func GetValidatorManagerType(
 		return validatormanagertypes.ProofOfStake
 	}
 	// verify it is PoA
-	if _, err := validator.GetValidationID(rpcURL, managerAddress, ids.EmptyNodeID); err == nil {
+	if _, err := GetValidationID(rpcURL, managerAddress, ids.EmptyNodeID); err == nil {
 		return validatormanagertypes.ProofOfAuthority
 	}
 	return validatormanagertypes.UndefinedValidatorManagement
