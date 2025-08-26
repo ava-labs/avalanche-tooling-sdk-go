@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package account
+package keychain
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-type Account struct {
+type Keychain struct {
 	keychain.Keychain
 }
 
