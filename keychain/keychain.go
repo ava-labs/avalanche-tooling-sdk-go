@@ -1,13 +1,13 @@
-// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package keychain
 
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/avalanche"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/ledger"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"golang.org/x/exp/maps"
@@ -15,7 +15,7 @@ import (
 
 type Keychain struct {
 	keychain.Keychain
-	network avalanche.Network
+	network network.Network
 	Ledger  *Ledger
 }
 
@@ -53,7 +53,7 @@ type Ledger struct {
 // For stored keys, NewKeychain will generate a new key pair in the provided keyPath if no .pk
 // file currently exists in the provided path.
 func NewKeychain(
-	network avalanche.Network,
+	network network.Network,
 	keyPath string,
 	ledgerInfo *LedgerParams,
 ) (*Keychain, error) {
@@ -95,11 +95,6 @@ func NewKeychain(
 		network:  network,
 	}
 	return &kc, nil
-}
-
-// P returns string formatted addresses in the keychain
-func (kc *Keychain) P() ([]string, error) {
-	return utils.P(kc.network.HRP(), kc.Addresses().List())
 }
 
 func (kc *Keychain) LedgerEnabled() bool {

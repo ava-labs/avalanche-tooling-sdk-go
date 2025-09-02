@@ -1,16 +1,15 @@
-// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package utils
 
 import (
 	"context"
-	"fmt"
-	"sort"
-	"strings"
+	"os"
+	"os/signal"
+	"slices"
+	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
 )
 
 // Unique returns a new slice containing only the unique elements from the input slice.
@@ -26,40 +25,38 @@ func Unique[T comparable](arr []T) []T {
 	return unique
 }
 
+func Belongs[T comparable](input []T, elem T) bool {
+	return slices.Contains(input, elem)
+}
+
+func Map[T, U any](input []T, f func(T) U) []U {
+	output := make([]U, 0, len(input))
+	for _, e := range input {
+		output = append(output, f(e))
+	}
+	return output
+}
+
 func Uint32Sort(arr []uint32) {
-	sort.Slice(arr, func(i, j int) bool { return arr[i] < arr[j] })
+	slices.Sort(arr)
 }
 
 // Context for API requests
 func GetAPIContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), constants.APIRequestTimeout)
+	return GetTimedContext(constants.APIRequestTimeout)
 }
 
 // Context for API requests with large timeout
 func GetAPILargeContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), constants.APIRequestLargeTimeout)
+	return GetTimedContext(constants.APIRequestLargeTimeout)
 }
 
-func P(
-	networkHRP string,
-	addresses []ids.ShortID,
-) ([]string, error) {
-	return MapWithError(
-		addresses,
-		func(addr ids.ShortID) (string, error) {
-			return address.Format("P", networkHRP, addr[:])
-		},
-	)
-}
-
-func RemoveSurrounding(s string, left string, right string) (string, error) {
-	s = strings.TrimSpace(s)
-	if len(s) > 0 {
-		if len(s) < len(left)+len(right) || !strings.HasPrefix(s, left) || !strings.HasSuffix(s, right) {
-			return "", fmt.Errorf("expected esp %q to be of form '%s...%s'", s, left, right)
-		}
-		s = strings.TrimPrefix(s, left)
-		s = strings.TrimSuffix(s, right)
+// Timed Context
+func GetTimedContext(timeout time.Duration) (context.Context, context.CancelFunc) {
+	parent, sigCancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, timeCancel := context.WithTimeout(parent, timeout)
+	return ctx, func() {
+		sigCancel()
+		timeCancel()
 	}
-	return s, nil
 }

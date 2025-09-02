@@ -1,42 +1,126 @@
-// Copyright (C) 2024, Ava Labs, Inc. All rights reserved.
+// Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-
 package validator
 
 import (
-	"time"
+	"encoding/json"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
+	avalanchegojson "github.com/ava-labs/avalanchego/utils/json"
+	"github.com/ava-labs/avalanchego/utils/rpc"
+	"github.com/ava-labs/avalanchego/vms/platformvm"
 )
 
-type PrimaryNetworkValidatorParams struct {
-	// NodeID is the unique identifier of the node to be added as a validator on the Primary Network.
-	NodeID ids.NodeID
+type ValidatorKind int64
 
-	// Duration is how long the node will be staking the Primary Network
-	// Duration has to be greater than or equal to minimum duration for the specified network
-	// (Fuji / Mainnet)
-	Duration time.Duration
+const (
+	UndefinedValidatorKind ValidatorKind = iota
+	NonValidator
+	SovereignValidator
+	NonSovereignValidator
+)
 
-	// StakeAmount is the amount of Avalanche tokens (AVAX) to stake in this validator, which is
-	// denominated in nAVAX. StakeAmount has to be greater than or equal to minimum stake required
-	// for the specified network
-	StakeAmount uint64
-
-	// DelegationFee is the percent fee this validator will charge when others delegate stake to it
-	// When DelegationFee is not set, the minimum delegation fee for the specified network will be set
-	// For more information on delegation fee, please head to https://docs.avax.network/nodes/validate/node-validator#delegation-fee-rate
-	DelegationFee uint32
+// To enable querying validation IDs from P-Chain
+type CurrentValidatorInfo struct {
+	Weight       avalanchegojson.Uint64 `json:"weight"`
+	NodeID       ids.NodeID             `json:"nodeID"`
+	ValidationID ids.ID                 `json:"validationID"`
+	Balance      avalanchegojson.Uint64 `json:"balance"`
 }
 
-type SubnetValidatorParams struct {
-	// NodeID is the unique identifier of the node to be added as a validator on the specified Subnet.
-	NodeID ids.NodeID
-	// Duration is how long the node will be staking the Subnet
-	// Duration has to be less than or equal to the duration that the node will be validating the Primary
-	// Network
-	Duration time.Duration
-	// Weight is the validator's weight when sampling validators.
-	// Weight for subnet validators is set to 20 by default
-	Weight uint64
+func GetTotalWeight(network network.Network, subnetID ids.ID) (uint64, error) {
+	validators, err := GetCurrentValidators(network, subnetID)
+	if err != nil {
+		return 0, err
+	}
+	weight := uint64(0)
+	for _, vdr := range validators {
+		weight += uint64(vdr.Weight)
+	}
+	return weight, nil
+}
+
+func IsValidator(network network.Network, subnetID ids.ID, nodeID ids.NodeID) (bool, error) {
+	validators, err := GetCurrentValidators(network, subnetID)
+	if err != nil {
+		return false, err
+	}
+	nodeIDs := utils.Map(validators, func(v CurrentValidatorInfo) ids.NodeID { return v.NodeID })
+	return utils.Belongs(nodeIDs, nodeID), nil
+}
+
+func GetValidatorBalance(net network.Network, validationID ids.ID) (uint64, error) {
+	vdrInfo, err := GetValidatorInfo(net, validationID)
+	if err != nil {
+		return 0, err
+	}
+	return vdrInfo.Balance, nil
+}
+
+func GetValidatorInfo(net network.Network, validationID ids.ID) (platformvm.L1Validator, error) {
+	pClient := platformvm.NewClient(net.Endpoint)
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
+	vdrInfo, _, err := pClient.GetL1Validator(ctx, validationID)
+	if err != nil {
+		return platformvm.L1Validator{}, err
+	}
+	return vdrInfo, nil
+}
+
+func GetValidatorKind(
+	network network.Network,
+	subnetID ids.ID,
+	nodeID ids.NodeID,
+) (ValidatorKind, error) {
+	pClient := platformvm.NewClient(network.Endpoint)
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
+	vs, err := pClient.GetCurrentValidators(ctx, subnetID, nil)
+	if err != nil {
+		return UndefinedValidatorKind, err
+	}
+	for _, v := range vs {
+		if v.NodeID == nodeID {
+			if v.TxID == ids.Empty {
+				return SovereignValidator, nil
+			}
+			return NonSovereignValidator, nil
+		}
+	}
+	return NonValidator, nil
+}
+
+// Enables querying the validation IDs from P-Chain
+func GetCurrentValidators(network network.Network, subnetID ids.ID) ([]CurrentValidatorInfo, error) {
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
+	requester := rpc.NewEndpointRequester(network.Endpoint + "/ext/P")
+	res := &platformvm.GetCurrentValidatorsReply{}
+	if err := requester.SendRequest(
+		ctx,
+		"platform.getCurrentValidators",
+		&platformvm.GetCurrentValidatorsArgs{
+			SubnetID: subnetID,
+			NodeIDs:  nil,
+		},
+		res,
+	); err != nil {
+		return nil, err
+	}
+	validators := make([]CurrentValidatorInfo, 0, len(res.Validators))
+	for _, vI := range res.Validators {
+		vBytes, err := json.Marshal(vI)
+		if err != nil {
+			return nil, err
+		}
+		var v CurrentValidatorInfo
+		if err := json.Unmarshal(vBytes, &v); err != nil {
+			return nil, err
+		}
+		validators = append(validators, v)
+	}
+	return validators, nil
 }
