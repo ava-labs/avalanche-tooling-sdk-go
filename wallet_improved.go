@@ -1,18 +1,17 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package wallet
+package avalanche_tooling_sdk_go
 
 import (
 	"context"
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanchego/network"
-	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/coreth/accounts"
 	"github.com/ava-labs/subnet-evm/ethclient"
-	"github.com/stretchr/testify/require"
 )
 
 type ChainClients struct {
@@ -29,14 +28,22 @@ type Wallet struct {
 }
 
 // Single constructor that accepts any key source
-func NewWallet(ctx context.Context, network network.Network) (*Wallet, error) {
-
+func NewWallet(ctx context.Context, uri string) (Wallet, error) {
+	wallet, err := primary.MakeWallet(
+		ctx,
+		uri,
+		nil,
+		nil,
+		primary.WalletConfig{},
+	)
+	return Wallet{
+		Wallet: wallet,
+	}, err
 }
 
 func (w *Wallet) CreateAccount(ctx context.Context, network network.Network, keySource interface{}) (*account.Account, error) {
-	keychain, err := keychain.NewKeychain(network, "KEY_PATH", nil)
-	require.NoError(err)
-	keychain.Keychain()
+	newAccount, err := account.NewAccount()
+
 }
 
 func (w *Wallet) GetAccount(ctx context.Context, network network.Network, keySource interface{}) (*account.Account, error) {
