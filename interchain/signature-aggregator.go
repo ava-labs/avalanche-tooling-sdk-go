@@ -21,7 +21,7 @@ const (
 	SignatureAggregatorRequestTimeout = 30 * time.Second
 	DefaultQuorumPercentage           = 67
 	MaxRetries                        = 3
-	InitialBackoff                    = 1 * time.Second
+	InitialBackoff                    = 5 * time.Second
 )
 
 // SignMessage sends a request to the signature aggregator to sign a message.
