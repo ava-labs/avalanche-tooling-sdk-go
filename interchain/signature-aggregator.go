@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	SignatureAggregatorRequestTimeout = 30 * time.Second
+	SignatureAggregatorRequestTimeout = 90 * time.Second
 	DefaultQuorumPercentage           = 67
-	MaxRetries                        = 3
+	MaxRetries                        = 5
 	InitialBackoff                    = 5 * time.Second
 )
 
