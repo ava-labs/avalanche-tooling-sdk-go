@@ -28,6 +28,7 @@ const (
 	PChainTransformSubnetTx
 	PChainAddPermissionlessValidatorTx
 	PChainTransferSubnetOwnershipTx
+	PChainConvertSubnetToL1Tx
 )
 
 type Multisig struct {
@@ -175,6 +176,8 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
 		subnetAuth = unsignedTx.SubnetAuth
 	case *txs.TransferSubnetOwnershipTx:
 		subnetAuth = unsignedTx.SubnetAuth
+	case *txs.ConvertSubnetToL1Tx:
+		subnetAuth = unsignedTx.SubnetAuth
 	default:
 		return nil, fmt.Errorf("unexpected unsigned tx type %T", unsignedTx)
 	}
@@ -218,6 +221,8 @@ func (ms *Multisig) GetTxKind() (TxKind, error) {
 		return PChainAddPermissionlessValidatorTx, nil
 	case *txs.TransferSubnetOwnershipTx:
 		return PChainTransferSubnetOwnershipTx, nil
+	case *txs.ConvertSubnetToL1Tx:
+		return PChainConvertSubnetToL1Tx, nil
 	default:
 		return Undefined, fmt.Errorf("unexpected unsigned tx type %T", unsignedTx)
 	}
@@ -242,6 +247,8 @@ func (ms *Multisig) GetNetworkID() (uint32, error) {
 	case *txs.AddPermissionlessValidatorTx:
 		networkID = unsignedTx.NetworkID
 	case *txs.TransferSubnetOwnershipTx:
+		networkID = unsignedTx.NetworkID
+	case *txs.ConvertSubnetToL1Tx:
 		networkID = unsignedTx.NetworkID
 	default:
 		return 0, fmt.Errorf("unexpected unsigned tx type %T", unsignedTx)
@@ -284,6 +291,8 @@ func (ms *Multisig) GetBlockchainID() (ids.ID, error) {
 		blockchainID = unsignedTx.BlockchainID
 	case *txs.TransferSubnetOwnershipTx:
 		blockchainID = unsignedTx.BlockchainID
+	case *txs.ConvertSubnetToL1Tx:
+		blockchainID = unsignedTx.BlockchainID
 	default:
 		return ids.Empty, fmt.Errorf("unexpected unsigned tx type %T", unsignedTx)
 	}
@@ -309,6 +318,8 @@ func (ms *Multisig) GetSubnetID() (ids.ID, error) {
 	case *txs.AddPermissionlessValidatorTx:
 		subnetID = unsignedTx.Subnet
 	case *txs.TransferSubnetOwnershipTx:
+		subnetID = unsignedTx.Subnet
+	case *txs.ConvertSubnetToL1Tx:
 		subnetID = unsignedTx.Subnet
 	default:
 		return ids.Empty, fmt.Errorf("unexpected unsigned tx type %T", unsignedTx)

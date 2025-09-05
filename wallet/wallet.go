@@ -26,7 +26,7 @@ func New(ctx context.Context, uri string, avaxKeychain avagokeychain.Keychain, c
 		ctx,
 		uri,
 		avaxKeychain,
-		nil,
+		secp256k1fx.NewKeychain(),
 		config,
 	)
 	return Wallet{
