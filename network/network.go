@@ -54,3 +54,27 @@ func FujiNetwork() Network {
 func MainnetNetwork() Network {
 	return NewNetwork(Mainnet, constants.MainnetID, MainnetAPIEndpoint)
 }
+
+// HRPFromNetworkID returns the Human Readable Part (HRP) for a given NetworkID.
+// This function maps all known Avalanche network IDs to their corresponding HRP values.
+// For unknown NetworkIDs, it returns the FallbackHRP.
+func HRPFromNetworkID(networkID uint32) string {
+	switch networkID {
+	case constants.MainnetID:
+		return constants.MainnetHRP
+	case constants.CascadeID:
+		return constants.CascadeHRP
+	case constants.DenaliID:
+		return constants.DenaliHRP
+	case constants.EverestID:
+		return constants.EverestHRP
+	case constants.FujiID:
+		return constants.FujiHRP
+	case constants.UnitTestID:
+		return constants.UnitTestHRP
+	case constants.LocalID:
+		return constants.LocalHRP
+	default:
+		return constants.FallbackHRP
+	}
+}
