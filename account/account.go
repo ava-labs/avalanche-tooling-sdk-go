@@ -3,24 +3,32 @@
 package account
 
 import (
+	"fmt"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 )
 
 type Account struct {
-	*keychain.SoftKey
+	*key.SoftKey
 	*keychain.Keychain
 }
 
 func NewAccount() (Account, error) {
 	k, err := key.NewSoft(0)
 	if err != nil {
-		return err
+		return Account{}, err
 	}
-	return nil, nil
+	return Account{
+		SoftKey:  k,
+		Keychain: nil, // Will be set later if needed
+	}, nil
 }
 
 func (a *Account) GetPChainAddress() (string, error) {
-	cChainAddr := sk.C()
-
+	if a.SoftKey == nil {
+		return "", fmt.Errorf("SoftKey not initialized")
+	}
+	cChainAddr := a.SoftKey.C()
+	return cChainAddr, nil
 }
