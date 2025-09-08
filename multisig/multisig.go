@@ -3,18 +3,17 @@
 package multisig
 
 import (
-	"context"
 	"fmt"
-
-	"github.com/ava-labs/avalanchego/vms/platformvm"
+	"math"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/vms/components/verify"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
-
-	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 )
 
 type TxKind int64
@@ -186,9 +185,13 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected subnetAuth of type *secp256k1fx.Input, got %T", subnetAuth)
 	}
+	controlKeysLen := len(controlKeys)
+	if controlKeysLen > math.MaxUint32 {
+		return nil, fmt.Errorf("value %d out of range for uint32", controlKeysLen)
+	}
 	authSigners := []ids.ShortID{}
 	for _, sigIndex := range subnetInput.SigIndices {
-		if sigIndex >= uint32(len(controlKeys)) {
+		if sigIndex >= uint32(controlKeysLen) {
 			return nil, fmt.Errorf("signer index %d exceeds number of control keys", sigIndex)
 		}
 		authSigners = append(authSigners, controlKeys[sigIndex])
@@ -352,7 +355,8 @@ func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 
 func GetOwners(network network.Network, subnetID ids.ID) ([]ids.ShortID, uint32, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
-	ctx := context.Background()
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
 	subnetResponse, err := pClient.GetSubnet(ctx, subnetID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("subnet tx %s query error: %w", subnetID, err)

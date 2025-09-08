@@ -13,4 +13,6 @@ const (
 	UserOnlyWriteReadPerms     = 0o600
 	UserOnlyWriteReadExecPerms = 0o700
 	WriteReadUserOnlyPerms     = 0o600
+
+	SignatureTimeout = 5 * time.Minute
 )
