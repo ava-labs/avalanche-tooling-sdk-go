@@ -5,6 +5,7 @@ package avalanche_tooling_sdk_go
 import (
 	"context"
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/transaction"
@@ -34,21 +35,26 @@ var _ Wallet = (*LocalWallet)(nil)
 
 // NewLocalWallet creates a new local wallet
 func NewLocalWallet(ctx context.Context, uri string) (*LocalWallet, error) {
-	wallet, err := primary.MakeWallet(
-		ctx,
-		uri,
-		nil,
-		nil,
-		primary.WalletConfig{},
-	)
-	if err != nil {
-		return nil, err
-	}
 	return &LocalWallet{
-		Wallet:   wallet,
+		Wallet:   nil,
 		accounts: []account.Account{},
 		clients:  ChainClients{},
 	}, nil
+}
+
+func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account.Account, network network.Network) error {
+	wallet, err := primary.MakeWallet(
+		ctx,
+		network.Endpoint,
+		account.SoftKey.KeyChain(),
+		account.SoftKey.KeyChain(),
+		primary.WalletConfig{},
+	)
+	if err != nil {
+		return err
+	}
+	w.Wallet = wallet
+	return nil
 }
 
 func (w *LocalWallet) Accounts() []account.Account {
@@ -60,7 +66,7 @@ func (w *LocalWallet) Clients() ChainClients {
 }
 
 // CreateAccount creates a new account using local key generation
-func (w *LocalWallet) CreateAccount(ctx context.Context, network network.Network) (*account.Account, error) {
+func (w *LocalWallet) CreateAccount(ctx context.Context) (*account.Account, error) {
 	newAccount, err := account.NewAccount()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new account: %w", err)
@@ -73,14 +79,14 @@ func (w *LocalWallet) CreateAccount(ctx context.Context, network network.Network
 }
 
 // GetAccount retrieves an existing account by address or identifier
-func (w *LocalWallet) GetAccount(ctx context.Context, network network.Network, address ids.ShortID) (*account.Account, error) {
+func (w *LocalWallet) GetAccount(ctx context.Context, address ids.ShortID) (*account.Account, error) {
 	// TODO: Implement account retrieval logic based on address
 	// This could search through w.accounts or use the embedded primary.Wallet
 	return nil, fmt.Errorf("not implemented")
 }
 
 // ListAccounts returns all accounts managed by this wallet
-func (w *LocalWallet) ListAccounts(ctx context.Context, network network.Network) ([]*account.Account, error) {
+func (w *LocalWallet) ListAccounts(ctx context.Context) ([]*account.Account, error) {
 	// Return all accounts in the wallet
 	accounts := w.GetAllAccounts()
 	result := make([]*account.Account, len(accounts))
@@ -91,7 +97,7 @@ func (w *LocalWallet) ListAccounts(ctx context.Context, network network.Network)
 }
 
 // ImportAccount imports an existing account into the wallet
-func (w *LocalWallet) ImportAccount(ctx context.Context, network network.Network, account account.Account) (*account.Account, error) {
+func (w *LocalWallet) ImportAccount(ctx context.Context, account account.Account) (*account.Account, error) {
 	// TODO: Implement account import logic
 	// This would add the provided account to the wallet
 	return nil, fmt.Errorf("not implemented")

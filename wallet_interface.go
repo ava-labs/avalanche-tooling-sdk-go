@@ -39,16 +39,16 @@ type Wallet interface {
 	Clients() ChainClients
 	// Account Management
 	// CreateAccount creates a new account
-	CreateAccount(ctx context.Context, network network.Network) (*account.Account, error)
+	CreateAccount(ctx context.Context) (*account.Account, error)
 
 	// GetAccount retrieves an existing account by address or identifier
-	GetAccount(ctx context.Context, network network.Network, address ids.ShortID) (*account.Account, error)
+	GetAccount(ctx context.Context, address ids.ShortID) (*account.Account, error)
 
 	// ListAccounts returns all accounts managed by this wallet
-	ListAccounts(ctx context.Context, network network.Network) ([]*account.Account, error)
+	ListAccounts(ctx context.Context) ([]*account.Account, error)
 
 	// ImportAccount imports an existing account into the wallet
-	ImportAccount(ctx context.Context, network network.Network, account account.Account) (*account.Account, error)
+	ImportAccount(ctx context.Context, account account.Account) (*account.Account, error)
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation

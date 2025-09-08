@@ -4,6 +4,7 @@ package account
 
 import (
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
@@ -15,7 +16,7 @@ type Account struct {
 }
 
 func NewAccount() (Account, error) {
-	k, err := key.NewSoft(0)
+	k, err := key.NewSoft()
 	if err != nil {
 		return Account{}, err
 	}
@@ -25,10 +26,10 @@ func NewAccount() (Account, error) {
 	}, nil
 }
 
-func (a *Account) GetPChainAddress() (string, error) {
+func (a *Account) GetPChainAddress(network network.Network) (string, error) {
 	if a.SoftKey == nil {
 		return "", fmt.Errorf("SoftKey not initialized")
 	}
-	cChainAddr := a.SoftKey.C()
-	return cChainAddr, nil
+	pchainAddrs, err := a.SoftKey.GetNetworkChainAddress(network, "P")
+	return pchainAddrs[0], err
 }
