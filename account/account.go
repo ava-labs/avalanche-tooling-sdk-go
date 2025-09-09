@@ -7,12 +7,10 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
 )
 
 type Account struct {
 	*key.SoftKey
-	*keychain.Keychain
 }
 
 func NewAccount() (Account, error) {
@@ -21,8 +19,7 @@ func NewAccount() (Account, error) {
 		return Account{}, err
 	}
 	return Account{
-		SoftKey:  k,
-		Keychain: nil, // Will be set later if needed
+		SoftKey: k,
 	}, nil
 }
 

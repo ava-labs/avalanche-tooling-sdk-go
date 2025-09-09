@@ -63,7 +63,7 @@ type Wallet interface {
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation
-	BuildTx(ctx context.Context, params TxParams) (tx.BuiltTx, error)
+	BuildTx(ctx context.Context, account account.Account, params TxParams) (tx.BuiltTx, error)
 
 	// SignTx signs a transaction
 	SignTx(ctx context.Context, network network.Network, tx transaction.Transaction) (tx.SignedTx, error)

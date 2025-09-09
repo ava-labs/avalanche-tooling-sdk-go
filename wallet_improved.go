@@ -5,6 +5,7 @@ package avalanche_tooling_sdk_go
 import (
 	"context"
 	"fmt"
+	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
@@ -110,7 +111,7 @@ func (w *LocalWallet) ImportAccount(ctx context.Context, account account.Account
 }
 
 // BuildTx constructs a transaction for the specified operation
-func (w *LocalWallet) BuildTx(ctx context.Context, params TxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) BuildTx(ctx context.Context, account account.Account, params TxParams) (tx.BuiltTx, error) {
 	// Validate parameters first
 	if err := params.Validate(); err != nil {
 		return tx.BuiltTx{}, fmt.Errorf("invalid parameters: %w", err)
@@ -119,7 +120,7 @@ func (w *LocalWallet) BuildTx(ctx context.Context, params TxParams) (tx.BuiltTx,
 	// Route to appropriate chain handler based on chain type
 	switch chainType := params.GetChainType(); chainType {
 	case "P-Chain":
-		return w.buildPChainTx(ctx, params)
+		return w.buildPChainTx(ctx, account, params)
 	case "C-Chain":
 		return w.buildCChainTx(ctx, params)
 	case "X-Chain":
@@ -205,14 +206,14 @@ func (w *LocalWallet) GetAllAccounts() []account.Account {
 	return w.accounts
 }
 
-func (w *LocalWallet) buildPChainTx(ctx context.Context, params TxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildPChainTx(ctx context.Context, account account.Account, params TxParams) (tx.BuiltTx, error) {
 	switch txType := params.GetTxType(); txType {
 	case "ConvertSubnetToL1Tx":
 		convertParams, ok := params.(*txs.ConvertSubnetToL1TxParams)
 		if !ok {
 			return tx.BuiltTx{}, fmt.Errorf("invalid params type for ConvertSubnetToL1Tx, expected *txs.ConvertSubnetToL1TxParams")
 		}
-		return w.buildConvertSubnetToL1Tx(ctx, convertParams)
+		return w.buildConvertSubnetToL1Tx(ctx, account, convertParams)
 	case "DisableL1ValidatorTx":
 		disableParams, ok := params.(*txs.DisableL1ValidatorTxParams)
 		if !ok {
@@ -225,8 +226,8 @@ func (w *LocalWallet) buildPChainTx(ctx context.Context, params TxParams) (tx.Bu
 }
 
 // buildConvertSubnetToL1Tx builds a ConvertSubnetToL1Tx transaction
-func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, params *txs.ConvertSubnetToL1TxParams) (tx.BuiltTx, error) {
-	options := w.GetMultisigTxOptions(params.SubnetAuthKeys)
+func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, account account.Account, params *txs.ConvertSubnetToL1TxParams) (tx.BuiltTx, error) {
+	options := GetMultisigTxOptions(account, params.SubnetAuthKeys)
 	unsignedTx, err := w.P().Builder().NewConvertSubnetToL1Tx(
 		params.SubnetID,
 		params.ChainID,
@@ -267,9 +268,9 @@ func (w *LocalWallet) buildXChainTx(ctx context.Context, params TxParams) (tx.Bu
 	return tx.BuiltTx{}, fmt.Errorf("X-Chain transactions not yet implemented")
 }
 
-func (w *LocalWallet) GetMultisigTxOptions(subnetAuthKeys []ids.ShortID) []common.Option {
+func GetMultisigTxOptions(account account.Account, subnetAuthKeys []ids.ShortID) []common.Option {
 	options := []common.Option{}
-	walletAddrs := w.Keychain.Addresses().List()
+	walletAddrs := account.SoftKey.KeyChain().Addresses().List()
 	changeAddr := walletAddrs[0]
 	// addrs to use for signing
 	customAddrsSet := set.Set[ids.ShortID]{}
