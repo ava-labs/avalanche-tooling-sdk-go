@@ -37,13 +37,6 @@ type SignedTx struct {
 	threshold   uint32
 }
 
-func New(pChainTx *txs.Tx) *SignedTx {
-	ms := SignedTx{
-		Tx: pChainTx,
-	}
-	return &ms
-}
-
 func (ms *SignedTx) String() string {
 	if ms.Tx != nil {
 		return ms.Tx.ID().String()

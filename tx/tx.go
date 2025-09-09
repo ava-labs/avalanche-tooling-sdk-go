@@ -5,9 +5,18 @@ package tx
 import (
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/set"
+	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 )
+
+type BuiltTx struct {
+	*txs.Tx
+}
+
+type SentTx struct {
+	*txs.Tx
+}
 
 func GetMultisigTxOptions(subnetAuthKeys []ids.ShortID, addresses set.Set[ids.ShortID]) []common.Option {
 	options := []common.Option{}

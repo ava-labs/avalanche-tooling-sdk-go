@@ -10,7 +10,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/transaction"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/network"
-	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/coreth/accounts"
 	"github.com/ava-labs/subnet-evm/ethclient"
 )
@@ -30,14 +29,19 @@ type WalletConfig struct {
 	Clients ChainClients
 }
 
-// TxParams represents a generic interface for transaction parameters
-type TxParams interface {
+// BuildTxParams represents a generic interface for transaction parameters
+type BuildTxParams interface {
 	// GetTxType returns the transaction type identifier
 	GetTxType() string
 	// Validate validates the parameters
 	Validate() error
 	// GetChainType returns which chain this transaction is for
 	GetChainType() string
+}
+
+// BuildTxParams represents a generic interface for transaction parameters
+type SignTxParams struct {
+	*tx.BuiltTx
 }
 
 // Wallet represents the core wallet interface that can be implemented
@@ -63,17 +67,13 @@ type Wallet interface {
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation
-	BuildTx(ctx context.Context, account account.Account, params TxParams) (tx.BuiltTx, error)
+	BuildTx(ctx context.Context, account account.Account, params BuildTxParams) (tx.BuiltTx, error)
 
 	// SignTx signs a transaction
-	SignTx(ctx context.Context, network network.Network, tx transaction.Transaction) (tx.SignedTx, error)
+	SignTx(ctx context.Context, account accounts.Account, tx SignTxParams) (tx.SignedTx, error)
 
 	// SendTx submits a signed transaction to the network
-	SendTx(ctx context.Context, network network.Network, tx transaction.Transaction) (ids.ID, error)
-
-	// P-Chain Specific Operations
-	// SignPChainTx signs a P-Chain transaction
-	SignPChainTx(ctx context.Context, unsignedTx txs.UnsignedTx, account accounts.Account) (*txs.Tx, error)
+	SendTx(ctx context.Context, network network.Network, account accounts.Account, tx transaction.Transaction) (tx.SentTx, error)
 
 	// GetAddresses returns all addresses managed by this wallet
 	GetAddresses(ctx context.Context) ([]ids.ShortID, error)

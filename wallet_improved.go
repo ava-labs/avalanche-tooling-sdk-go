@@ -111,7 +111,7 @@ func (w *LocalWallet) ImportAccount(ctx context.Context, account account.Account
 }
 
 // BuildTx constructs a transaction for the specified operation
-func (w *LocalWallet) BuildTx(ctx context.Context, account account.Account, params TxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) BuildTx(ctx context.Context, account account.Account, params BuildTxParams) (tx.BuiltTx, error) {
 	// Validate parameters first
 	if err := params.Validate(); err != nil {
 		return tx.BuiltTx{}, fmt.Errorf("invalid parameters: %w", err)
@@ -131,10 +131,14 @@ func (w *LocalWallet) BuildTx(ctx context.Context, account account.Account, para
 }
 
 // SignTx signs a transaction
-func (w *LocalWallet) SignTx(ctx context.Context, network avagoNetwork.Network, txn transaction.Transaction) (tx.SignedTx, error) {
-	// TODO: Implement transaction signing logic
-	// This would use the embedded primary.Wallet to sign transactions
-	return tx.SignedTx{}, fmt.Errorf("not implemented")
+func (w *LocalWallet) SignTx(ctx context.Context, account account.Account, network avagoNetwork.Network, transaction SignTxParams) (tx.SignedTx, error) {
+	if err := w.loadAccountIntoWallet(ctx, account, network network.Network); err != nil {
+		return tx.SignedTx{}, fmt.Errorf("error signing tx: %w", err)
+	}
+	if err := w.P().Signer().Sign(context.Background(), transaction.BuiltTx.Tx); err != nil {
+		return tx.SignedTx{}, fmt.Errorf("error signing tx: %w", err)
+	}
+	return tx.SignedTx{Tx: transaction.BuiltTx.Tx}, nil
 }
 
 // SendTx submits a signed transaction to the network
@@ -206,7 +210,7 @@ func (w *LocalWallet) GetAllAccounts() []account.Account {
 	return w.accounts
 }
 
-func (w *LocalWallet) buildPChainTx(ctx context.Context, account account.Account, params TxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildPChainTx(ctx context.Context, account account.Account, params BuildTxParams) (tx.BuiltTx, error) {
 	switch txType := params.GetTxType(); txType {
 	case "ConvertSubnetToL1Tx":
 		convertParams, ok := params.(*txs.ConvertSubnetToL1TxParams)
@@ -257,13 +261,13 @@ func (w *LocalWallet) buildDisableL1ValidatorTx(ctx context.Context, params *txs
 }
 
 // buildCChainTx builds C-Chain transactions
-func (w *LocalWallet) buildCChainTx(ctx context.Context, params TxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildCChainTx(ctx context.Context, params BuildTxParams) (tx.BuiltTx, error) {
 	// TODO: Implement C-Chain transaction building
 	return tx.BuiltTx{}, fmt.Errorf("C-Chain transactions not yet implemented")
 }
 
 // buildXChainTx builds X-Chain transactions
-func (w *LocalWallet) buildXChainTx(ctx context.Context, params TxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildXChainTx(ctx context.Context, params BuildTxParams) (tx.BuiltTx, error) {
 	// TODO: Implement X-Chain transaction building
 	return tx.BuiltTx{}, fmt.Errorf("X-Chain transactions not yet implemented")
 }

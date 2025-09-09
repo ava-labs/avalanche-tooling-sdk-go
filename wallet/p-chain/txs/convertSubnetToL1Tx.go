@@ -75,5 +75,5 @@ func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*tx.SignedTx, err
 	if err := params.Wallet.P().Signer().Sign(context.Background(), &builtTx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return tx.New(&builtTx), nil
+	return &tx.SignedTx{Tx: &builtTx}, nil
 }
