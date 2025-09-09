@@ -59,7 +59,7 @@ func (p ConvertSubnetToL1TxParams) GetChainType() string {
 	return "P-Chain"
 }
 
-func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*tx.SignedTx, error) {
+func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*tx.SignTxResult, error) {
 	options := params.Wallet.GetMultisigTxOptions(params.SubnetAuthKeys)
 	unsignedTx, err := params.Wallet.P().Builder().NewConvertSubnetToL1Tx(
 		params.SubnetID,
@@ -75,5 +75,5 @@ func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*tx.SignedTx, err
 	if err := params.Wallet.P().Signer().Sign(context.Background(), &builtTx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return &tx.SignedTx{Tx: &builtTx}, nil
+	return &tx.SignTxResult{Tx: &builtTx}, nil
 }

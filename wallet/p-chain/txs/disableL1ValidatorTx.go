@@ -42,7 +42,7 @@ func (p DisableL1ValidatorTxParams) GetChainType() string {
 	return "P-Chain"
 }
 
-func NewDisableL1ValidatorTx(params DisableL1ValidatorTxParams) (*tx.SignedTx, error) {
+func NewDisableL1ValidatorTx(params DisableL1ValidatorTxParams) (*tx.SignTxResult, error) {
 	unsignedTx, err := params.Wallet.P().Builder().NewDisableL1ValidatorTx(
 		params.ValidationID,
 	)

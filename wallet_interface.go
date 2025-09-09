@@ -4,13 +4,12 @@ package avalanche_tooling_sdk_go
 
 import (
 	"context"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/transaction"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/network"
-	"github.com/ava-labs/coreth/accounts"
 	"github.com/ava-labs/subnet-evm/ethclient"
 )
 
@@ -29,8 +28,14 @@ type WalletConfig struct {
 	Clients ChainClients
 }
 
-// BuildTxParams represents a generic interface for transaction parameters
-type BuildTxParams interface {
+type BuildTxParams struct {
+	BuildTxInput
+	account account.Account
+	network network.Network
+}
+
+// BuildTxInput represents a generic interface for transaction parameters
+type BuildTxInput interface {
 	// GetTxType returns the transaction type identifier
 	GetTxType() string
 	// Validate validates the parameters
@@ -39,9 +44,16 @@ type BuildTxParams interface {
 	GetChainType() string
 }
 
-// BuildTxParams represents a generic interface for transaction parameters
 type SignTxParams struct {
-	*tx.BuiltTx
+	*tx.BuildTxResult
+	account account.Account
+	network network.Network
+}
+
+type SendTxParams struct {
+	*tx.SignTxResult
+	account account.Account
+	network network.Network
 }
 
 // Wallet represents the core wallet interface that can be implemented
@@ -67,13 +79,13 @@ type Wallet interface {
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation
-	BuildTx(ctx context.Context, account account.Account, params BuildTxParams) (tx.BuiltTx, error)
+	BuildTx(ctx context.Context, params BuildTxParams) (tx.BuildTxResult, error)
 
 	// SignTx signs a transaction
-	SignTx(ctx context.Context, account accounts.Account, tx SignTxParams) (tx.SignedTx, error)
+	SignTx(ctx context.Context, params SignTxParams) (tx.SignTxResult, error)
 
 	// SendTx submits a signed transaction to the network
-	SendTx(ctx context.Context, network network.Network, account accounts.Account, tx transaction.Transaction) (tx.SentTx, error)
+	SendTx(ctx context.Context, params SendTxParams) (tx.SendTxResult, error)
 
 	// GetAddresses returns all addresses managed by this wallet
 	GetAddresses(ctx context.Context) ([]ids.ShortID, error)

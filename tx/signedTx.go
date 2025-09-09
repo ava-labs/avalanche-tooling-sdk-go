@@ -31,24 +31,24 @@ const (
 	PChainConvertSubnetToL1Tx
 )
 
-type SignedTx struct {
+type SignTxResult struct {
 	Tx          *txs.Tx
 	controlKeys []ids.ShortID
 	threshold   uint32
 }
 
-func (ms *SignedTx) String() string {
+func (ms *SignTxResult) String() string {
 	if ms.Tx != nil {
 		return ms.Tx.ID().String()
 	}
 	return ""
 }
 
-func (ms *SignedTx) Undefined() bool {
+func (ms *SignTxResult) Undefined() bool {
 	return ms.Tx == nil
 }
 
-func (ms *SignedTx) ToBytes() ([]byte, error) {
+func (ms *SignTxResult) ToBytes() ([]byte, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}
@@ -59,7 +59,7 @@ func (ms *SignedTx) ToBytes() ([]byte, error) {
 	return txBytes, nil
 }
 
-func (ms *SignedTx) FromBytes(txBytes []byte) error {
+func (ms *SignTxResult) FromBytes(txBytes []byte) error {
 	var tx txs.Tx
 	if _, err := txs.Codec.Unmarshal(txBytes, &tx); err != nil {
 		return fmt.Errorf("error unmarshaling signed tx: %w", err)
@@ -71,7 +71,7 @@ func (ms *SignedTx) FromBytes(txBytes []byte) error {
 	return nil
 }
 
-func (ms *SignedTx) IsReadyToCommit() (bool, error) {
+func (ms *SignTxResult) IsReadyToCommit() (bool, error) {
 	if ms.Undefined() {
 		return false, ErrUndefinedTx
 	}
@@ -97,7 +97,7 @@ func (ms *SignedTx) IsReadyToCommit() (bool, error) {
 //     authSigners by using the index) to the remaining signers list
 //
 // if the tx is fully signed, returns empty slice
-func (ms *SignedTx) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
+func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
 	if ms.Undefined() {
 		return nil, nil, ErrUndefinedTx
 	}
@@ -148,7 +148,7 @@ func (ms *SignedTx) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 //   - get subnet auth indices from the tx, field tx.UnsignedTx.SubnetAuth
 //   - creates the string slice of required subnet auth addresses by applying
 //     the indices to the control keys slice
-func (ms *SignedTx) GetAuthSigners() ([]ids.ShortID, error) {
+func (ms *SignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}
@@ -192,11 +192,11 @@ func (ms *SignedTx) GetAuthSigners() ([]ids.ShortID, error) {
 	return authSigners, nil
 }
 
-func (*SignedTx) GetSpendSigners() ([]ids.ShortID, error) {
+func (*SignTxResult) GetSpendSigners() ([]ids.ShortID, error) {
 	return nil, fmt.Errorf("not implemented yet")
 }
 
-func (ms *SignedTx) GetTxKind() (TxKind, error) {
+func (ms *SignTxResult) GetTxKind() (TxKind, error) {
 	if ms.Undefined() {
 		return Undefined, ErrUndefinedTx
 	}
@@ -222,7 +222,7 @@ func (ms *SignedTx) GetTxKind() (TxKind, error) {
 }
 
 // get network id associated to tx
-func (ms *SignedTx) GetNetworkID() (uint32, error) {
+func (ms *SignTxResult) GetNetworkID() (uint32, error) {
 	if ms.Undefined() {
 		return 0, ErrUndefinedTx
 	}
@@ -250,7 +250,7 @@ func (ms *SignedTx) GetNetworkID() (uint32, error) {
 }
 
 // get network model associated to tx
-func (ms *SignedTx) GetNetwork() (network.Network, error) {
+func (ms *SignTxResult) GetNetwork() (network.Network, error) {
 	if ms.Undefined() {
 		return network.UndefinedNetwork, ErrUndefinedTx
 	}
@@ -265,7 +265,7 @@ func (ms *SignedTx) GetNetwork() (network.Network, error) {
 	return newNetwork, nil
 }
 
-func (ms *SignedTx) GetBlockchainID() (ids.ID, error) {
+func (ms *SignTxResult) GetBlockchainID() (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, ErrUndefinedTx
 	}
@@ -293,7 +293,7 @@ func (ms *SignedTx) GetBlockchainID() (ids.ID, error) {
 }
 
 // GetSubnetID gets subnet id associated to tx
-func (ms *SignedTx) GetSubnetID() (ids.ID, error) {
+func (ms *SignTxResult) GetSubnetID() (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, ErrUndefinedTx
 	}
@@ -320,7 +320,7 @@ func (ms *SignedTx) GetSubnetID() (ids.ID, error) {
 	return subnetID, nil
 }
 
-func (ms *SignedTx) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
+func (ms *SignTxResult) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 	if ms.Undefined() {
 		return nil, 0, ErrUndefinedTx
 	}
@@ -357,7 +357,7 @@ func GetOwners(network network.Network, subnetID ids.ID) ([]ids.ShortID, uint32,
 	return controlKeys, threshold, nil
 }
 
-func (ms *SignedTx) GetWrappedPChainTx() (*txs.Tx, error) {
+func (ms *SignTxResult) GetWrappedPChainTx() (*txs.Tx, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}

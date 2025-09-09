@@ -96,7 +96,7 @@ func (w *Wallet) GetMultisigTxOptions(subnetAuthKeys []ids.ShortID) []common.Opt
 	return options
 }
 
-func (w *Wallet) Commit(ms tx.SignedTx, waitForTxAcceptance bool) (ids.ID, error) {
+func (w *Wallet) Commit(ms tx.SignTxResult, waitForTxAcceptance bool) (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, tx.ErrUndefinedTx
 	}

@@ -10,11 +10,11 @@ import (
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 )
 
-type BuiltTx struct {
+type BuildTxResult struct {
 	*txs.Tx
 }
 
-type SentTx struct {
+type SendTxResult struct {
 	*txs.Tx
 }
 

@@ -303,7 +303,7 @@ func vmID(vmName string) (ids.ID, error) {
 	return ids.ToID(b)
 }
 
-func (c *Subnet) Commit(ms tx.SignedTx, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
+func (c *Subnet) Commit(ms tx.SignTxResult, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, tx.ErrUndefinedTx
 	}

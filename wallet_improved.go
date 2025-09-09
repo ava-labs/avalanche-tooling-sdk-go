@@ -5,6 +5,7 @@ package avalanche_tooling_sdk_go
 import (
 	"context"
 	"fmt"
+
 	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
@@ -14,10 +15,8 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/transaction"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/p-chain/txs"
 	"github.com/ava-labs/avalanchego/ids"
-	avagoNetwork "github.com/ava-labs/avalanchego/network"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/coreth/accounts"
@@ -111,41 +110,44 @@ func (w *LocalWallet) ImportAccount(ctx context.Context, account account.Account
 }
 
 // BuildTx constructs a transaction for the specified operation
-func (w *LocalWallet) BuildTx(ctx context.Context, account account.Account, params BuildTxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) BuildTx(ctx context.Context, params BuildTxParams) (tx.BuildTxResult, error) {
+	if err := w.loadAccountIntoWallet(ctx, params.account, params.network); err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("error signing tx: %w", err)
+	}
 	// Validate parameters first
 	if err := params.Validate(); err != nil {
-		return tx.BuiltTx{}, fmt.Errorf("invalid parameters: %w", err)
+		return tx.BuildTxResult{}, fmt.Errorf("invalid parameters: %w", err)
 	}
 
 	// Route to appropriate chain handler based on chain type
 	switch chainType := params.GetChainType(); chainType {
 	case "P-Chain":
-		return w.buildPChainTx(ctx, account, params)
+		return w.buildPChainTx(ctx, params.account, params.BuildTxInput)
 	case "C-Chain":
 		return w.buildCChainTx(ctx, params)
 	case "X-Chain":
 		return w.buildXChainTx(ctx, params)
 	default:
-		return tx.BuiltTx{}, fmt.Errorf("unsupported chain type: %s", chainType)
+		return tx.BuildTxResult{}, fmt.Errorf("unsupported chain type: %s", chainType)
 	}
 }
 
 // SignTx signs a transaction
-func (w *LocalWallet) SignTx(ctx context.Context, account account.Account, network avagoNetwork.Network, transaction SignTxParams) (tx.SignedTx, error) {
-	if err := w.loadAccountIntoWallet(ctx, account, network network.Network); err != nil {
-		return tx.SignedTx{}, fmt.Errorf("error signing tx: %w", err)
+func (w *LocalWallet) SignTx(ctx context.Context, params SignTxParams) (tx.SignTxResult, error) {
+	if err := w.loadAccountIntoWallet(ctx, params.account, params.network); err != nil {
+		return tx.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
-	if err := w.P().Signer().Sign(context.Background(), transaction.BuiltTx.Tx); err != nil {
-		return tx.SignedTx{}, fmt.Errorf("error signing tx: %w", err)
+	if err := w.P().Signer().Sign(context.Background(), params.BuildTxResult.Tx); err != nil {
+		return tx.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
-	return tx.SignedTx{Tx: transaction.BuiltTx.Tx}, nil
+	return tx.SignTxResult{Tx: params.BuildTxResult.Tx}, nil
 }
 
 // SendTx submits a signed transaction to the network
-func (w *LocalWallet) SendTx(ctx context.Context, network avagoNetwork.Network, txn transaction.Transaction) (ids.ID, error) {
+func (w *LocalWallet) SendTx(ctx context.Context, params SendTxParams) (tx.SendTxResult, error) {
 	// TODO: Implement transaction sending logic
 	// This would use the embedded primary.Wallet to send transactions
-	return ids.Empty, fmt.Errorf("not implemented")
+	return tx.SendTxResult{}, fmt.Errorf("not implemented")
 }
 
 func (w *LocalWallet) SignPChainTx(ctx context.Context, unsignedTx avagoTxs.UnsignedTx, account accounts.Account) (*avagoTxs.Tx, error) {
@@ -210,27 +212,27 @@ func (w *LocalWallet) GetAllAccounts() []account.Account {
 	return w.accounts
 }
 
-func (w *LocalWallet) buildPChainTx(ctx context.Context, account account.Account, params BuildTxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildPChainTx(ctx context.Context, account account.Account, params BuildTxInput) (tx.BuildTxResult, error) {
 	switch txType := params.GetTxType(); txType {
 	case "ConvertSubnetToL1Tx":
 		convertParams, ok := params.(*txs.ConvertSubnetToL1TxParams)
 		if !ok {
-			return tx.BuiltTx{}, fmt.Errorf("invalid params type for ConvertSubnetToL1Tx, expected *txs.ConvertSubnetToL1TxParams")
+			return tx.BuildTxResult{}, fmt.Errorf("invalid params type for ConvertSubnetToL1Tx, expected *txs.ConvertSubnetToL1TxParams")
 		}
 		return w.buildConvertSubnetToL1Tx(ctx, account, convertParams)
 	case "DisableL1ValidatorTx":
 		disableParams, ok := params.(*txs.DisableL1ValidatorTxParams)
 		if !ok {
-			return tx.BuiltTx{}, fmt.Errorf("invalid params type for DisableL1ValidatorTx, expected *txs.DisableL1ValidatorTxParams")
+			return tx.BuildTxResult{}, fmt.Errorf("invalid params type for DisableL1ValidatorTx, expected *txs.DisableL1ValidatorTxParams")
 		}
 		return w.buildDisableL1ValidatorTx(ctx, disableParams)
 	default:
-		return tx.BuiltTx{}, fmt.Errorf("unsupported P-Chain transaction type: %s", txType)
+		return tx.BuildTxResult{}, fmt.Errorf("unsupported P-Chain transaction type: %s", txType)
 	}
 }
 
 // buildConvertSubnetToL1Tx builds a ConvertSubnetToL1Tx transaction
-func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, account account.Account, params *txs.ConvertSubnetToL1TxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, account account.Account, params *txs.ConvertSubnetToL1TxParams) (tx.BuildTxResult, error) {
 	options := GetMultisigTxOptions(account, params.SubnetAuthKeys)
 	unsignedTx, err := w.P().Builder().NewConvertSubnetToL1Tx(
 		params.SubnetID,
@@ -240,36 +242,36 @@ func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, account acco
 		options...,
 	)
 	if err != nil {
-		return tx.BuiltTx{}, fmt.Errorf("error building tx: %w", err)
+		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
 	}
 	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
-	return tx.BuiltTx{Tx: &builtTx}, nil
+	return tx.BuildTxResult{Tx: &builtTx}, nil
 }
 
 // buildDisableL1ValidatorTx builds a DisableL1ValidatorTx transaction
-func (w *LocalWallet) buildDisableL1ValidatorTx(ctx context.Context, params *txs.DisableL1ValidatorTxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildDisableL1ValidatorTx(ctx context.Context, params *txs.DisableL1ValidatorTxParams) (tx.BuildTxResult, error) {
 	// Use the existing NewDisableL1ValidatorTx function
 	signedTx, err := txs.NewDisableL1ValidatorTx(*params)
 	if err != nil {
-		return tx.BuiltTx{}, fmt.Errorf("failed to create DisableL1ValidatorTx: %w", err)
+		return tx.BuildTxResult{}, fmt.Errorf("failed to create DisableL1ValidatorTx: %w", err)
 	}
 
-	// Convert SignedTx to BuiltTx
-	return tx.BuiltTx{
+	// Convert SignTxResult to BuildTxResult
+	return tx.BuildTxResult{
 		Tx: signedTx.Tx,
 	}, nil
 }
 
 // buildCChainTx builds C-Chain transactions
-func (w *LocalWallet) buildCChainTx(ctx context.Context, params BuildTxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildCChainTx(ctx context.Context, params BuildTxInput) (tx.BuildTxResult, error) {
 	// TODO: Implement C-Chain transaction building
-	return tx.BuiltTx{}, fmt.Errorf("C-Chain transactions not yet implemented")
+	return tx.BuildTxResult{}, fmt.Errorf("C-Chain transactions not yet implemented")
 }
 
 // buildXChainTx builds X-Chain transactions
-func (w *LocalWallet) buildXChainTx(ctx context.Context, params BuildTxParams) (tx.BuiltTx, error) {
+func (w *LocalWallet) buildXChainTx(ctx context.Context, params BuildTxInput) (tx.BuildTxResult, error) {
 	// TODO: Implement X-Chain transaction building
-	return tx.BuiltTx{}, fmt.Errorf("X-Chain transactions not yet implemented")
+	return tx.BuildTxResult{}, fmt.Errorf("X-Chain transactions not yet implemented")
 }
 
 func GetMultisigTxOptions(account account.Account, subnetAuthKeys []ids.ShortID) []common.Option {
