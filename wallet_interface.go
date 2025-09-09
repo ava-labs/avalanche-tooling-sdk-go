@@ -4,6 +4,7 @@ package avalanche_tooling_sdk_go
 
 import (
 	"context"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/transaction"
@@ -29,6 +30,16 @@ type WalletConfig struct {
 	Clients ChainClients
 }
 
+// TxParams represents a generic interface for transaction parameters
+type TxParams interface {
+	// GetTxType returns the transaction type identifier
+	GetTxType() string
+	// Validate validates the parameters
+	Validate() error
+	// GetChainType returns which chain this transaction is for
+	GetChainType() string
+}
+
 // Wallet represents the core wallet interface that can be implemented
 // by different wallet types (local, API-based, etc.)
 type Wallet interface {
@@ -52,10 +63,10 @@ type Wallet interface {
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation
-	BuildTx(ctx context.Context, network network.Network, txType string, params map[string]interface{}) (transaction.Transaction, error)
+	BuildTx(ctx context.Context, params TxParams) (tx.BuiltTx, error)
 
 	// SignTx signs a transaction
-	SignTx(ctx context.Context, network network.Network, tx transaction.Transaction) (transaction.Transaction, error)
+	SignTx(ctx context.Context, network network.Network, tx transaction.Transaction) (tx.SignedTx, error)
 
 	// SendTx submits a signed transaction to the network
 	SendTx(ctx context.Context, network network.Network, tx transaction.Transaction) (ids.ID, error)

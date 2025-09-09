@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -29,7 +29,37 @@ type ConvertSubnetToL1TxParams struct {
 	Wallet *wallet.Wallet
 }
 
-func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*multisig.Multisig, error) {
+// GetTxType returns the transaction type identifier
+func (p ConvertSubnetToL1TxParams) GetTxType() string {
+	return "ConvertSubnetToL1Tx"
+}
+
+// Validate validates the parameters
+func (p ConvertSubnetToL1TxParams) Validate() error {
+	if p.SubnetID == ids.Empty {
+		return fmt.Errorf("SubnetID cannot be empty")
+	}
+	if p.ChainID == ids.Empty {
+		return fmt.Errorf("ChainID cannot be empty")
+	}
+	if len(p.Address) == 0 {
+		return fmt.Errorf("Address cannot be empty")
+	}
+	if len(p.Validators) == 0 {
+		return fmt.Errorf("Validators cannot be empty")
+	}
+	if p.Wallet == nil {
+		return fmt.Errorf("Wallet cannot be nil")
+	}
+	return nil
+}
+
+// GetChainType returns which chain this transaction is for
+func (p ConvertSubnetToL1TxParams) GetChainType() string {
+	return "P-Chain"
+}
+
+func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*tx.SignedTx, error) {
 	options := params.Wallet.GetMultisigTxOptions(params.SubnetAuthKeys)
 	unsignedTx, err := params.Wallet.P().Builder().NewConvertSubnetToL1Tx(
 		params.SubnetID,
@@ -41,9 +71,9 @@ func NewConvertSubnetToL1Tx(params ConvertSubnetToL1TxParams) (*multisig.Multisi
 	if err != nil {
 		return nil, fmt.Errorf("error building tx: %w", err)
 	}
-	tx := txs.Tx{Unsigned: unsignedTx}
-	if err := params.Wallet.P().Signer().Sign(context.Background(), &tx); err != nil {
+	builtTx := txs.Tx{Unsigned: unsignedTx}
+	if err := params.Wallet.P().Signer().Sign(context.Background(), &builtTx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return multisig.New(&tx), nil
+	return tx.New(&builtTx), nil
 }

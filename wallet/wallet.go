@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 	utilsSDK "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
 	avagokeychain "github.com/ava-labs/avalanchego/utils/crypto/keychain"
@@ -96,9 +96,9 @@ func (w *Wallet) GetMultisigTxOptions(subnetAuthKeys []ids.ShortID) []common.Opt
 	return options
 }
 
-func (w *Wallet) Commit(ms multisig.Multisig, waitForTxAcceptance bool) (ids.ID, error) {
+func (w *Wallet) Commit(ms tx.SignedTx, waitForTxAcceptance bool) (ids.ID, error) {
 	if ms.Undefined() {
-		return ids.Empty, multisig.ErrUndefinedTx
+		return ids.Empty, tx.ErrUndefinedTx
 	}
 	isReady, err := ms.IsReadyToCommit()
 	if err != nil {

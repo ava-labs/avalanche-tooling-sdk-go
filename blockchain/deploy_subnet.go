@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
@@ -17,7 +17,7 @@ import (
 
 // CreateSubnetTx creates uncommitted CreateSubnetTx
 // keychain in wallet will be used to build, sign and pay for the transaction
-func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*tx.SignedTx, error) {
 	if c.DeployInfo.ControlKeys == nil {
 		return nil, fmt.Errorf("control keys are not provided")
 	}
@@ -42,12 +42,12 @@ func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error
 	if err := wallet.P().Signer().Sign(ctx, &tx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return multisig.New(&tx), nil
+	return tx.New(&tx), nil
 }
 
 // CreateBlockchainTx creates uncommitted CreateChainTx
 // keychain in wallet will be used to build, sign and pay for the transaction
-func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*tx.SignedTx, error) {
 	if c.SubnetID == ids.Empty {
 		return nil, fmt.Errorf("subnet ID is not provided")
 	}
@@ -83,5 +83,5 @@ func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, e
 	if err := wallet.P().Signer().Sign(ctx, &tx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return multisig.New(&tx), nil
+	return tx.New(&tx), nil
 }

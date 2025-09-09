@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -21,7 +21,28 @@ type DisableL1ValidatorTxParams struct {
 	Wallet *wallet.Wallet
 }
 
-func NewDisableL1ValidatorTx(params DisableL1ValidatorTxParams) (*multisig.Multisig, error) {
+// GetTxType returns the transaction type identifier
+func (p DisableL1ValidatorTxParams) GetTxType() string {
+	return "DisableL1ValidatorTx"
+}
+
+// Validate validates the parameters
+func (p DisableL1ValidatorTxParams) Validate() error {
+	if p.ValidationID == ids.Empty {
+		return fmt.Errorf("ValidationID cannot be empty")
+	}
+	if p.Wallet == nil {
+		return fmt.Errorf("Wallet cannot be nil")
+	}
+	return nil
+}
+
+// GetChainType returns which chain this transaction is for
+func (p DisableL1ValidatorTxParams) GetChainType() string {
+	return "P-Chain"
+}
+
+func NewDisableL1ValidatorTx(params DisableL1ValidatorTxParams) (*tx.SignedTx, error) {
 	unsignedTx, err := params.Wallet.P().Builder().NewDisableL1ValidatorTx(
 		params.ValidationID,
 	)
@@ -32,5 +53,5 @@ func NewDisableL1ValidatorTx(params DisableL1ValidatorTxParams) (*multisig.Multi
 	if err := params.Wallet.P().Signer().Sign(context.Background(), &tx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return multisig.New(&tx), nil
+	return tx.New(&tx), nil
 }

@@ -16,8 +16,8 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
@@ -303,9 +303,9 @@ func vmID(vmName string) (ids.ID, error) {
 	return ids.ToID(b)
 }
 
-func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
+func (c *Subnet) Commit(ms tx.SignedTx, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
 	if ms.Undefined() {
-		return ids.Empty, multisig.ErrUndefinedTx
+		return ids.Empty, tx.ErrUndefinedTx
 	}
 	isReady, err := ms.IsReadyToCommit()
 	if err != nil {
@@ -348,7 +348,7 @@ func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcc
 	if issueTxErr != nil {
 		return ids.Empty, fmt.Errorf("issue tx error %w", issueTxErr)
 	}
-	if _, ok := ms.PChainTx.Unsigned.(*txs.CreateSubnetTx); ok {
+	if _, ok := ms.Tx.Unsigned.(*txs.CreateSubnetTx); ok {
 		c.SubnetID = tx.ID()
 	}
 	return tx.ID(), issueTxErr
