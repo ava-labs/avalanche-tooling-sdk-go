@@ -8,9 +8,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
-	"sort"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/constants"

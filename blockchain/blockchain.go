@@ -9,9 +9,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
 	"math/big"
 	"os"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"

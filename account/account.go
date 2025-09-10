@@ -4,6 +4,7 @@ package account
 
 import (
 	"fmt"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"

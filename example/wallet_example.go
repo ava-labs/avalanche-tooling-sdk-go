@@ -4,9 +4,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"os"
 	"time"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
@@ -16,7 +17,6 @@ import (
 )
 
 func CreateSubnet() error {
-
 	ctx, cancel := utils.GetTimedContext(120 * time.Second)
 	defer cancel()
 	network := network.FujiNetwork()

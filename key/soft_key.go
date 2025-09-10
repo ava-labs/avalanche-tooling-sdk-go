@@ -8,11 +8,12 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/cb58"
