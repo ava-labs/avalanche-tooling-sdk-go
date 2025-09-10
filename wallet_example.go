@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package avalanche_tooling_sdk_go
+package main
 
 import (
 	"fmt"

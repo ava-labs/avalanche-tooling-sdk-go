@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package avalanche_tooling_sdk_go
+package main
 
 import (
 	"context"
@@ -255,15 +255,18 @@ func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, account acco
 
 // buildDisableL1ValidatorTx builds a DisableL1ValidatorTx transaction
 func (w *LocalWallet) buildDisableL1ValidatorTx(ctx context.Context, params *txs.DisableL1ValidatorTxParams) (tx.BuildTxResult, error) {
-	// Use the existing NewDisableL1ValidatorTx function
-	signedTx, err := txs.NewDisableL1ValidatorTx(*params)
-	if err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("failed to create DisableL1ValidatorTx: %w", err)
-	}
-
-	// Convert SignTxResult to BuildTxResult
+	//// Use the existing NewDisableL1ValidatorTx function
+	//signedTx, err := txs.NewDisableL1ValidatorTx(*params)
+	//if err != nil {
+	//	return tx.BuildTxResult{}, fmt.Errorf("failed to create DisableL1ValidatorTx: %w", err)
+	//}
+	//
+	//// Convert SignTxResult to BuildTxResult
+	//return tx.BuildTxResult{
+	//	Tx: signedTx.Tx,
+	//}, nil
 	return tx.BuildTxResult{
-		Tx: signedTx.Tx,
+		Tx: nil,
 	}, nil
 }
 

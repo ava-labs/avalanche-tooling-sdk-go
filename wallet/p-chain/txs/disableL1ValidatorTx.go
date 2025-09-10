@@ -3,14 +3,11 @@
 package txs
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 // DisableL1ValidatorTxParams contains all parameters needed to create a DisableL1ValidatorTx
@@ -42,16 +39,16 @@ func (p DisableL1ValidatorTxParams) GetChainType() string {
 	return "P-Chain"
 }
 
-func NewDisableL1ValidatorTx(params DisableL1ValidatorTxParams) (*tx.SignTxResult, error) {
-	unsignedTx, err := params.Wallet.P().Builder().NewDisableL1ValidatorTx(
-		params.ValidationID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error building tx: %w", err)
-	}
-	tx := txs.Tx{Unsigned: unsignedTx}
-	if err := params.Wallet.P().Signer().Sign(context.Background(), &tx); err != nil {
-		return nil, fmt.Errorf("error signing tx: %w", err)
-	}
-	return tx.New(&tx), nil
-}
+//func NewDisableL1ValidatorTx(params DisableL1ValidatorTxParams) (*tx.SignTxResult, error) {
+//	unsignedTx, err := params.Wallet.P().Builder().NewDisableL1ValidatorTx(
+//		params.ValidationID,
+//	)
+//	if err != nil {
+//		return nil, fmt.Errorf("error building tx: %w", err)
+//	}
+//	tx := txs.Tx{Unsigned: unsignedTx}
+//	if err := params.Wallet.P().Signer().Sign(context.Background(), &tx); err != nil {
+//		return nil, fmt.Errorf("error signing tx: %w", err)
+//	}
+//	return tx.New(&tx), nil
+//}

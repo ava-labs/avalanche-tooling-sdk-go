@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package avalanche_tooling_sdk_go
+package main
 
 import (
 	"context"
@@ -10,23 +10,7 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/subnet-evm/ethclient"
 )
-
-// ChainClientsInterface represents the different blockchain clients available
-// This is an interface version of ChainClients to avoid conflicts
-type ChainClientsInterface interface {
-	GetCChainClient() *ethclient.Client
-	GetXChainEndpoint() string
-	GetPChainEndpoint() string
-}
-
-// WalletConfig represents configuration options for wallet initialization
-type WalletConfig struct {
-	URI     string
-	Network network.Network
-	Clients ChainClients
-}
 
 type BuildTxParams struct {
 	BuildTxInput
