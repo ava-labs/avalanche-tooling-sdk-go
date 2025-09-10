@@ -1,20 +1,19 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package multisig
+package tx
 
 import (
-	"context"
 	"fmt"
-
-	"github.com/ava-labs/avalanchego/vms/platformvm"
+	"math"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/vms/components/verify"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
-
-	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 )
 
 type TxKind int64
@@ -32,42 +31,35 @@ const (
 	PChainConvertSubnetToL1Tx
 )
 
-type Multisig struct {
-	PChainTx    *txs.Tx
+type SignTxResult struct {
+	Tx          *txs.Tx
 	controlKeys []ids.ShortID
 	threshold   uint32
 }
 
-func New(pChainTx *txs.Tx) *Multisig {
-	ms := Multisig{
-		PChainTx: pChainTx,
-	}
-	return &ms
-}
-
-func (ms *Multisig) String() string {
-	if ms.PChainTx != nil {
-		return ms.PChainTx.ID().String()
+func (ms *SignTxResult) String() string {
+	if ms.Tx != nil {
+		return ms.Tx.ID().String()
 	}
 	return ""
 }
 
-func (ms *Multisig) Undefined() bool {
-	return ms.PChainTx == nil
+func (ms *SignTxResult) Undefined() bool {
+	return ms.Tx == nil
 }
 
-func (ms *Multisig) ToBytes() ([]byte, error) {
+func (ms *SignTxResult) ToBytes() ([]byte, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}
-	txBytes, err := txs.Codec.Marshal(txs.CodecVersion, ms.PChainTx)
+	txBytes, err := txs.Codec.Marshal(txs.CodecVersion, ms.Tx)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't marshal signed tx: %w", err)
 	}
 	return txBytes, nil
 }
 
-func (ms *Multisig) FromBytes(txBytes []byte) error {
+func (ms *SignTxResult) FromBytes(txBytes []byte) error {
 	var tx txs.Tx
 	if _, err := txs.Codec.Unmarshal(txBytes, &tx); err != nil {
 		return fmt.Errorf("error unmarshaling signed tx: %w", err)
@@ -75,15 +67,15 @@ func (ms *Multisig) FromBytes(txBytes []byte) error {
 	if err := tx.Initialize(txs.Codec); err != nil {
 		return fmt.Errorf("error initializing signed tx: %w", err)
 	}
-	ms.PChainTx = &tx
+	ms.Tx = &tx
 	return nil
 }
 
-func (ms *Multisig) IsReadyToCommit() (bool, error) {
+func (ms *SignTxResult) IsReadyToCommit() (bool, error) {
 	if ms.Undefined() {
 		return false, ErrUndefinedTx
 	}
-	unsignedTx := ms.PChainTx.Unsigned
+	unsignedTx := ms.Tx.Unsigned
 	switch unsignedTx.(type) {
 	case *txs.CreateSubnetTx:
 		return true, nil
@@ -105,7 +97,7 @@ func (ms *Multisig) IsReadyToCommit() (bool, error) {
 //     authSigners by using the index) to the remaining signers list
 //
 // if the tx is fully signed, returns empty slice
-func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
+func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
 	if ms.Undefined() {
 		return nil, nil, ErrUndefinedTx
 	}
@@ -114,16 +106,16 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 		return nil, nil, err
 	}
 	emptySig := [secp256k1.SignatureLen]byte{}
-	numCreds := len(ms.PChainTx.Creds)
+	numCreds := len(ms.Tx.Creds)
 	// we should have at least 1 cred for output owners and 1 cred for subnet auth
 	if numCreds < 2 {
 		return nil, nil, fmt.Errorf("expected tx.Creds of len 2, got %d. doesn't seem to be a multisig tx with subnet auth requirements", numCreds)
 	}
 	// signatures for output owners should be filled (all creds except last one)
-	for credIndex := range ms.PChainTx.Creds[:numCreds-1] {
-		cred, ok := ms.PChainTx.Creds[credIndex].(*secp256k1fx.Credential)
+	for credIndex := range ms.Tx.Creds[:numCreds-1] {
+		cred, ok := ms.Tx.Creds[credIndex].(*secp256k1fx.Credential)
 		if !ok {
-			return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.PChainTx.Creds[credIndex])
+			return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.Tx.Creds[credIndex])
 		}
 		for i, sig := range cred.Sigs {
 			if sig == emptySig {
@@ -132,9 +124,9 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 		}
 	}
 	// signatures for subnet auth (last cred)
-	cred, ok := ms.PChainTx.Creds[numCreds-1].(*secp256k1fx.Credential)
+	cred, ok := ms.Tx.Creds[numCreds-1].(*secp256k1fx.Credential)
 	if !ok {
-		return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.PChainTx.Creds[1])
+		return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.Tx.Creds[1])
 	}
 	if len(cred.Sigs) != len(authSigners) {
 		return nil, nil, fmt.Errorf("expected number of cred's signatures %d to equal number of auth signers %d",
@@ -156,7 +148,7 @@ func (ms *Multisig) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, err
 //   - get subnet auth indices from the tx, field tx.UnsignedTx.SubnetAuth
 //   - creates the string slice of required subnet auth addresses by applying
 //     the indices to the control keys slice
-func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
+func (ms *SignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}
@@ -164,7 +156,7 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
 	if err != nil {
 		return nil, err
 	}
-	unsignedTx := ms.PChainTx.Unsigned
+	unsignedTx := ms.Tx.Unsigned
 	var subnetAuth verify.Verifiable
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -186,9 +178,13 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected subnetAuth of type *secp256k1fx.Input, got %T", subnetAuth)
 	}
+	controlKeysLen := len(controlKeys)
+	if controlKeysLen > math.MaxUint32 {
+		return nil, fmt.Errorf("value %d out of range for uint32", controlKeysLen)
+	}
 	authSigners := []ids.ShortID{}
 	for _, sigIndex := range subnetInput.SigIndices {
-		if sigIndex >= uint32(len(controlKeys)) {
+		if sigIndex >= uint32(controlKeysLen) {
 			return nil, fmt.Errorf("signer index %d exceeds number of control keys", sigIndex)
 		}
 		authSigners = append(authSigners, controlKeys[sigIndex])
@@ -196,15 +192,15 @@ func (ms *Multisig) GetAuthSigners() ([]ids.ShortID, error) {
 	return authSigners, nil
 }
 
-func (*Multisig) GetSpendSigners() ([]ids.ShortID, error) {
+func (*SignTxResult) GetSpendSigners() ([]ids.ShortID, error) {
 	return nil, fmt.Errorf("not implemented yet")
 }
 
-func (ms *Multisig) GetTxKind() (TxKind, error) {
+func (ms *SignTxResult) GetTxKind() (TxKind, error) {
 	if ms.Undefined() {
 		return Undefined, ErrUndefinedTx
 	}
-	unsignedTx := ms.PChainTx.Unsigned
+	unsignedTx := ms.Tx.Unsigned
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
 		return PChainRemoveSubnetValidatorTx, nil
@@ -226,11 +222,11 @@ func (ms *Multisig) GetTxKind() (TxKind, error) {
 }
 
 // get network id associated to tx
-func (ms *Multisig) GetNetworkID() (uint32, error) {
+func (ms *SignTxResult) GetNetworkID() (uint32, error) {
 	if ms.Undefined() {
 		return 0, ErrUndefinedTx
 	}
-	unsignedTx := ms.PChainTx.Unsigned
+	unsignedTx := ms.Tx.Unsigned
 	var networkID uint32
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -254,7 +250,7 @@ func (ms *Multisig) GetNetworkID() (uint32, error) {
 }
 
 // get network model associated to tx
-func (ms *Multisig) GetNetwork() (network.Network, error) {
+func (ms *SignTxResult) GetNetwork() (network.Network, error) {
 	if ms.Undefined() {
 		return network.UndefinedNetwork, ErrUndefinedTx
 	}
@@ -269,11 +265,11 @@ func (ms *Multisig) GetNetwork() (network.Network, error) {
 	return newNetwork, nil
 }
 
-func (ms *Multisig) GetBlockchainID() (ids.ID, error) {
+func (ms *SignTxResult) GetBlockchainID() (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, ErrUndefinedTx
 	}
-	unsignedTx := ms.PChainTx.Unsigned
+	unsignedTx := ms.Tx.Unsigned
 	var blockchainID ids.ID
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -297,11 +293,11 @@ func (ms *Multisig) GetBlockchainID() (ids.ID, error) {
 }
 
 // GetSubnetID gets subnet id associated to tx
-func (ms *Multisig) GetSubnetID() (ids.ID, error) {
+func (ms *SignTxResult) GetSubnetID() (ids.ID, error) {
 	if ms.Undefined() {
 		return ids.Empty, ErrUndefinedTx
 	}
-	unsignedTx := ms.PChainTx.Unsigned
+	unsignedTx := ms.Tx.Unsigned
 	var subnetID ids.ID
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
@@ -318,15 +314,13 @@ func (ms *Multisig) GetSubnetID() (ids.ID, error) {
 		subnetID = unsignedTx.Subnet
 	case *txs.ConvertSubnetToL1Tx:
 		subnetID = unsignedTx.Subnet
-	case *txs.DisableL1ValidatorTx:
-		subnetID = unsignedTx.Subnet
 	default:
 		return ids.Empty, fmt.Errorf("unable to GetSubnetID due to unexpected unsigned tx type %T", unsignedTx)
 	}
 	return subnetID, nil
 }
 
-func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
+func (ms *SignTxResult) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 	if ms.Undefined() {
 		return nil, 0, ErrUndefinedTx
 	}
@@ -352,7 +346,8 @@ func (ms *Multisig) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 
 func GetOwners(network network.Network, subnetID ids.ID) ([]ids.ShortID, uint32, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
-	ctx := context.Background()
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
 	subnetResponse, err := pClient.GetSubnet(ctx, subnetID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("subnet tx %s query error: %w", subnetID, err)
@@ -362,9 +357,9 @@ func GetOwners(network network.Network, subnetID ids.ID) ([]ids.ShortID, uint32,
 	return controlKeys, threshold, nil
 }
 
-func (ms *Multisig) GetWrappedPChainTx() (*txs.Tx, error) {
+func (ms *SignTxResult) GetWrappedPChainTx() (*txs.Tx, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
 	}
-	return ms.PChainTx, nil
+	return ms.Tx, nil
 }

@@ -14,12 +14,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/cavaliergopher/grab/v3"
-	"github.com/stretchr/testify/require"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/logging"
+
+	"github.com/cavaliergopher/grab/v3"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewGetter(t *testing.T) {

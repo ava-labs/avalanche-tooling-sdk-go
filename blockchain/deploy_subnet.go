@@ -4,12 +4,12 @@
 package blockchain
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
-
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
@@ -17,7 +17,7 @@ import (
 
 // CreateSubnetTx creates uncommitted CreateSubnetTx
 // keychain in wallet will be used to build, sign and pay for the transaction
-func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*tx.SignTxResult, error) {
 	if c.DeployInfo.ControlKeys == nil {
 		return nil, fmt.Errorf("control keys are not provided")
 	}
@@ -37,15 +37,17 @@ func (c *Subnet) CreateSubnetTx(wallet wallet.Wallet) (*multisig.Multisig, error
 		return nil, fmt.Errorf("error building tx: %w", err)
 	}
 	tx := txs.Tx{Unsigned: unsignedTx}
-	if err := wallet.P().Signer().Sign(context.Background(), &tx); err != nil {
+	ctx, cancel := utils.GetTimedContext(constants.SignatureTimeout)
+	defer cancel()
+	if err := wallet.P().Signer().Sign(ctx, &tx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return multisig.New(&tx), nil
+	return tx.New(&tx), nil
 }
 
 // CreateBlockchainTx creates uncommitted CreateChainTx
 // keychain in wallet will be used to build, sign and pay for the transaction
-func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, error) {
+func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*tx.SignTxResult, error) {
 	if c.SubnetID == ids.Empty {
 		return nil, fmt.Errorf("subnet ID is not provided")
 	}
@@ -76,8 +78,10 @@ func (c *Subnet) CreateBlockchainTx(wallet wallet.Wallet) (*multisig.Multisig, e
 		return nil, fmt.Errorf("error building tx: %w", err)
 	}
 	tx := txs.Tx{Unsigned: unsignedTx}
-	if err := wallet.P().Signer().Sign(context.Background(), &tx); err != nil {
+	ctx, cancel := utils.GetTimedContext(constants.SignatureTimeout)
+	defer cancel()
+	if err := wallet.P().Signer().Sign(ctx, &tx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
 	}
-	return multisig.New(&tx), nil
+	return tx.New(&tx), nil
 }

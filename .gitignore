@@ -18,5 +18,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Misc
+blockchain/KEY_PATH
+
 # ignore GoLand metafiles directory
 .idea/

@@ -8,17 +8,15 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"io"
 	"os"
 	"strings"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/cb58"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/vms/components/avax"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
@@ -40,8 +38,7 @@ type SoftKey struct {
 	privKey        *secp256k1.PrivateKey
 	privKeyRaw     []byte
 	privKeyEncoded string
-
-	keyChain *secp256k1fx.Keychain
+	keyChain       *secp256k1fx.Keychain
 }
 
 const (
@@ -51,6 +48,8 @@ const (
 	rawEwoqPk      = "ewoqjP7PxY4yr3iLTpLisriqt94hdyDFNgchSxGGztUrTXtNN"
 	EwoqPrivateKey = privKeyEncPfx + rawEwoqPk
 )
+
+var ewoqKeyBytes = []byte("56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027")
 
 type SOp struct {
 	privKey        *secp256k1.PrivateKey
@@ -125,8 +124,7 @@ func NewSoft(opts ...SOpOption) (*SoftKey, error) {
 		privKey:        privKey,
 		privKeyRaw:     privKey.Bytes(),
 		privKeyEncoded: privKeyEncoded,
-
-		keyChain: keyChain,
+		keyChain:       keyChain,
 	}
 
 	return m, nil
@@ -280,15 +278,7 @@ func (m *SoftKey) PrivKeyHex() string {
 
 // Saves the private key to disk with hex encoding.
 func (m *SoftKey) Save(p string) error {
-	return os.WriteFile(p, []byte(m.PrivKeyHex()), constants.UserOnlyWriteReadPerms)
-}
-
-func (m *SoftKey) P(networkHRP string) (string, error) {
-	return address.Format("P", networkHRP, m.privKey.PublicKey().Address().Bytes())
-}
-
-func (m *SoftKey) X(networkHRP string) (string, error) {
-	return address.Format("X", networkHRP, m.privKey.PublicKey().Address().Bytes())
+	return os.WriteFile(p, []byte(m.PrivKeyHex()), constants.WriteReadUserOnlyPerms)
 }
 
 func (m *SoftKey) Spends(outputs []*avax.UTXO, opts ...OpOption) (

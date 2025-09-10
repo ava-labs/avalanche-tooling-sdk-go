@@ -7,6 +7,7 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -68,7 +69,7 @@ func NewDownloader(
 	network network.Network,
 	logger logging.Logger,
 ) (Downloader, error) {
-	tmpFile, err := os.CreateTemp("", "avalanche-cli-public-archive-*")
+	tmpFile, err := os.CreateTemp("", "avalanche-tooling-sdk-go-public-archive-*")
 	if err != nil {
 		return Downloader{}, err
 	}
@@ -181,7 +182,11 @@ func (d Downloader) UnpackTo(targetDir string) error {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			d.logger.Debug("Creating directory", zap.String("path", targetPath))
-			if err := os.MkdirAll(targetPath, os.FileMode(header.Mode)); err != nil {
+			headerMode := header.Mode
+			if headerMode < 0 || headerMode > math.MaxUint32 {
+				return fmt.Errorf("value %d out of range for uint32", headerMode)
+			}
+			if err := os.MkdirAll(targetPath, os.FileMode(headerMode)); err != nil {
 				d.logger.Error("Failed to create directory", zap.Error(err))
 				return fmt.Errorf("failed to create directory: %w", err)
 			}

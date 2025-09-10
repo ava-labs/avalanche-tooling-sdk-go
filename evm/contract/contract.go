@@ -18,6 +18,7 @@ import (
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/core/types"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -214,6 +215,7 @@ func ParseSpec(
 	event bool,
 	paid bool,
 	view bool,
+	outputParams interface{},
 	params ...interface{},
 ) (string, string, error) {
 	index := strings.Index(esp, "(")
@@ -246,7 +248,7 @@ func ParseSpec(
 	if err != nil {
 		return "", "", err
 	}
-	outputsMaps, err := getMap(outputTypes, nil)
+	outputsMaps, err := getMap(outputTypes, outputParams)
 	if err != nil {
 		return "", "", err
 	}
@@ -254,6 +256,8 @@ func ParseSpec(
 		for i := range inputsMaps {
 			if sdkUtils.Belongs(indexedFields, i) {
 				inputsMaps[i]["indexed"] = true
+			} else {
+				inputsMaps[i]["indexed"] = false
 			}
 		}
 	}
@@ -318,7 +322,7 @@ func TxToMethod(
 	if !generateRawTxOnly && privateKey == "" {
 		return nil, nil, fmt.Errorf("from private key must be defined to be able to sign the tx at TxToMethod")
 	}
-	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, payment != nil, false, params...)
+	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, payment != nil, false, nil, params...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -418,7 +422,7 @@ func TxToMethodWithWarpMessage(
 	if !generateRawTxOnly && privateKey == "" {
 		return nil, nil, fmt.Errorf("from private key must be defined to be able to sign the tx at TxToMethodWithWarpMessage")
 	}
-	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, false, params...)
+	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, false, nil, params...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -523,7 +527,7 @@ func DebugTraceCall(
 	methodSpec string,
 	params ...interface{},
 ) (map[string]interface{}, error) {
-	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, false, params...)
+	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, false, nil, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -566,9 +570,10 @@ func CallToMethod(
 	rpcURL string,
 	contractAddress common.Address,
 	methodSpec string,
+	outputParams interface{},
 	params ...interface{},
 ) ([]interface{}, error) {
-	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, true, params...)
+	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, true, outputParams, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -614,10 +619,10 @@ func DeployContract(
 	binBytes []byte,
 	methodSpec string,
 	params ...interface{},
-) (common.Address, error) {
-	_, methodABI, err := ParseSpec(methodSpec, nil, true, false, false, false, params...)
+) (common.Address, *types.Transaction, *types.Receipt, error) {
+	_, methodABI, err := ParseSpec(methodSpec, nil, true, false, false, false, nil, params...)
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, nil, nil, err
 	}
 	metadata := &bind.MetaData{
 		ABI: methodABI,
@@ -625,31 +630,32 @@ func DeployContract(
 	}
 	abi, err := metadata.GetAbi()
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, nil, nil, err
 	}
 	bin := common.FromHex(metadata.Bin)
 	if len(bin) == 0 {
-		return common.Address{}, fmt.Errorf("failure on given binary for smart contract: zero len")
+		return common.Address{}, nil, nil, fmt.Errorf("failure on given binary for smart contract: zero len")
 	}
 	client, err := evm.GetClient(rpcURL)
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, nil, nil, err
 	}
 	defer client.Close()
 	txOpts, err := client.GetTxOptsWithSigner(privateKey)
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, nil, nil, err
 	}
 	address, tx, _, err := bind.DeployContract(txOpts, *abi, bin, client.EthClient, params...)
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, nil, nil, err
 	}
-	if _, success, err := client.WaitForTransaction(tx); err != nil {
-		return common.Address{}, err
+	receipt, success, err := client.WaitForTransaction(tx)
+	if err != nil {
+		return common.Address{}, tx, receipt, err
 	} else if !success {
-		return common.Address{}, ErrFailedReceiptStatus
+		return common.Address{}, tx, receipt, ErrFailedReceiptStatus
 	}
-	return address, nil
+	return address, tx, receipt, nil
 }
 
 func UnpackLog(
@@ -658,7 +664,7 @@ func UnpackLog(
 	log types.Log,
 	event interface{},
 ) error {
-	eventName, eventABI, err := ParseSpec(eventSpec, indexedFields, false, true, false, false, event)
+	eventName, eventABI, err := ParseSpec(eventSpec, indexedFields, false, true, false, false, nil, event)
 	if err != nil {
 		return err
 	}

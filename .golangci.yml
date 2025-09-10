@@ -19,7 +19,6 @@ linters:
     - depguard
     - errcheck
     - errorlint
-    - exportloopref
     - goconst
     - gocritic
     - gofmt

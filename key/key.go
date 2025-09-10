@@ -7,9 +7,13 @@ package key
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"sort"
 
 	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/vms/components/avax"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
@@ -22,15 +26,11 @@ var (
 
 // Key defines methods for key manager interface.
 type Key interface {
-	// P returns all formatted P-Chain addresses.
-	P(string) (string, error)
-	// C returns the C-Chain address in Ethereum format
-	C() string
 	// Addresses returns the all raw ids.ShortID address.
 	Addresses() []ids.ShortID
 	// Match attempts to match a list of addresses up to the provided threshold.
 	Match(owners *secp256k1fx.OutputOwners, time uint64) ([]uint32, []ids.ShortID, bool)
-	// Spends attempts to spend all specified UTXOs (outputs)
+	// Spend attempts to spend all specified UTXOs (outputs)
 	// and returns the new UTXO inputs.
 	//
 	// If target amount is specified, it only uses the
@@ -56,6 +56,39 @@ type OpOption func(*Op)
 func (op *Op) applyOpts(opts []OpOption) {
 	for _, opt := range opts {
 		opt(op)
+	}
+}
+
+func WithTime(t uint64) OpOption {
+	return func(op *Op) {
+		op.time = t
+	}
+}
+
+func WithTargetAmount(ta uint64) OpOption {
+	return func(op *Op) {
+		op.targetAmount = ta
+	}
+}
+
+// To deduct transfer fee from total spend (output).
+// e.g., "units.MilliAvax" for X/P-Chain transfer.
+func WithFeeDeduct(fee uint64) OpOption {
+	return func(op *Op) {
+		op.feeDeduct = fee
+	}
+}
+
+func GetHRP(networkID uint32) string {
+	switch networkID {
+	case constants.LocalID:
+		return constants.LocalHRP
+	case constants.FujiID:
+		return constants.FujiHRP
+	case constants.MainnetID:
+		return constants.MainnetHRP
+	default:
+		return constants.FallbackHRP
 	}
 }
 
@@ -93,4 +126,14 @@ func (ins *innerSortTransferableInputsWithSigners) Swap(i, j int) {
 // This is based off of (generics?): https://github.com/ava-labs/avalanchego/blob/224c9fd23d41839201dd0275ac864a845de6e93e/vms/components/avax/transferables.go#L202
 func SortTransferableInputsWithSigners(ins []*avax.TransferableInput, signers [][]ids.ShortID) {
 	sort.Sort(&innerSortTransferableInputsWithSigners{ins: ins, signers: signers})
+}
+
+func (m *SoftKey) GetNetworkChainAddress(network network.Network, chain string) ([]string, error) {
+	if chain != "P" && chain != "X" {
+		return nil, fmt.Errorf("only P or X is accepted as a chain option")
+	}
+	// Parse HRP to create valid address
+	hrp := GetHRP(network.ID)
+	addressStr, error := address.Format(chain, hrp, m.privKey.PublicKey().Address().Bytes())
+	return []string{addressStr}, error
 }
