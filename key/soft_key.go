@@ -14,7 +14,6 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/cb58"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
@@ -22,8 +21,8 @@ import (
 	"github.com/ava-labs/avalanchego/vms/components/avax"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
+	"github.com/ava-labs/libevm/crypto"
 
-	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/zap"
 )
 
@@ -249,7 +248,7 @@ func (m *SoftKey) C() string {
 	ecdsaPrv := m.privKey.ToECDSA()
 	pub := ecdsaPrv.PublicKey
 
-	addr := eth_crypto.PubkeyToAddress(pub)
+	addr := crypto.PubkeyToAddress(pub)
 	return addr.String()
 }
 
