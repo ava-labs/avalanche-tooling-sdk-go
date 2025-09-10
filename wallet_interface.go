@@ -75,7 +75,7 @@ type Wallet interface {
 	ListAccounts(ctx context.Context) ([]*account.Account, error)
 
 	// ImportAccount imports an existing account into the wallet
-	ImportAccount(ctx context.Context, account account.Account) (*account.Account, error)
+	ImportAccount(ctx context.Context, keyPath string) (*account.Account, error)
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation

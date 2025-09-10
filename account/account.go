@@ -23,6 +23,16 @@ func NewAccount() (Account, error) {
 	}, nil
 }
 
+func Import(keyPath string) (Account, error) {
+	k, err := key.LoadSoft(keyPath)
+	if err != nil {
+		return Account{}, err
+	}
+	return Account{
+		SoftKey: k,
+	}, nil
+}
+
 func (a *Account) GetPChainAddress(network network.Network) (string, error) {
 	if a.SoftKey == nil {
 		return "", fmt.Errorf("SoftKey not initialized")

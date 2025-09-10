@@ -40,7 +40,7 @@ type LocalWallet struct {
 var _ Wallet = (*LocalWallet)(nil)
 
 // NewLocalWallet creates a new local wallet
-func NewLocalWallet(ctx context.Context, uri string) (*LocalWallet, error) {
+func NewLocalWallet() (*LocalWallet, error) {
 	return &LocalWallet{
 		Wallet:   nil,
 		accounts: []account.Account{},
@@ -103,10 +103,15 @@ func (w *LocalWallet) ListAccounts(ctx context.Context) ([]*account.Account, err
 }
 
 // ImportAccount imports an existing account into the wallet
-func (w *LocalWallet) ImportAccount(ctx context.Context, account account.Account) (*account.Account, error) {
+func (w *LocalWallet) ImportAccount(ctx context.Context, keyPath string) (*account.Account, error) {
 	// TODO: Implement account import logic
 	// This would add the provided account to the wallet
-	return nil, fmt.Errorf("not implemented")
+	existingAccount, err := account.Import(keyPath)
+	if err != nil {
+		return nil, fmt.Errorf("error when importing account %s \n", err)
+	}
+	w.AddAccount(existingAccount)
+	return &existingAccount, nil
 }
 
 // BuildTx constructs a transaction for the specified operation

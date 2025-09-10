@@ -131,17 +131,17 @@ func NewSoft(opts ...SOpOption) (*SoftKey, error) {
 }
 
 // LoadSoft loads the private key from disk and creates the corresponding SoftKey.
-func LoadSoft(networkID uint32, keyPath string) (*SoftKey, error) {
+func LoadSoft(keyPath string) (*SoftKey, error) {
 	kb, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
 	}
-	return LoadSoftFromBytes(networkID, kb)
+	return LoadSoftFromBytes(kb)
 }
 
-func LoadSoftOrCreate(networkID uint32, keyPath string) (*SoftKey, error) {
+func LoadSoftOrCreate(keyPath string) (*SoftKey, error) {
 	if utils.FileExists(keyPath) {
-		return LoadSoft(networkID, keyPath)
+		return LoadSoft(keyPath)
 	} else {
 		k, err := NewSoft()
 		if err != nil {
@@ -155,7 +155,7 @@ func LoadSoftOrCreate(networkID uint32, keyPath string) (*SoftKey, error) {
 }
 
 // LoadSoftFromBytes loads the private key from bytes and creates the corresponding SoftKey.
-func LoadSoftFromBytes(networkID uint32, kb []byte) (*SoftKey, error) {
+func LoadSoftFromBytes(kb []byte) (*SoftKey, error) {
 	// in case, it's already encoded
 	k, err := NewSoft(WithPrivateKeyEncoded(string(kb)))
 	if err == nil {
