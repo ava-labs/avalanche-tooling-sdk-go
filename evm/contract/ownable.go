@@ -4,7 +4,7 @@ package contract
 
 import (
 	"github.com/ava-labs/avalanchego/utils/logging"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ava-labs/libevm/common"
 )
 
 // GetContractOwner gets owner for https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-owner contracts

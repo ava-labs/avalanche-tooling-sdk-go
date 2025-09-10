@@ -8,9 +8,9 @@ import (
 	"math/big"
 
 	"github.com/ava-labs/avalanchego/utils/units"
-	"github.com/ava-labs/subnet-evm/core/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/ava-labs/libevm/crypto"
 )
 
 // Returns the first log in 'logs' that is successfully parsed by 'parser'
