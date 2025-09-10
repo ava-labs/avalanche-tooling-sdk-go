@@ -4,7 +4,11 @@ package wallet
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"time"
 
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 
@@ -155,7 +159,11 @@ func (w *LocalWallet) SendTx(ctx context.Context, params SendTxParams) (tx.SendT
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
 		return tx.SendTxResult{}, fmt.Errorf("error sending tx: %w", err)
 	}
-	return tx.SendTxResult{}, fmt.Errorf("not implemented")
+	sentTx, err := w.Commit(*params.SignTxResult)
+	if err != nil {
+		return tx.SendTxResult{}, fmt.Errorf("error sending tx: %w", err)
+	}
+	return tx.SendTxResult{Tx: sentTx}, nil
 }
 
 func (w *LocalWallet) SignPChainTx(ctx context.Context, unsignedTx avagoTxs.UnsignedTx, account accounts.Account) (*avagoTxs.Tx, error) {
@@ -305,4 +313,49 @@ func GetMultisigTxOptions(account account.Account, subnetAuthKeys []ids.ShortID)
 	}
 	options = append(options, common.WithChangeOwner(changeOwner))
 	return options
+}
+
+func (w *LocalWallet) Commit(transaction tx.SignTxResult) (*avagoTxs.Tx, error) {
+	if transaction.Undefined() {
+		return nil, multisig.ErrUndefinedTx
+	}
+	isReady, err := transaction.IsReadyToCommit()
+	if err != nil {
+		return nil, err
+	}
+	if !isReady {
+		return nil, errors.New("tx is not fully signed so can't be committed")
+	}
+	tx, err := transaction.GetWrappedPChainTx()
+	if err != nil {
+		return nil, err
+	}
+	const (
+		repeats             = 3
+		sleepBetweenRepeats = 2 * time.Second
+	)
+	var issueTxErr error
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < repeats; i++ {
+		ctx, cancel := utils.GetAPILargeContext()
+		defer cancel()
+		options := []common.Option{common.WithContext(ctx)}
+		// TODO: split error checking and recovery between issuing and waiting for status
+		issueTxErr = w.P().IssueTx(tx, options...)
+		if issueTxErr == nil {
+			break
+		}
+		if ctx.Err() != nil {
+			issueTxErr = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", tx.ID(), issueTxErr)
+		} else {
+			issueTxErr = fmt.Errorf("error issuing tx with ID %s: %w", tx.ID(), issueTxErr)
+		}
+		time.Sleep(sleepBetweenRepeats)
+	}
+	if issueTxErr != nil {
+		return nil, fmt.Errorf("issue tx error %w", issueTxErr)
+	}
+	return tx, issueTxErr
 }
