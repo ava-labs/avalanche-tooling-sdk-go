@@ -6,9 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	"time"
 
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 
@@ -25,7 +26,6 @@ import (
 	"github.com/ava-labs/avalanchego/ids"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
-	"github.com/ava-labs/coreth/accounts"
 	"github.com/ava-labs/subnet-evm/ethclient"
 )
 
@@ -166,7 +166,7 @@ func (w *LocalWallet) SendTx(ctx context.Context, params SendTxParams) (tx.SendT
 	return tx.SendTxResult{Tx: sentTx}, nil
 }
 
-func (w *LocalWallet) SignPChainTx(ctx context.Context, unsignedTx avagoTxs.UnsignedTx, account accounts.Account) (*avagoTxs.Tx, error) {
+func (w *LocalWallet) SignPChainTx(ctx context.Context, unsignedTx avagoTxs.UnsignedTx, account account.Account) (*avagoTxs.Tx, error) {
 	tx := avagoTxs.Tx{Unsigned: unsignedTx}
 	if err := w.Wallet.P().Signer().Sign(ctx, &tx); err != nil {
 		return nil, fmt.Errorf("error signing tx: %w", err)
