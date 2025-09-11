@@ -15,17 +15,18 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
+	ethereum "github.com/ava-labs/libevm"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/ava-labs/libevm/crypto"
+	ethparams "github.com/ava-labs/libevm/params"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
-	"github.com/ava-labs/subnet-evm/core/types"
 	"github.com/ava-labs/subnet-evm/ethclient"
-	"github.com/ava-labs/subnet-evm/interfaces"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/plugin/evm/upgrade/legacy"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	"github.com/ava-labs/subnet-evm/predicate"
 	subnetEvmUtils "github.com/ava-labs/subnet-evm/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const (
@@ -292,7 +293,7 @@ func (client Client) CalculateTxParams(
 // returns the estimated gas limit
 // supports [repeatsOnFailure] failures
 func (client Client) EstimateGasLimit(
-	msg interfaces.CallMsg,
+	msg ethereum.CallMsg,
 ) (uint64, error) {
 	gasLimit, err := utils.RetryWithContextGen(
 		utils.GetAPILargeContext,
@@ -531,7 +532,7 @@ func (client Client) TransactWithWarpMessage(
 			StorageKeys: subnetEvmUtils.BytesToHashSlice(predicate.PackPredicate(warpMessage.Bytes())),
 		},
 	}
-	msg := interfaces.CallMsg{
+	msg := ethereum.CallMsg{
 		From:       from,
 		To:         &contract,
 		GasPrice:   nil,
@@ -585,7 +586,7 @@ func (client Client) BlockByNumber(n *big.Int) (*types.Block, error) {
 
 // get logs as given by [query]
 // supports [repeatsOnFailure] failures
-func (client Client) FilterLogs(query interfaces.FilterQuery) ([]types.Log, error) {
+func (client Client) FilterLogs(query ethereum.FilterQuery) ([]types.Log, error) {
 	logs, err := utils.RetryWithContextGen(
 		utils.GetAPILargeContext,
 		func(ctx context.Context) ([]types.Log, error) {
@@ -699,7 +700,7 @@ func (client Client) CreateDummyBlocks(
 			nonce = nonceFromAPI
 		}
 		// send Big1 to himself
-		tx := types.NewTransaction(nonce, addr, common.Big1, params.TxGas, gasPrice, nil)
+		tx := types.NewTransaction(nonce, addr, common.Big1, ethparams.TxGas, gasPrice, nil)
 		triggerTx, err := types.SignTx(tx, txSigner, privKey)
 		if err != nil {
 			return fmt.Errorf("types.SignTx failure at step %d: %w", i, err)

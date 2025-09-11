@@ -12,20 +12,20 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core"
 	"github.com/ava-labs/subnet-evm/commontype"
-	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params"
+	"github.com/ava-labs/subnet-evm/params/extras"
 
-	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
 )
 
@@ -77,7 +77,7 @@ type SubnetEVMParams struct {
 	// the EVM. There is no byte code associated with that address.
 	//
 	// For more information regarding Precompiles, head to https://docs.avax.network/build/vm/evm/intro.
-	Precompiles params.Precompiles
+	Precompiles extras.Precompiles
 
 	// Timestamp
 	// TODO: add description what timestamp is
@@ -244,7 +244,9 @@ func createEvmGenesis(
 	genesis.Timestamp = *subnetEVMParams.Timestamp
 
 	conf := params.SubnetEVMDefaultChainConfig
-	conf.NetworkUpgrades = params.NetworkUpgrades{}
+	extra := params.GetExtra(conf)
+
+	extra.NetworkUpgrades = extras.NetworkUpgrades{}
 
 	var err error
 
@@ -265,15 +267,15 @@ func createEvmGenesis(
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
 	}
 
-	conf.FeeConfig = subnetEVMParams.FeeConfig
-	conf.GenesisPrecompiles = subnetEVMParams.Precompiles
+	extra.FeeConfig = subnetEVMParams.FeeConfig
+	extra.GenesisPrecompiles = subnetEVMParams.Precompiles
 
 	conf.ChainID = subnetEVMParams.ChainID
 
 	genesis.Alloc = allocation
 	genesis.Config = conf
 	genesis.Difficulty = vm.Difficulty
-	genesis.GasLimit = conf.FeeConfig.GasLimit.Uint64()
+	genesis.GasLimit = extra.FeeConfig.GasLimit.Uint64()
 
 	jsonBytes, err := genesis.MarshalJSON()
 	if err != nil {

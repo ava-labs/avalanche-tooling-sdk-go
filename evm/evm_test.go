@@ -14,11 +14,11 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	mockethclient "github.com/ava-labs/avalanche-tooling-sdk-go/mocks/ethclient"
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
-	"github.com/ava-labs/subnet-evm/core/types"
+	ethereum "github.com/ava-labs/libevm"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/ava-labs/libevm/crypto"
 	subnetethclient "github.com/ava-labs/subnet-evm/ethclient"
-	"github.com/ava-labs/subnet-evm/interfaces"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -787,7 +787,7 @@ func TestEstimateGasLimit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
-			gasLimit, err := client.EstimateGasLimit(interfaces.CallMsg{})
+			gasLimit, err := client.EstimateGasLimit(ethereum.CallMsg{})
 			if tt.expectError {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), "gas limit")
@@ -1111,7 +1111,7 @@ func TestFilterLogs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
-			result, err := client.FilterLogs(interfaces.FilterQuery{})
+			result, err := client.FilterLogs(ethereum.FilterQuery{})
 			if tt.expectError {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), "retrieving logs")
