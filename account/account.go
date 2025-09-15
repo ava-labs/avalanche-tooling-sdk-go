@@ -9,9 +9,6 @@ import (
 	"github.com/ava-labs/avalanchego/ids"
 )
 
-// AccountType represents different types of accounts
-type AccountType string
-
 // Account represents the interface for different account implementations
 type Account interface {
 	// Addresses returns all addresses associated with this account
