@@ -1,0 +1,33 @@
+{
+  "org_id": "Org#0b411066-a5e3-4115-bb20-884757e0aad5",
+  "role_id": null,
+  "expiration": 1789492344,
+  "purpose": "cs v0.118.1+8643ff5f9",
+  "token": "3d6fd7397:MDBiM2NhODAtNTZiZS00NTllLTg2NjMtNmZlMzdkZmEyZTFm.eyJlcG9jaF9udW0iOjEsImVwb2NoX3Rva2VuIjoianVjVnh1UmpnS1IxbUs4Mm5ENGdQSU9qV3MvUC9JODUxMW0vc1kxMnhGQT0iLCJvdGhlcl90b2tlbiI6IjNxekQ0ODNKeTFHY3hkZGtDWTZ1b2RPSjBQTVJaVEEyRlJvMTMwMUVlclk9In0=",
+  "refresh_token": "3d6fd7397:MDBiM2NhODAtNTZiZS00NTllLTg2NjMtNmZlMzdkZmEyZTFm.eyJlcG9jaF9udW0iOjEsImVwb2NoX3Rva2VuIjoianVjVnh1UmpnS1IxbUs4Mm5ENGdQSU9qV3MvUC9JODUxMW0vc1kxMnhGQT0iLCJvdGhlcl90b2tlbiI6IjNxekQ0ODNKeTFHY3hkZGtDWTZ1b2RPSjBQTVJaVEEyRlJvMTMwMUVlclk9In0=.h2vPMroA+HvU8ECExmE/qRkfyT2ivb+QubyiTERYzGU=",
+  "env": {
+    "Dev-CubeSignerStack": {
+      "ClientId": "1tiou9ecj058khiidmhj4ds4rj",
+      "DefaultCredentialRpId": "cubist.dev",
+      "GoogleDeviceClientId": "59575607964-nc9hjnjka7jlb838jmg40qes4dtpsm6e.apps.googleusercontent.com",
+      "GoogleDeviceClientSecret": "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",
+      "Region": "us-east-1",
+      "SignerApiRoot": "https://gamma.signer.cubist.dev",
+      "UserPoolId": "us-east-1_RU7HEslOW"
+    }
+  },
+  "session_info": {
+    "auth_token": "3qzD483Jy1GcxddkCY6uodOJ0PMRZTA2FRo1301EerY=",
+    "auth_token_exp": 1757956644,
+    "epoch": 1,
+    "epoch_token": "jucVxuRjgKR1mK82nD4gPIOjWs/P/I8511m/sY12xFA=",
+    "refresh_token": "h2vPMroA+HvU8ECExmE/qRkfyT2ivb+QubyiTERYzGU=",
+    "refresh_token_exp": 1758042744,
+    "session_id": "00b3ca80-56be-459e-8663-6fe37dfa2e1f"
+  },
+  "scopes": [
+    "sign:*",
+    "manage:*"
+  ],
+  "auth_kind": "sso"
+}

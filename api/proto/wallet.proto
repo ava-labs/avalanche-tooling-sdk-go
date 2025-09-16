@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+package avalanche.wallet.v1;
+
+option go_package = "github.com/ava-labs/avalanche-tooling-sdk-go/api/proto";
+
+import "google/protobuf/empty.proto";
+
+// WalletService provides wallet management operations
+service WalletService {
+  // Account Management
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  rpc ListAccounts(google.protobuf.Empty) returns (ListAccountsResponse);
+  rpc ImportAccount(ImportAccountRequest) returns (ImportAccountResponse);
+  
+  // Address Management
+  rpc GetAddresses(google.protobuf.Empty) returns (GetAddressesResponse);
+  
+  // Transaction Operations
+  rpc BuildTransaction(BuildTransactionRequest) returns (BuildTransactionResponse);
+  rpc SignTransaction(SignTransactionRequest) returns (SignTransactionResponse);
+  rpc SendTransaction(SendTransactionRequest) returns (SendTransactionResponse);
+  
+  // Chain Clients
+  rpc GetChainClients(google.protobuf.Empty) returns (GetChainClientsResponse);
+  rpc SetChainClients(SetChainClientsRequest) returns (google.protobuf.Empty);
+  
+  // Cleanup
+  rpc Close(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+// Account Management Messages
+message CreateAccountRequest {
+  // Empty for now, could add account options later
+}
+
+message CreateAccountResponse {
+  string account_id = 1;
+  repeated string addresses = 2;
+  string p_chain_address = 3;
+}
+
+message GetAccountRequest {
+  string address = 1;
+}
+
+message GetAccountResponse {
+  string account_id = 1;
+  repeated string addresses = 2;
+  string p_chain_address = 3;
+}
+
+message ListAccountsResponse {
+  repeated AccountInfo accounts = 1;
+}
+
+message AccountInfo {
+  string account_id = 1;
+  repeated string addresses = 2;
+  string p_chain_address = 3;
+}
+
+message ImportAccountRequest {
+  string key_path = 1;
+}
+
+message ImportAccountResponse {
+  string account_id = 1;
+  repeated string addresses = 2;
+  string p_chain_address = 3;
+}
+
+// Address Management Messages
+message GetAddressesResponse {
+  repeated string addresses = 1;
+}
+
+// Transaction Messages
+message BuildTransactionRequest {
+  string account_id = 1;
+  string network = 2;
+  TransactionParams transaction_params = 3;
+}
+
+message TransactionParams {
+  string tx_type = 1;
+  string chain_type = 2;
+  // P-Chain specific params
+  PChainParams p_chain_params = 3;
+  // C-Chain specific params
+  CChainParams c_chain_params = 4;
+  // X-Chain specific params
+  XChainParams x_chain_params = 5;
+}
+
+message PChainParams {
+  oneof params {
+    CreateSubnetParams create_subnet = 1;
+    ConvertSubnetToL1Params convert_subnet_to_l1 = 2;
+  }
+}
+
+message CreateSubnetParams {
+  repeated string control_keys = 1;
+  uint32 threshold = 2;
+}
+
+message ConvertSubnetToL1Params {
+  repeated string subnet_auth_keys = 1;
+  string subnet_id = 2;
+  string chain_id = 3;
+  string address = 4;
+  repeated ConvertSubnetToL1Validator validators = 5;
+}
+
+message ConvertSubnetToL1Validator {
+  string node_id = 1;
+  uint64 weight = 2;
+  uint64 start_time = 3;
+  uint64 end_time = 4;
+}
+
+message CChainParams {
+  // C-Chain specific parameters
+  string to_address = 1;
+  string value = 2;
+  string gas_limit = 3;
+  string gas_price = 4;
+  string data = 5;
+}
+
+message XChainParams {
+  // X-Chain specific parameters
+  repeated string to_addresses = 1;
+  repeated string amounts = 2;
+  string memo = 3;
+}
+
+message BuildTransactionResponse {
+  string transaction_id = 1;
+  bytes transaction_bytes = 2;
+  bool is_signed = 3;
+  string chain_type = 4;
+}
+
+message SignTransactionRequest {
+  string account_id = 1;
+  string network = 2;
+  bytes transaction_bytes = 3;
+}
+
+message SignTransactionResponse {
+  string transaction_id = 1;
+  bytes transaction_bytes = 2;
+  bool is_signed = 3;
+}
+
+message SendTransactionRequest {
+  string account_id = 1;
+  string network = 2;
+  bytes transaction_bytes = 3;
+}
+
+message SendTransactionResponse {
+  string transaction_id = 1;
+  string tx_hash = 2;
+  bool success = 3;
+}
+
+// Chain Clients Messages
+message GetChainClientsResponse {
+  string c_chain_endpoint = 1;
+  string x_chain_endpoint = 2;
+  string p_chain_endpoint = 3;
+}
+
+message SetChainClientsRequest {
+  string c_chain_endpoint = 1;
+  string x_chain_endpoint = 2;
+  string p_chain_endpoint = 3;
+}

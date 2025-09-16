@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package avalanche.account.v1;
+
+option go_package = "github.com/ava-labs/avalanche-tooling-sdk-go/api/proto";
+
+import "google/protobuf/empty.proto";
+
+// AccountService provides account-specific operations
+service AccountService {
+  // Get account addresses
+  rpc GetAddresses(GetAddressesRequest) returns (GetAddressesResponse);
+  
+  // Get P-Chain address for specific network
+  rpc GetPChainAddress(GetPChainAddressRequest) returns (GetPChainAddressResponse);
+  
+  // Get keychain information
+  rpc GetKeychain(GetKeychainRequest) returns (GetKeychainResponse);
+}
+
+message GetAddressesRequest {
+  string account_id = 1;
+}
+
+message GetAddressesResponse {
+  repeated string addresses = 1;
+}
+
+message GetPChainAddressRequest {
+  string account_id = 1;
+  string network = 2;
+}
+
+message GetPChainAddressResponse {
+  string p_chain_address = 1;
+}
+
+message GetKeychainRequest {
+  string account_id = 1;
+}
+
+message GetKeychainResponse {
+  repeated string addresses = 1;
+  // Note: In a real implementation, you might want to return
+  // keychain metadata rather than the actual keys for security
+}
