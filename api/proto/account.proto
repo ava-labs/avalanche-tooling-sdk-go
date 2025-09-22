@@ -8,8 +8,6 @@ import "google/protobuf/empty.proto";
 
 // AccountService provides account-specific operations
 service AccountService {
-  // Get account addresses
-  rpc GetAddresses(GetAddressesRequest) returns (GetAddressesResponse);
   
   // Get P-Chain address for specific network
   rpc GetPChainAddress(GetPChainAddressRequest) returns (GetPChainAddressResponse);
@@ -18,13 +16,6 @@ service AccountService {
   rpc GetKeychain(GetKeychainRequest) returns (GetKeychainResponse);
 }
 
-message GetAddressesRequest {
-  string account_id = 1;
-}
-
-message GetAddressesResponse {
-  repeated string addresses = 1;
-}
 
 message GetPChainAddressRequest {
   string account_id = 1;

@@ -22,94 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetAddressesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetAddressesRequest) Reset() {
-	*x = GetAddressesRequest{}
-	mi := &file_api_proto_account_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetAddressesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetAddressesRequest) ProtoMessage() {}
-
-func (x *GetAddressesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_account_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetAddressesRequest.ProtoReflect.Descriptor instead.
-func (*GetAddressesRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_account_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *GetAddressesRequest) GetAccountId() string {
-	if x != nil {
-		return x.AccountId
-	}
-	return ""
-}
-
-type GetAddressesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Addresses     []string               `protobuf:"bytes,1,rep,name=addresses,proto3" json:"addresses,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetAddressesResponse) Reset() {
-	*x = GetAddressesResponse{}
-	mi := &file_api_proto_account_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetAddressesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetAddressesResponse) ProtoMessage() {}
-
-func (x *GetAddressesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_account_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetAddressesResponse.ProtoReflect.Descriptor instead.
-func (*GetAddressesResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_account_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetAddressesResponse) GetAddresses() []string {
-	if x != nil {
-		return x.Addresses
-	}
-	return nil
-}
-
 type GetPChainAddressRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
@@ -120,7 +32,7 @@ type GetPChainAddressRequest struct {
 
 func (x *GetPChainAddressRequest) Reset() {
 	*x = GetPChainAddressRequest{}
-	mi := &file_api_proto_account_proto_msgTypes[2]
+	mi := &file_api_proto_account_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -132,7 +44,7 @@ func (x *GetPChainAddressRequest) String() string {
 func (*GetPChainAddressRequest) ProtoMessage() {}
 
 func (x *GetPChainAddressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_account_proto_msgTypes[2]
+	mi := &file_api_proto_account_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -145,7 +57,7 @@ func (x *GetPChainAddressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPChainAddressRequest.ProtoReflect.Descriptor instead.
 func (*GetPChainAddressRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_account_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_account_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetPChainAddressRequest) GetAccountId() string {
@@ -171,7 +83,7 @@ type GetPChainAddressResponse struct {
 
 func (x *GetPChainAddressResponse) Reset() {
 	*x = GetPChainAddressResponse{}
-	mi := &file_api_proto_account_proto_msgTypes[3]
+	mi := &file_api_proto_account_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -183,7 +95,7 @@ func (x *GetPChainAddressResponse) String() string {
 func (*GetPChainAddressResponse) ProtoMessage() {}
 
 func (x *GetPChainAddressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_account_proto_msgTypes[3]
+	mi := &file_api_proto_account_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -196,7 +108,7 @@ func (x *GetPChainAddressResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPChainAddressResponse.ProtoReflect.Descriptor instead.
 func (*GetPChainAddressResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_account_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_account_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetPChainAddressResponse) GetPChainAddress() string {
@@ -215,7 +127,7 @@ type GetKeychainRequest struct {
 
 func (x *GetKeychainRequest) Reset() {
 	*x = GetKeychainRequest{}
-	mi := &file_api_proto_account_proto_msgTypes[4]
+	mi := &file_api_proto_account_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -227,7 +139,7 @@ func (x *GetKeychainRequest) String() string {
 func (*GetKeychainRequest) ProtoMessage() {}
 
 func (x *GetKeychainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_account_proto_msgTypes[4]
+	mi := &file_api_proto_account_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -240,7 +152,7 @@ func (x *GetKeychainRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetKeychainRequest.ProtoReflect.Descriptor instead.
 func (*GetKeychainRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_account_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_account_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetKeychainRequest) GetAccountId() string {
@@ -259,7 +171,7 @@ type GetKeychainResponse struct {
 
 func (x *GetKeychainResponse) Reset() {
 	*x = GetKeychainResponse{}
-	mi := &file_api_proto_account_proto_msgTypes[5]
+	mi := &file_api_proto_account_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -271,7 +183,7 @@ func (x *GetKeychainResponse) String() string {
 func (*GetKeychainResponse) ProtoMessage() {}
 
 func (x *GetKeychainResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_account_proto_msgTypes[5]
+	mi := &file_api_proto_account_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -284,7 +196,7 @@ func (x *GetKeychainResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetKeychainResponse.ProtoReflect.Descriptor instead.
 func (*GetKeychainResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_account_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_account_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetKeychainResponse) GetAddresses() []string {
@@ -298,12 +210,7 @@ var File_api_proto_account_proto protoreflect.FileDescriptor
 
 const file_api_proto_account_proto_rawDesc = "" +
 	"\n" +
-	"\x17api/proto/account.proto\x12\x14avalanche.account.v1\x1a\x1bgoogle/protobuf/empty.proto\"4\n" +
-	"\x13GetAddressesRequest\x12\x1d\n" +
-	"\n" +
-	"account_id\x18\x01 \x01(\tR\taccountId\"4\n" +
-	"\x14GetAddressesResponse\x12\x1c\n" +
-	"\taddresses\x18\x01 \x03(\tR\taddresses\"R\n" +
+	"\x17api/proto/account.proto\x12\x14avalanche.account.v1\x1a\x1bgoogle/protobuf/empty.proto\"R\n" +
 	"\x17GetPChainAddressRequest\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x18\n" +
@@ -314,9 +221,8 @@ const file_api_proto_account_proto_rawDesc = "" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\"3\n" +
 	"\x13GetKeychainResponse\x12\x1c\n" +
-	"\taddresses\x18\x01 \x03(\tR\taddresses2\xce\x02\n" +
-	"\x0eAccountService\x12e\n" +
-	"\fGetAddresses\x12).avalanche.account.v1.GetAddressesRequest\x1a*.avalanche.account.v1.GetAddressesResponse\x12q\n" +
+	"\taddresses\x18\x01 \x03(\tR\taddresses2\xe7\x01\n" +
+	"\x0eAccountService\x12q\n" +
 	"\x10GetPChainAddress\x12-.avalanche.account.v1.GetPChainAddressRequest\x1a..avalanche.account.v1.GetPChainAddressResponse\x12b\n" +
 	"\vGetKeychain\x12(.avalanche.account.v1.GetKeychainRequest\x1a).avalanche.account.v1.GetKeychainResponseB8Z6github.com/ava-labs/avalanche-tooling-sdk-go/api/protob\x06proto3"
 
@@ -332,24 +238,20 @@ func file_api_proto_account_proto_rawDescGZIP() []byte {
 	return file_api_proto_account_proto_rawDescData
 }
 
-var file_api_proto_account_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_api_proto_account_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_api_proto_account_proto_goTypes = []any{
-	(*GetAddressesRequest)(nil),      // 0: avalanche.account.v1.GetAddressesRequest
-	(*GetAddressesResponse)(nil),     // 1: avalanche.account.v1.GetAddressesResponse
-	(*GetPChainAddressRequest)(nil),  // 2: avalanche.account.v1.GetPChainAddressRequest
-	(*GetPChainAddressResponse)(nil), // 3: avalanche.account.v1.GetPChainAddressResponse
-	(*GetKeychainRequest)(nil),       // 4: avalanche.account.v1.GetKeychainRequest
-	(*GetKeychainResponse)(nil),      // 5: avalanche.account.v1.GetKeychainResponse
+	(*GetPChainAddressRequest)(nil),  // 0: avalanche.account.v1.GetPChainAddressRequest
+	(*GetPChainAddressResponse)(nil), // 1: avalanche.account.v1.GetPChainAddressResponse
+	(*GetKeychainRequest)(nil),       // 2: avalanche.account.v1.GetKeychainRequest
+	(*GetKeychainResponse)(nil),      // 3: avalanche.account.v1.GetKeychainResponse
 }
 var file_api_proto_account_proto_depIdxs = []int32{
-	0, // 0: avalanche.account.v1.AccountService.GetAddresses:input_type -> avalanche.account.v1.GetAddressesRequest
-	2, // 1: avalanche.account.v1.AccountService.GetPChainAddress:input_type -> avalanche.account.v1.GetPChainAddressRequest
-	4, // 2: avalanche.account.v1.AccountService.GetKeychain:input_type -> avalanche.account.v1.GetKeychainRequest
-	1, // 3: avalanche.account.v1.AccountService.GetAddresses:output_type -> avalanche.account.v1.GetAddressesResponse
-	3, // 4: avalanche.account.v1.AccountService.GetPChainAddress:output_type -> avalanche.account.v1.GetPChainAddressResponse
-	5, // 5: avalanche.account.v1.AccountService.GetKeychain:output_type -> avalanche.account.v1.GetKeychainResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	0, // 0: avalanche.account.v1.AccountService.GetPChainAddress:input_type -> avalanche.account.v1.GetPChainAddressRequest
+	2, // 1: avalanche.account.v1.AccountService.GetKeychain:input_type -> avalanche.account.v1.GetKeychainRequest
+	1, // 2: avalanche.account.v1.AccountService.GetPChainAddress:output_type -> avalanche.account.v1.GetPChainAddressResponse
+	3, // 3: avalanche.account.v1.AccountService.GetKeychain:output_type -> avalanche.account.v1.GetKeychainResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -366,7 +268,7 @@ func file_api_proto_account_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_account_proto_rawDesc), len(file_api_proto_account_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

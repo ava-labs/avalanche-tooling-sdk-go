@@ -14,8 +14,6 @@ service WalletService {
   rpc ListAccounts(google.protobuf.Empty) returns (ListAccountsResponse);
   rpc ImportAccount(ImportAccountRequest) returns (ImportAccountResponse);
   
-  // Address Management
-  rpc GetAddresses(google.protobuf.Empty) returns (GetAddressesResponse);
   
   // Transaction Operations
   rpc BuildTransaction(BuildTransactionRequest) returns (BuildTransactionResponse);
@@ -71,10 +69,6 @@ message ImportAccountResponse {
   string p_chain_address = 3;
 }
 
-// Address Management Messages
-message GetAddressesResponse {
-  repeated string addresses = 1;
-}
 
 // Transaction Messages
 message BuildTransactionRequest {

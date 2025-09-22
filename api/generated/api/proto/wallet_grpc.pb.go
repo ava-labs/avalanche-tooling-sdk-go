@@ -24,7 +24,6 @@ const (
 	WalletService_GetAccount_FullMethodName       = "/avalanche.wallet.v1.WalletService/GetAccount"
 	WalletService_ListAccounts_FullMethodName     = "/avalanche.wallet.v1.WalletService/ListAccounts"
 	WalletService_ImportAccount_FullMethodName    = "/avalanche.wallet.v1.WalletService/ImportAccount"
-	WalletService_GetAddresses_FullMethodName     = "/avalanche.wallet.v1.WalletService/GetAddresses"
 	WalletService_BuildTransaction_FullMethodName = "/avalanche.wallet.v1.WalletService/BuildTransaction"
 	WalletService_SignTransaction_FullMethodName  = "/avalanche.wallet.v1.WalletService/SignTransaction"
 	WalletService_SendTransaction_FullMethodName  = "/avalanche.wallet.v1.WalletService/SendTransaction"
@@ -44,8 +43,6 @@ type WalletServiceClient interface {
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
 	ListAccounts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	ImportAccount(ctx context.Context, in *ImportAccountRequest, opts ...grpc.CallOption) (*ImportAccountResponse, error)
-	// Address Management
-	GetAddresses(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAddressesResponse, error)
 	// Transaction Operations
 	BuildTransaction(ctx context.Context, in *BuildTransactionRequest, opts ...grpc.CallOption) (*BuildTransactionResponse, error)
 	SignTransaction(ctx context.Context, in *SignTransactionRequest, opts ...grpc.CallOption) (*SignTransactionResponse, error)
@@ -99,16 +96,6 @@ func (c *walletServiceClient) ImportAccount(ctx context.Context, in *ImportAccou
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ImportAccountResponse)
 	err := c.cc.Invoke(ctx, WalletService_ImportAccount_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *walletServiceClient) GetAddresses(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAddressesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetAddressesResponse)
-	err := c.cc.Invoke(ctx, WalletService_GetAddresses_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,8 +173,6 @@ type WalletServiceServer interface {
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
 	ListAccounts(context.Context, *emptypb.Empty) (*ListAccountsResponse, error)
 	ImportAccount(context.Context, *ImportAccountRequest) (*ImportAccountResponse, error)
-	// Address Management
-	GetAddresses(context.Context, *emptypb.Empty) (*GetAddressesResponse, error)
 	// Transaction Operations
 	BuildTransaction(context.Context, *BuildTransactionRequest) (*BuildTransactionResponse, error)
 	SignTransaction(context.Context, *SignTransactionRequest) (*SignTransactionResponse, error)
@@ -218,9 +203,6 @@ func (UnimplementedWalletServiceServer) ListAccounts(context.Context, *emptypb.E
 }
 func (UnimplementedWalletServiceServer) ImportAccount(context.Context, *ImportAccountRequest) (*ImportAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ImportAccount not implemented")
-}
-func (UnimplementedWalletServiceServer) GetAddresses(context.Context, *emptypb.Empty) (*GetAddressesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAddresses not implemented")
 }
 func (UnimplementedWalletServiceServer) BuildTransaction(context.Context, *BuildTransactionRequest) (*BuildTransactionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuildTransaction not implemented")
@@ -329,24 +311,6 @@ func _WalletService_ImportAccount_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).ImportAccount(ctx, req.(*ImportAccountRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WalletService_GetAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WalletServiceServer).GetAddresses(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WalletService_GetAddresses_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WalletServiceServer).GetAddresses(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -481,10 +445,6 @@ var WalletService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ImportAccount",
 			Handler:    _WalletService_ImportAccount_Handler,
-		},
-		{
-			MethodName: "GetAddresses",
-			Handler:    _WalletService_GetAddresses_Handler,
 		},
 		{
 			MethodName: "BuildTransaction",

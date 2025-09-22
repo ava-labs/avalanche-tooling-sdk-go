@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccountService_GetAddresses_FullMethodName     = "/avalanche.account.v1.AccountService/GetAddresses"
 	AccountService_GetPChainAddress_FullMethodName = "/avalanche.account.v1.AccountService/GetPChainAddress"
 	AccountService_GetKeychain_FullMethodName      = "/avalanche.account.v1.AccountService/GetKeychain"
 )
@@ -30,8 +29,6 @@ const (
 //
 // AccountService provides account-specific operations
 type AccountServiceClient interface {
-	// Get account addresses
-	GetAddresses(ctx context.Context, in *GetAddressesRequest, opts ...grpc.CallOption) (*GetAddressesResponse, error)
 	// Get P-Chain address for specific network
 	GetPChainAddress(ctx context.Context, in *GetPChainAddressRequest, opts ...grpc.CallOption) (*GetPChainAddressResponse, error)
 	// Get keychain information
@@ -44,16 +41,6 @@ type accountServiceClient struct {
 
 func NewAccountServiceClient(cc grpc.ClientConnInterface) AccountServiceClient {
 	return &accountServiceClient{cc}
-}
-
-func (c *accountServiceClient) GetAddresses(ctx context.Context, in *GetAddressesRequest, opts ...grpc.CallOption) (*GetAddressesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetAddressesResponse)
-	err := c.cc.Invoke(ctx, AccountService_GetAddresses_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *accountServiceClient) GetPChainAddress(ctx context.Context, in *GetPChainAddressRequest, opts ...grpc.CallOption) (*GetPChainAddressResponse, error) {
@@ -82,8 +69,6 @@ func (c *accountServiceClient) GetKeychain(ctx context.Context, in *GetKeychainR
 //
 // AccountService provides account-specific operations
 type AccountServiceServer interface {
-	// Get account addresses
-	GetAddresses(context.Context, *GetAddressesRequest) (*GetAddressesResponse, error)
 	// Get P-Chain address for specific network
 	GetPChainAddress(context.Context, *GetPChainAddressRequest) (*GetPChainAddressResponse, error)
 	// Get keychain information
@@ -98,9 +83,6 @@ type AccountServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAccountServiceServer struct{}
 
-func (UnimplementedAccountServiceServer) GetAddresses(context.Context, *GetAddressesRequest) (*GetAddressesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAddresses not implemented")
-}
 func (UnimplementedAccountServiceServer) GetPChainAddress(context.Context, *GetPChainAddressRequest) (*GetPChainAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPChainAddress not implemented")
 }
@@ -126,24 +108,6 @@ func RegisterAccountServiceServer(s grpc.ServiceRegistrar, srv AccountServiceSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&AccountService_ServiceDesc, srv)
-}
-
-func _AccountService_GetAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAddressesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServiceServer).GetAddresses(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AccountService_GetAddresses_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).GetAddresses(ctx, req.(*GetAddressesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _AccountService_GetPChainAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -189,10 +153,6 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "avalanche.account.v1.AccountService",
 	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetAddresses",
-			Handler:    _AccountService_GetAddresses_Handler,
-		},
 		{
 			MethodName: "GetPChainAddress",
 			Handler:    _AccountService_GetPChainAddress_Handler,

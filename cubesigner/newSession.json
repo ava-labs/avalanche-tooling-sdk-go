@@ -1,10 +1,10 @@
 {
   "org_id": "Org#0b411066-a5e3-4115-bb20-884757e0aad5",
   "role_id": null,
-  "expiration": 1789492344,
+  "expiration": 1790091319,
   "purpose": "cs v0.118.1+8643ff5f9",
-  "token": "3d6fd7397:MDBiM2NhODAtNTZiZS00NTllLTg2NjMtNmZlMzdkZmEyZTFm.eyJlcG9jaF9udW0iOjEsImVwb2NoX3Rva2VuIjoianVjVnh1UmpnS1IxbUs4Mm5ENGdQSU9qV3MvUC9JODUxMW0vc1kxMnhGQT0iLCJvdGhlcl90b2tlbiI6IjNxekQ0ODNKeTFHY3hkZGtDWTZ1b2RPSjBQTVJaVEEyRlJvMTMwMUVlclk9In0=",
-  "refresh_token": "3d6fd7397:MDBiM2NhODAtNTZiZS00NTllLTg2NjMtNmZlMzdkZmEyZTFm.eyJlcG9jaF9udW0iOjEsImVwb2NoX3Rva2VuIjoianVjVnh1UmpnS1IxbUs4Mm5ENGdQSU9qV3MvUC9JODUxMW0vc1kxMnhGQT0iLCJvdGhlcl90b2tlbiI6IjNxekQ0ODNKeTFHY3hkZGtDWTZ1b2RPSjBQTVJaVEEyRlJvMTMwMUVlclk9In0=.h2vPMroA+HvU8ECExmE/qRkfyT2ivb+QubyiTERYzGU=",
+  "token": "3d6fd7397:OWNkMGE0NjMtZGZlYi00YzcwLWE3MjgtZTZmY2IzMjBjNzk2.eyJlcG9jaF9udW0iOjEsImVwb2NoX3Rva2VuIjoid0NrR2IwdkUreEU4YlcvMVhjNGdQS3ZvUnQ4K05xYVRrNHlIRUt3cGR4QT0iLCJvdGhlcl90b2tlbiI6Ik5KbU1jaXFKL2ZLR3dxQVRUSC8xRjNaMSs4OEMrUll0S1RiMDAxMGxSelE9In0=",
+  "refresh_token": "3d6fd7397:OWNkMGE0NjMtZGZlYi00YzcwLWE3MjgtZTZmY2IzMjBjNzk2.eyJlcG9jaF9udW0iOjEsImVwb2NoX3Rva2VuIjoid0NrR2IwdkUreEU4YlcvMVhjNGdQS3ZvUnQ4K05xYVRrNHlIRUt3cGR4QT0iLCJvdGhlcl90b2tlbiI6Ik5KbU1jaXFKL2ZLR3dxQVRUSC8xRjNaMSs4OEMrUll0S1RiMDAxMGxSelE9In0=.6+HEvapCg2JYItRc369Ff1VNjgZHB5z51F4TYGyAx+0=",
   "env": {
     "Dev-CubeSignerStack": {
       "ClientId": "1tiou9ecj058khiidmhj4ds4rj",
@@ -17,16 +17,15 @@
     }
   },
   "session_info": {
-    "auth_token": "3qzD483Jy1GcxddkCY6uodOJ0PMRZTA2FRo1301EerY=",
-    "auth_token_exp": 1757956644,
+    "auth_token": "NJmMciqJ/fKGwqATTH/1F3Z1+88C+RYtKTb0010lRzQ=",
+    "auth_token_exp": 1758555619,
     "epoch": 1,
-    "epoch_token": "jucVxuRjgKR1mK82nD4gPIOjWs/P/I8511m/sY12xFA=",
-    "refresh_token": "h2vPMroA+HvU8ECExmE/qRkfyT2ivb+QubyiTERYzGU=",
-    "refresh_token_exp": 1758042744,
-    "session_id": "00b3ca80-56be-459e-8663-6fe37dfa2e1f"
+    "epoch_token": "wCkGb0vE+xE8bW/1Xc4gPKvoRt8+NqaTk4yHEKwpdxA=",
+    "refresh_token": "6+HEvapCg2JYItRc369Ff1VNjgZHB5z51F4TYGyAx+0=",
+    "refresh_token_exp": 1758641719,
+    "session_id": "9cd0a463-dfeb-4c70-a728-e6fcb320c796"
   },
   "scopes": [
-    "sign:*",
     "manage:*"
   ],
   "auth_kind": "sso"

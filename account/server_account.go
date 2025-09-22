@@ -11,6 +11,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
@@ -203,5 +204,5 @@ func (a *ServerAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 	//	return nil, fmt.Errorf("SoftKey not initialized")
 	//}
 	//return a.SoftKey.KeyChain(), nil
-	return "", nil
+	return nil, fmt.Errorf("GetKeychain not implemented")
 }

@@ -79,7 +79,8 @@ func (s *Server) Stop() error {
 
 	// Close wallet
 	ctx := context.Background()
-	if err := s.walletServer.Close(ctx, nil); err != nil {
+	_, err := s.walletServer.Close(ctx, nil)
+	if err != nil {
 		log.Printf("Error closing wallet: %v", err)
 	}
 
