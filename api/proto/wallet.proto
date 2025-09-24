@@ -34,9 +34,12 @@ message CreateAccountRequest {
 }
 
 message CreateAccountResponse {
-  string account_id = 1;
-  repeated string addresses = 2;
-  string p_chain_address = 3;
+  string fuji_avax_address = 1;
+  string avax_address = 2;
+  string eth_address = 3;
+  string fuji_avax_key_id = 4;
+  string avax_key_id = 5;
+  string eth_key_id = 6;
 }
 
 message GetAccountRequest {

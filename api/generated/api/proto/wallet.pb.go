@@ -60,12 +60,15 @@ func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
 }
 
 type CreateAccountResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Addresses     []string               `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"`
-	PChainAddress string                 `protobuf:"bytes,3,opt,name=p_chain_address,json=pChainAddress,proto3" json:"p_chain_address,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	FujiAvaxAddress string                 `protobuf:"bytes,1,opt,name=fuji_avax_address,json=fujiAvaxAddress,proto3" json:"fuji_avax_address,omitempty"`
+	AvaxAddress     string                 `protobuf:"bytes,2,opt,name=avax_address,json=avaxAddress,proto3" json:"avax_address,omitempty"`
+	EthAddress      string                 `protobuf:"bytes,3,opt,name=eth_address,json=ethAddress,proto3" json:"eth_address,omitempty"`
+	FujiAvaxKeyId   string                 `protobuf:"bytes,4,opt,name=fuji_avax_key_id,json=fujiAvaxKeyId,proto3" json:"fuji_avax_key_id,omitempty"`
+	AvaxKeyId       string                 `protobuf:"bytes,5,opt,name=avax_key_id,json=avaxKeyId,proto3" json:"avax_key_id,omitempty"`
+	EthKeyId        string                 `protobuf:"bytes,6,opt,name=eth_key_id,json=ethKeyId,proto3" json:"eth_key_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *CreateAccountResponse) Reset() {
@@ -98,23 +101,44 @@ func (*CreateAccountResponse) Descriptor() ([]byte, []int) {
 	return file_api_proto_wallet_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CreateAccountResponse) GetAccountId() string {
+func (x *CreateAccountResponse) GetFujiAvaxAddress() string {
 	if x != nil {
-		return x.AccountId
+		return x.FujiAvaxAddress
 	}
 	return ""
 }
 
-func (x *CreateAccountResponse) GetAddresses() []string {
+func (x *CreateAccountResponse) GetAvaxAddress() string {
 	if x != nil {
-		return x.Addresses
+		return x.AvaxAddress
 	}
-	return nil
+	return ""
 }
 
-func (x *CreateAccountResponse) GetPChainAddress() string {
+func (x *CreateAccountResponse) GetEthAddress() string {
 	if x != nil {
-		return x.PChainAddress
+		return x.EthAddress
+	}
+	return ""
+}
+
+func (x *CreateAccountResponse) GetFujiAvaxKeyId() string {
+	if x != nil {
+		return x.FujiAvaxKeyId
+	}
+	return ""
+}
+
+func (x *CreateAccountResponse) GetAvaxKeyId() string {
+	if x != nil {
+		return x.AvaxKeyId
+	}
+	return ""
+}
+
+func (x *CreateAccountResponse) GetEthKeyId() string {
+	if x != nil {
+		return x.EthKeyId
 	}
 	return ""
 }
@@ -1421,12 +1445,16 @@ var File_api_proto_wallet_proto protoreflect.FileDescriptor
 const file_api_proto_wallet_proto_rawDesc = "" +
 	"\n" +
 	"\x16api/proto/wallet.proto\x12\x13avalanche.wallet.v1\x1a\x1bgoogle/protobuf/empty.proto\"\x16\n" +
-	"\x14CreateAccountRequest\"|\n" +
-	"\x15CreateAccountResponse\x12\x1d\n" +
+	"\x14CreateAccountRequest\"\xee\x01\n" +
+	"\x15CreateAccountResponse\x12*\n" +
+	"\x11fuji_avax_address\x18\x01 \x01(\tR\x0ffujiAvaxAddress\x12!\n" +
+	"\favax_address\x18\x02 \x01(\tR\vavaxAddress\x12\x1f\n" +
+	"\veth_address\x18\x03 \x01(\tR\n" +
+	"ethAddress\x12'\n" +
+	"\x10fuji_avax_key_id\x18\x04 \x01(\tR\rfujiAvaxKeyId\x12\x1e\n" +
+	"\vavax_key_id\x18\x05 \x01(\tR\tavaxKeyId\x12\x1c\n" +
 	"\n" +
-	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1c\n" +
-	"\taddresses\x18\x02 \x03(\tR\taddresses\x12&\n" +
-	"\x0fp_chain_address\x18\x03 \x01(\tR\rpChainAddress\"-\n" +
+	"eth_key_id\x18\x06 \x01(\tR\bethKeyId\"-\n" +
 	"\x11GetAccountRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"y\n" +
 	"\x12GetAccountResponse\x12\x1d\n" +
