@@ -6,6 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/cubist-labs/cubesigner-go-sdk/client"
+	"github.com/cubist-labs/cubesigner-go-sdk/models"
+	"github.com/cubist-labs/cubesigner-go-sdk/session"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -21,9 +24,14 @@ import (
 )
 
 const (
-	fujiKeyType    = "secp-ava-test"
-	mainnetKeyType = "secp-ava"
-	ethKeytype     = "secp"
+	fujiKeyTypeStr       = "secp-ava-test"
+	mainnetKeyTypeStr    = "secp-ava"
+	ethKeytypeStr        = "secp"
+	fujiKeyType          = models.SecpAvaTestAddr
+	mainnetKeyType       = models.SecpAvaAddr
+	ethKeytype           = models.SecpEthAddr
+	avaKeyDerivationPath = "m/44'/9000'/0'/0/0"
+	ethKeyDerivationPath = "m/44'/60'/0'/0/0"
 )
 
 // KeyInfo represents a key from the CLI response
@@ -50,9 +58,8 @@ type CreateKeyResponse struct {
 type WalletServer struct {
 	proto.UnimplementedWalletServiceServer
 	*primary.Wallet
-	accounts                 []account.Account
-	signerCliBinaryPath      string
-	signerSessionManagerPath string
+	accounts  []account.Account
+	apiClient *client.ApiClient
 }
 
 // ImportKey imports a key using the CLI binary
@@ -112,36 +119,67 @@ func (s *WalletServer) CreateKeyMnemonic(ctx context.Context) (string, error) {
 	// Return the material_id of the first key
 	return createKeyResp.Keys[0].MaterialID, nil
 }
-func (s *WalletServer) DeriveKeyFromMnemonic(ctx context.Context, keyType string, mnemonicId string) ([]byte, error) {
-	//./cs key derive --key-type secp-ava-test --mnemonic-id 0x77d33975e4a52019e869091ef343083d8f11542b262bdfb7fa6d7597ebc97f4c --derivation-path "m/44'/9000'/0'/0/0"
-	//./cs key derive \
-	//>   --mnemonic-id 0x77d33975e4a52019e869091ef343083d8f11542b262bdfb7fa6d7597ebc97f4c \
-	//>   --key-type secp \
-	//>   -d "m/44'/60'/0'/0/0" \
+
+//func (s *WalletServer) DeriveKeyFromMnemonic(ctx context.Context, keyType string, mnemonicId string) ([]byte, error) {
+//	//./cs key derive --key-type secp-ava-test --mnemonic-id 0x77d33975e4a52019e869091ef343083d8f11542b262bdfb7fa6d7597ebc97f4c --derivation-path "m/44'/9000'/0'/0/0"
+//	//./cs key derive \
+//	//>   --mnemonic-id 0x77d33975e4a52019e869091ef343083d8f11542b262bdfb7fa6d7597ebc97f4c \
+//	//>   --key-type secp \
+//	//>   -d "m/44'/60'/0'/0/0" \
+//	derivationPath := ""
+//	// Validate inputs
+//	if keyType == "" {
+//		return nil, fmt.Errorf("key type cannot be empty")
+//	}
+//	if keyType == fujiKeyType || keyType == mainnetKeyType {
+//		derivationPath = "m/44'/9000'/0'/0/0"
+//	} else if keyType == ethKeytype {
+//		derivationPath = "m/44'/60'/0'/0/0"
+//	}
+//	// Build CLI command
+//	args := []string{
+//		"key", "derive",
+//		"--key-type", keyType,
+//		"--mnemonic-id", mnemonicId,
+//		"-d", derivationPath,
+//	}
+//
+//	// Execute command with session management
+//	output, err := s.executeCLICommandWithSession(ctx, args)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to import key via CLI: %w", err)
+//	}
+//	return output, nil
+//}
+
+func (s *WalletServer) DeriveKeyFromMnemonic(keyType models.KeyType, mnemonicId string) (models.KeyInfo, error) {
 	derivationPath := ""
-	// Validate inputs
 	if keyType == "" {
-		return nil, fmt.Errorf("key type cannot be empty")
+		return models.KeyInfo{}, fmt.Errorf("key type cannot be empty")
 	}
 	if keyType == fujiKeyType || keyType == mainnetKeyType {
 		derivationPath = "m/44'/9000'/0'/0/0"
 	} else if keyType == ethKeytype {
 		derivationPath = "m/44'/60'/0'/0/0"
 	}
-	// Build CLI command
-	args := []string{
-		"key", "derive",
-		"--key-type", keyType,
-		"--mnemonic-id", mnemonicId,
-		"-d", derivationPath,
+	keysToDerive := models.KeyTypeAndDerivationPath{
+		KeyType:        keyType,
+		DerivationPath: derivationPath,
+	}
+	deriveKeyRequest := models.DeriveKeysRequest{
+		MnemonicId:                 &mnemonicId,
+		KeyTypesAndDerivationPaths: []models.KeyTypeAndDerivationPath{keysToDerive},
+	}
+	deriveKeyResp, err := s.apiClient.DeriveKey(deriveKeyRequest)
+	if err != nil {
+		return models.KeyInfo{}, err
 	}
 
-	// Execute command with session management
-	output, err := s.executeCLICommandWithSession(ctx, args)
-	if err != nil {
-		return nil, fmt.Errorf("failed to import key via CLI: %w", err)
+	fmt.Printf("deriveKeyResp %s \n", deriveKeyResp.Keys)
+	if len(deriveKeyResp.Keys) > 0 {
+		return deriveKeyResp.Keys[0], nil
 	}
-	return output, nil
+	return models.KeyInfo{}, fmt.Errorf("no keys were derived")
 }
 
 // ImportKeyRaw imports a raw key using the CLI binary (like your example)
@@ -193,29 +231,26 @@ func getCubeSignerSessionPath() (string, error) {
 
 // NewWalletServer creates a new WalletServer
 func NewWalletServer() (*WalletServer, error) {
-	// Get CLI binary path
-	cliPath, err := getCLIBinaryPath()
+	filePath := "/Users/raymondsukanto/Desktop/management-session.json"
+	manager, err := session.NewJsonSessionManager(&filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cubesigner CLI binary path: %w", err)
+		return nil, err
 	}
-
-	// Get session file path
-	sessionPath, err := getCubeSignerSessionPath()
+	apiClient, err := client.NewApiClient(manager)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cubesigner session manager path: %w", err)
+		return nil, err
 	}
 
 	return &WalletServer{
-		accounts:                 []account.Account{},
-		signerCliBinaryPath:      cliPath,
-		signerSessionManagerPath: sessionPath,
+		accounts:  []account.Account{},
+		apiClient: apiClient,
 	}, nil
 }
 
 // CreateAccount creates a new account
 func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccountRequest) (*proto.CreateAccountResponse, error) {
 	// Define all key types to iterate through
-	keyTypes := []string{
+	keyTypes := []models.KeyType{
 		fujiKeyType,    // "secp-ava-test"
 		mainnetKeyType, // "secp-ava"
 		ethKeytype,     // "secp"
@@ -244,10 +279,24 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 	//if err != nil {
 	//	return nil, fmt.Errorf("failed to write private key to temp file: %w", err)
 	//}
-	mnemonicId, err := s.CreateKeyMnemonic(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create mnemonic: %v", err)
+	//mnemonicId, err := s.CreateKeyMnemonic(ctx)
+	//if err != nil {
+	//	return nil, status.Errorf(codes.Internal, "failed to create mnemonic: %v", err)
+	//}
+
+	createKeyRequest := models.CreateKeyRequest{
+		KeyType: models.Mnemonic,
 	}
+	createKeyResp, err := s.apiClient.CreateKey(createKeyRequest)
+	if err != nil {
+		return nil, err
+	}
+	materialID := ""
+	if len(createKeyResp.Keys) > 0 {
+		materialID = createKeyResp.Keys[0].MaterialId
+	}
+	fmt.Printf("createdKey %s \n", materialID)
+
 	// Loop through all key types and import them
 	for _, keyType := range keyTypes {
 		//output, err := s.ImportKeyRaw(ctx, keyType, tempFilePath)
@@ -257,12 +306,19 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 		//}
 		//importedKeys = append(importedKeys, output)
 
-		output, err := s.DeriveKeyFromMnemonic(ctx, keyType, mnemonicId)
+		//output, err := s.DeriveKeyFromMnemonic(ctx, keyType, mnemonicId)
+		//if err != nil {
+		//	errors = append(errors, fmt.Errorf("failed to import %s key: %w", keyType, err))
+		//	continue
+		//}
+		//derivedKeys = append(derivedKeys, output)
+
+		derivedKey, err := s.DeriveKeyFromMnemonic(keyType, materialID)
 		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to import %s key: %w", keyType, err))
+			errors = append(errors, fmt.Errorf("failed to derive %s key: %w", keyType, err))
 			continue
 		}
-		derivedKeys = append(derivedKeys, output)
+		derivedKeys = append(derivedKeys, derivedKey)
 	}
 
 	// Temporary files are cleaned up automatically via defer os.RemoveAll(tempDir)
