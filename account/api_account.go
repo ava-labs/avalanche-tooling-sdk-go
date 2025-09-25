@@ -3,7 +3,6 @@
 package account
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/api/generated/api/proto"
@@ -38,28 +37,7 @@ func (a *APIAccount) Addresses() []ids.ShortID {
 
 // GetPChainAddress returns the P-Chain address for the given network
 func (a *APIAccount) GetPChainAddress(network network.Network) (string, error) {
-	// Convert network to string
-	var networkStr string
-	switch network.Kind {
-	case 2: // Fuji testnet
-		networkStr = "fuji"
-	case 1: // Mainnet
-		networkStr = "mainnet"
-	default:
-		return "", fmt.Errorf("unsupported network")
-	}
-
-	_ = networkStr // Use networkStr to avoid unused variable warning
-
-	// Call gRPC server
-	resp, err := a.GrpcClient.GetAccount(context.Background(), &proto.GetAccountRequest{
-		Address: a.ServerAccountAddresses[0].String(), // Use first address to identify account
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to get account from server: %w", err)
-	}
-
-	return resp.PChainAddress, nil
+	return "", nil
 }
 
 // GetKeychain returns the keychain associated with this account

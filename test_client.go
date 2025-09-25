@@ -41,5 +41,25 @@ func main() {
 	fmt.Printf("  AvaxAddress: %v\n", resp.AvaxAddress)
 	fmt.Printf("  EthAddress: %s\n", resp.EthAddress)
 
-	fmt.Println("Test completed successfully!")
+	//Test GetAccount using the Fuji address
+	fmt.Println("\nCalling GetAccount...")
+
+	getReq := &proto.GetAccountRequest{
+		Address: "fuji1dyy5snc3esyye0z8cq2e39a2lz30mqxvlqk8j2",
+	}
+
+	getResp, err := client.GetAccount(ctx, getReq)
+	if err != nil {
+		log.Fatalf("GetAccount failed: %v", err)
+	}
+
+	// Print the GetAccount response
+	fmt.Printf("GetAccount Response:\n")
+	fmt.Printf("  Address: %s\n", getResp.Address)
+	fmt.Printf("  Policies: %v\n", getResp.Policies)
+	fmt.Printf("  Created At: %s\n", getResp.CreatedAt)
+	fmt.Printf("  Updated At: %s\n", getResp.UpdatedAt)
+	fmt.Printf("  Key Type: %s\n", getResp.KeyType)
+
+	fmt.Println("\nTest completed successfully!")
 }
