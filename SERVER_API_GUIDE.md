@@ -51,8 +51,28 @@ message CreateAccountResponse {
 }
 ```
 
+#### GetAccount
+Retrieve account information by address.
+
+**Request:**
+```protobuf
+message GetAccountRequest {
+  string address = 1;  // Account address to retrieve
+}
+```
+
+**Response:**
+```protobuf
+message GetAccountResponse {
+  string address = 1;        // Account address
+  repeated string policies = 2;  // Account policies
+  string created_at = 3;     // Creation timestamp in ISO 8601 format (e.g., "2025-03-25T12:00:00Z")
+  string updated_at = 4;     // Last modification timestamp in ISO 8601 format (e.g., "2025-03-25T12:00:00Z")
+  string key_type = 5;       // Key type (e.g., "secp-ava", "secp-ava-test", "secp")
+}
+```
+
 #### Other Methods (Currently Unimplemented)
-- `GetAccount` - Retrieve account by address
 - `ListAccounts` - List all accounts
 - `ImportAccount` - Import existing account
 - `BuildTransaction` - Build transactions

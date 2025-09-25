@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cubist-labs/cubesigner-go-sdk/client"
 	"github.com/cubist-labs/cubesigner-go-sdk/models"
@@ -25,7 +26,10 @@ import (
 const (
 	fujiKeyType          = models.SecpAvaTestAddr
 	mainnetKeyType       = models.SecpAvaAddr
-	ethKeytype           = models.SecpEthAddr
+	evmKeytype           = models.SecpEthAddr
+	fujiKeyTypeStr       = "Fuji"
+	mainnetKeyTypeStr    = "Mainnet"
+	evmKeytypeStr        = "EVM"
 	avaKeyDerivationPath = "m/44'/9000'/0'/0/0"
 	ethKeyDerivationPath = "m/44'/60'/0'/0/0"
 	accountsDataFile     = "data/accounts.json"
@@ -71,7 +75,7 @@ func (s *WalletServer) DeriveKeyFromMnemonic(keyType models.KeyType, mnemonicId 
 	}
 	if keyType == fujiKeyType || keyType == mainnetKeyType {
 		derivationPath = avaKeyDerivationPath
-	} else if keyType == ethKeytype {
+	} else if keyType == evmKeytype {
 		derivationPath = ethKeyDerivationPath
 	}
 	keysToDerive := models.KeyTypeAndDerivationPath{
@@ -202,7 +206,7 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 	keyTypes := []models.KeyType{
 		fujiKeyType,    // "secp-ava-test"
 		mainnetKeyType, // "secp-ava"
-		ethKeytype,     // "secp"
+		evmKeytype,     // "secp"
 	}
 
 	var errors []error
@@ -243,7 +247,7 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 	response := &proto.CreateAccountResponse{
 		FujiAvaxAddress: derivedKeys[fujiKeyType].MaterialId,
 		AvaxAddress:     derivedKeys[mainnetKeyType].MaterialId,
-		EthAddress:      derivedKeys[ethKeytype].MaterialId,
+		EthAddress:      derivedKeys[evmKeytype].MaterialId,
 	}
 
 	// Store account data in JSON file before returning
@@ -251,7 +255,7 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 	accountsToStore := make(map[string]models.KeyInfo)
 	accountsToStore[derivedKeys[fujiKeyType].MaterialId] = derivedKeys[fujiKeyType]
 	accountsToStore[derivedKeys[mainnetKeyType].MaterialId] = derivedKeys[mainnetKeyType]
-	accountsToStore[derivedKeys[ethKeytype].MaterialId] = derivedKeys[ethKeytype]
+	accountsToStore[derivedKeys[evmKeytype].MaterialId] = derivedKeys[evmKeytype]
 
 	// Save to JSON file
 	if err := s.addAccountToStorage(accountsToStore); err != nil {
@@ -263,7 +267,46 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 
 // GetAccount retrieves an account by address
 func (s *WalletServer) GetAccount(ctx context.Context, req *proto.GetAccountRequest) (*proto.GetAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
+	// Get account info from storage
+	keyInfo, err := s.getAccountByAddress(req.Address)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "account not found: %v", err)
+	}
+
+	// Convert policies from []interface{} to []string
+	var policies []string
+	for _, policy := range keyInfo.Policy {
+		if policyStr, ok := policy.(string); ok {
+			policies = append(policies, policyStr)
+		}
+	}
+
+	// Convert int64 timestamps to ISO 8601 string format
+	createdAtStr := time.Unix(*keyInfo.Created, 0).UTC().Format(time.RFC3339)
+	updatedAtStr := time.Unix(*keyInfo.LastModified, 0).UTC().Format(time.RFC3339)
+
+	keyType := ""
+	switch keyInfo.KeyType {
+	case fujiKeyType:
+		keyType = fujiKeyTypeStr
+	case mainnetKeyType:
+		keyType = mainnetKeyTypeStr
+	case evmKeytypeStr:
+		keyType = evmKeytypeStr
+	default:
+		return nil, fmt.Errorf("unsupported key type %s", keyInfo.KeyType)
+	}
+
+	// Create response
+	response := &proto.GetAccountResponse{
+		Address:   keyInfo.MaterialId,
+		Policies:  policies,
+		CreatedAt: createdAtStr,
+		UpdatedAt: updatedAtStr,
+		KeyType:   keyType,
+	}
+
+	return response, nil
 }
 
 // ListAccounts returns all accounts

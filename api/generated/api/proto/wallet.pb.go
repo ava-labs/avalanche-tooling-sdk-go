@@ -165,9 +165,11 @@ func (x *GetAccountRequest) GetAddress() string {
 
 type GetAccountResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Addresses     []string               `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"`
-	PChainAddress string                 `protobuf:"bytes,3,opt,name=p_chain_address,json=pChainAddress,proto3" json:"p_chain_address,omitempty"`
+	Address       string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Policies      []string               `protobuf:"bytes,2,rep,name=policies,proto3" json:"policies,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	KeyType       string                 `protobuf:"bytes,5,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,23 +204,37 @@ func (*GetAccountResponse) Descriptor() ([]byte, []int) {
 	return file_api_proto_wallet_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetAccountResponse) GetAccountId() string {
+func (x *GetAccountResponse) GetAddress() string {
 	if x != nil {
-		return x.AccountId
+		return x.Address
 	}
 	return ""
 }
 
-func (x *GetAccountResponse) GetAddresses() []string {
+func (x *GetAccountResponse) GetPolicies() []string {
 	if x != nil {
-		return x.Addresses
+		return x.Policies
 	}
 	return nil
 }
 
-func (x *GetAccountResponse) GetPChainAddress() string {
+func (x *GetAccountResponse) GetCreatedAt() string {
 	if x != nil {
-		return x.PChainAddress
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *GetAccountResponse) GetUpdatedAt() string {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return ""
+}
+
+func (x *GetAccountResponse) GetKeyType() string {
+	if x != nil {
+		return x.KeyType
 	}
 	return ""
 }
@@ -1428,12 +1444,15 @@ const file_api_proto_wallet_proto_rawDesc = "" +
 	"\veth_address\x18\x03 \x01(\tR\n" +
 	"ethAddress\"-\n" +
 	"\x11GetAccountRequest\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"y\n" +
-	"\x12GetAccountResponse\x12\x1d\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"\xa3\x01\n" +
+	"\x12GetAccountResponse\x12\x18\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x1a\n" +
+	"\bpolicies\x18\x02 \x03(\tR\bpolicies\x12\x1d\n" +
 	"\n" +
-	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1c\n" +
-	"\taddresses\x18\x02 \x03(\tR\taddresses\x12&\n" +
-	"\x0fp_chain_address\x18\x03 \x01(\tR\rpChainAddress\"T\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\x04 \x01(\tR\tupdatedAt\x12\x19\n" +
+	"\bkey_type\x18\x05 \x01(\tR\akeyType\"T\n" +
 	"\x14ListAccountsResponse\x12<\n" +
 	"\baccounts\x18\x01 \x03(\v2 .avalanche.wallet.v1.AccountInfoR\baccounts\"r\n" +
 	"\vAccountInfo\x12\x1d\n" +

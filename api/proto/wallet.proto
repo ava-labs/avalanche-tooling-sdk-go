@@ -44,9 +44,11 @@ message GetAccountRequest {
 }
 
 message GetAccountResponse {
-  string account_id = 1;
-  repeated string addresses = 2;
-  string p_chain_address = 3;
+  string address = 1;
+  repeated string policies = 2;
+  string created_at = 3;
+  string updated_at = 4;
+  string key_type = 5;
 }
 
 message ListAccountsResponse {
