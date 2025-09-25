@@ -43,3 +43,24 @@ proto-gateway:
 		--openapiv2_out=api/generated \
 		api/proto/*.proto
 	@echo "gRPC code with HTTP gateway generated successfully"
+
+# Server API examples
+.PHONY: run-server run-client run-simple-client run-complete-example
+
+# Run the gRPC server
+run-server:
+	@echo "Starting gRPC server on port 8080..."
+	go run examples/grpc_server_example.go
+
+# Run the simple client example
+run-simple-client:
+	@echo "Running simple client example..."
+	go run examples/simple_client_example.go
+
+# Run the complete client example
+run-complete-example:
+	@echo "Running complete client example..."
+	go run examples/complete_server_example.go
+
+# Run both server and client (requires two terminals)
+run-demo: run-server run-simple-client

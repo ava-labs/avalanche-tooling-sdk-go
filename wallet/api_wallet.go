@@ -76,24 +76,45 @@ func (w *APIWallet) CreateAccount(ctx context.Context) (*account.Account, error)
 		return nil, fmt.Errorf("failed to create account: %w", err)
 	}
 
+	// Create addresses from the response
+	addresses := []ids.ShortID{}
+
+	// Add Fuji address
+	if resp.FujiAvaxAddress != "" {
+		addr, err := ids.ShortFromString(resp.FujiAvaxAddress)
+		if err != nil {
+			return nil, fmt.Errorf("invalid Fuji address from server: %s", resp.FujiAvaxAddress)
+		}
+		addresses = append(addresses, addr)
+	}
+
+	// Add Mainnet address
+	if resp.AvaxAddress != "" {
+		addr, err := ids.ShortFromString(resp.AvaxAddress)
+		if err != nil {
+			return nil, fmt.Errorf("invalid Mainnet address from server: %s", resp.AvaxAddress)
+		}
+		addresses = append(addresses, addr)
+	}
+
+	// Add ETH address
+	if resp.EthAddress != "" {
+		addr, err := ids.ShortFromString(resp.EthAddress)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ETH address from server: %s", resp.EthAddress)
+		}
+		addresses = append(addresses, addr)
+	}
+
 	// Create API account
 	apiAccount := &account.APIAccount{
-		AccountID:              resp.AccountId,
-		ServerAccountAddresses: make([]ids.ShortID, len(resp.Addresses)),
+		AccountID:              resp.FujiAvaxAddress, // Use Fuji address as account ID
+		ServerAccountAddresses: addresses,
 		GrpcClient:             w.grpcClient,
 	}
 
-	// Convert addresses
-	for i, addrStr := range resp.Addresses {
-		addr, err := ids.ShortFromString(addrStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid address from server: %s", addrStr)
-		}
-		apiAccount.ServerAccountAddresses[i] = addr
-	}
-
 	// Store account
-	w.accounts[resp.AccountId] = apiAccount
+	w.accounts[resp.FujiAvaxAddress] = apiAccount
 
 	// Return as account.Account interface
 	var accountInterface account.Account = apiAccount
@@ -293,22 +314,12 @@ func (w *APIWallet) SendTx(ctx context.Context, params SendTxParams) (tx.SendTxR
 
 // GetAddresses returns all addresses managed by this wallet
 func (w *APIWallet) GetAddresses(ctx context.Context) ([]ids.ShortID, error) {
-	// Call gRPC server
-	resp, err := w.grpcClient.GetAddresses(ctx, &emptypb.Empty{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get addresses: %w", err)
+	// Since GetAddresses is not implemented in the server, we'll return
+	// addresses from our local cache
+	addresses := []ids.ShortID{}
+	for _, account := range w.accounts {
+		addresses = append(addresses, account.Addresses()...)
 	}
-
-	// Convert addresses
-	addresses := make([]ids.ShortID, len(resp.Addresses))
-	for i, addrStr := range resp.Addresses {
-		addr, err := ids.ShortFromString(addrStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid address from server: %s", addrStr)
-		}
-		addresses[i] = addr
-	}
-
 	return addresses, nil
 }
 

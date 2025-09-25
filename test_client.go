@@ -37,10 +37,9 @@ func main() {
 
 	// Print the response
 	fmt.Printf("CreateAccount Response:\n")
-	fmt.Printf("  Account ID: %s\n", resp.AccountId)
-	fmt.Printf("  Addresses: %v\n", resp.Addresses)
-	fmt.Printf("  P-Chain Address: %s\n", resp.PChainAddress)
+	fmt.Printf("  FujiAvaxAddress: %s\n", resp.FujiAvaxAddress)
+	fmt.Printf("  AvaxAddress: %v\n", resp.AvaxAddress)
+	fmt.Printf("  EthAddress: %s\n", resp.EthAddress)
 
 	fmt.Println("Test completed successfully!")
 }
-

@@ -61,3 +61,8 @@ func (a *LocalAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 	}
 	return a.SoftKey.KeyChain(), nil
 }
+
+// NewAccount creates a new LocalAccount
+func (a *LocalAccount) NewAccount() (Account, error) {
+	return NewLocalAccount()
+}

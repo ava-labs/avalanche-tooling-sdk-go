@@ -96,7 +96,7 @@ func (s *WalletServer) DeriveKeyFromMnemonic(keyType models.KeyType, mnemonicId 
 
 // NewWalletServer creates a new WalletServer
 func NewWalletServer() (*WalletServer, error) {
-	filePath := "/Users/raymondsukanto/Desktop/management-session.json"
+	filePath := "/Users/raymondsukanto/Desktop/management-session2.json"
 	manager, err := session.NewJsonSessionManager(&filePath)
 	if err != nil {
 		return nil, err
@@ -205,14 +205,16 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 		ethKeytype,     // "secp"
 	}
 
-	var derivedKeys map[models.KeyType]models.KeyInfo
 	var errors []error
+	derivedKeys := make(map[models.KeyType]models.KeyInfo)
 
 	createKeyRequest := models.CreateKeyRequest{
 		KeyType: models.Mnemonic,
+		Count:   1,
 	}
 	createKeyResp, err := s.apiClient.CreateKey(createKeyRequest)
 	if err != nil {
+		fmt.Printf("we have error")
 		return nil, err
 	}
 	materialID := ""

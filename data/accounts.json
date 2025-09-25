@@ -1,3 +1,55 @@
 {
-  "accounts": {}
+  "accounts": {
+    "0x5568931c58d79532918ef177d75e628d7d34c5b3": {
+      "created": 1758819078,
+      "derivation_info": {
+        "derivation_path": "m/44'/60'/0'/0/0",
+        "mnemonic_id": "0x2fac9b04a229af1555ee354211dc18e11c5230976af376502f47cbe7dc19bc59"
+      },
+      "enabled": true,
+      "key_id": "Key#0x5568931c58d79532918ef177d75e628d7d34c5b3",
+      "key_type": "SecpEthAddr",
+      "last_modified": 1758819078,
+      "material_id": "0x5568931c58d79532918ef177d75e628d7d34c5b3",
+      "owner": "User#27380c1e-d81c-48f9-b46d-e8dee415d8a5",
+      "policy": [],
+      "public_key": "0x04ab4511ed90c3dc5b1b983f4e2f27aed98ad913af0725d8646b94879442bbae94005e26673234923c6094f24dcdbd8e83948cb9d1f118e827037ba61a2dcf37d4",
+      "purpose": "Evm",
+      "version": 0
+    },
+    "avax1dyy5snc3esyye0z8cq2e39a2lz30mqxvnjjc74": {
+      "created": 1758819078,
+      "derivation_info": {
+        "derivation_path": "m/44'/9000'/0'/0/0",
+        "mnemonic_id": "0x2fac9b04a229af1555ee354211dc18e11c5230976af376502f47cbe7dc19bc59"
+      },
+      "enabled": true,
+      "key_id": "Key#Ava_avax1dyy5snc3esyye0z8cq2e39a2lz30mqxvnjjc74",
+      "key_type": "SecpAvaAddr",
+      "last_modified": 1758819078,
+      "material_id": "avax1dyy5snc3esyye0z8cq2e39a2lz30mqxvnjjc74",
+      "owner": "User#27380c1e-d81c-48f9-b46d-e8dee415d8a5",
+      "policy": [],
+      "public_key": "0x046c6633b053cb2e1b33551e1923d6393b89818d0abdd31f36ed12b09f12ac0586bf2825c51e14d70c82d268df566ee658933a73dad1083f020e853b5d5c5aad36",
+      "purpose": "Ava",
+      "version": 0
+    },
+    "fuji1dyy5snc3esyye0z8cq2e39a2lz30mqxvlqk8j2": {
+      "created": 1758819078,
+      "derivation_info": {
+        "derivation_path": "m/44'/9000'/0'/0/0",
+        "mnemonic_id": "0x2fac9b04a229af1555ee354211dc18e11c5230976af376502f47cbe7dc19bc59"
+      },
+      "enabled": true,
+      "key_id": "Key#Ava_fuji1dyy5snc3esyye0z8cq2e39a2lz30mqxvlqk8j2",
+      "key_type": "SecpAvaTestAddr",
+      "last_modified": 1758819078,
+      "material_id": "fuji1dyy5snc3esyye0z8cq2e39a2lz30mqxvlqk8j2",
+      "owner": "User#27380c1e-d81c-48f9-b46d-e8dee415d8a5",
+      "policy": [],
+      "public_key": "0x046c6633b053cb2e1b33551e1923d6393b89818d0abdd31f36ed12b09f12ac0586bf2825c51e14d70c82d268df566ee658933a73dad1083f020e853b5d5c5aad36",
+      "purpose": "Ava",
+      "version": 0
+    }
+  }
 }

@@ -24,7 +24,8 @@ import (
 
 // ServerAccount represents a local account implementation
 type ServerAccount struct {
-	cubistKey models.KeyInfo
+	cubistKey    models.KeyInfo
+	cubistClient client.ApiClient
 }
 
 func encryptWithP384(privKeyBytes []byte, clientPrivKey *ecdsa.PrivateKey, serverPubKeyB64 string) (string, error) {
@@ -167,7 +168,10 @@ func NewServerAccount(cubistClient client.ApiClient) (Account, error) {
 		return nil, fmt.Errorf("ImportKey err %s \n", err)
 	}
 	fmt.Printf("importKeyResponse %s \n", importKeyResponse.Keys)
-	return &ServerAccount{}, nil
+	return &ServerAccount{
+		cubistKey:    importKeyResponse.Keys[0],
+		cubistClient: cubistClient,
+	}, nil
 }
 
 //
@@ -205,4 +209,9 @@ func (a *ServerAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 	//}
 	//return a.SoftKey.KeyChain(), nil
 	return nil, fmt.Errorf("GetKeychain not implemented")
+}
+
+// NewAccount creates a new ServerAccount
+func (a *ServerAccount) NewAccount() (Account, error) {
+	return NewServerAccount(a.cubistClient)
 }
