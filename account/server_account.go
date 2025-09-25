@@ -11,19 +11,19 @@ import (
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 )
 
-// APIAccount represents an account that communicates with a gRPC server
-type APIAccount struct {
+// ServerAccount represents an account that communicates with a gRPC server
+type ServerAccount struct {
 	AccountID              string
 	ServerAccountAddresses []ids.ShortID
 	GrpcClient             proto.WalletServiceClient
 }
 
-// Ensure APIAccount implements Account interface
-var _ Account = (*APIAccount)(nil)
+// Ensure ServerAccount implements Account interface
+var _ Account = (*ServerAccount)(nil)
 
-// NewAPIAccount creates a new API account
-func NewAPIAccount(accountID string, addresses []ids.ShortID, grpcClient proto.WalletServiceClient) *APIAccount {
-	return &APIAccount{
+// NewServerAccount creates a new API account
+func NewServerAccount(accountID string, addresses []ids.ShortID, grpcClient proto.WalletServiceClient) *ServerAccount {
+	return &ServerAccount{
 		AccountID:              accountID,
 		ServerAccountAddresses: addresses,
 		GrpcClient:             grpcClient,
@@ -31,17 +31,17 @@ func NewAPIAccount(accountID string, addresses []ids.ShortID, grpcClient proto.W
 }
 
 // Addresses returns all addresses associated with this account
-func (a *APIAccount) Addresses() []ids.ShortID {
+func (a *ServerAccount) Addresses() []ids.ShortID {
 	return a.ServerAccountAddresses
 }
 
 // GetPChainAddress returns the P-Chain address for the given network
-func (a *APIAccount) GetPChainAddress(network network.Network) (string, error) {
+func (a *ServerAccount) GetPChainAddress(network network.Network) (string, error) {
 	return "", nil
 }
 
 // GetKeychain returns the keychain associated with this account
-func (a *APIAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
+func (a *ServerAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 	// For API accounts, we don't have direct access to the keychain
 	// This is a limitation of the API-based approach - the server manages the keys
 	// In a real implementation, you might want to:
@@ -54,17 +54,17 @@ func (a *APIAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 }
 
 // GetAccountID returns the account ID
-func (a *APIAccount) GetAccountID() string {
+func (a *ServerAccount) GetAccountID() string {
 	return a.AccountID
 }
 
 // SetAddresses updates the addresses for this account
-func (a *APIAccount) SetAddresses(addresses []ids.ShortID) {
+func (a *ServerAccount) SetAddresses(addresses []ids.ShortID) {
 	a.ServerAccountAddresses = addresses
 }
 
 // NewAccount creates a new account of the same type
-func (a *APIAccount) NewAccount() (Account, error) {
+func (a *ServerAccount) NewAccount() (Account, error) {
 	// For API accounts, we can't create new accounts without a gRPC client
 	// This is a limitation of the API-based approach
 	return nil, fmt.Errorf("NewAccount not supported for API accounts - use wallet.CreateAccount instead")

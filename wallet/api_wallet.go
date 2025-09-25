@@ -20,7 +20,7 @@ import (
 type APIWallet struct {
 	grpcClient proto.WalletServiceClient
 	conn       *grpc.ClientConn
-	accounts   map[string]*account.APIAccount // account_id -> account mapping
+	accounts   map[string]*account.ServerAccount // account_id -> account mapping
 }
 
 // NewAPIWallet creates a new API wallet that connects to a gRPC server
@@ -37,7 +37,7 @@ func NewAPIWallet(serverAddr string) (*APIWallet, error) {
 	return &APIWallet{
 		grpcClient: grpcClient,
 		conn:       conn,
-		accounts:   make(map[string]*account.APIAccount),
+		accounts:   make(map[string]*account.ServerAccount),
 	}, nil
 }
 
@@ -107,7 +107,7 @@ func (w *APIWallet) CreateAccount(ctx context.Context) (*account.Account, error)
 	}
 
 	// Create API account
-	apiAccount := &account.APIAccount{
+	apiAccount := &account.ServerAccount{
 		AccountID:              resp.FujiAvaxAddress, // Use Fuji address as account ID
 		ServerAccountAddresses: addresses,
 		GrpcClient:             w.grpcClient,
@@ -138,7 +138,7 @@ func (w *APIWallet) GetAccount(ctx context.Context, address ids.ShortID) (*accou
 	}
 
 	// Create new API account
-	apiAccount := &account.APIAccount{
+	apiAccount := &account.ServerAccount{
 		AccountID:              resp.AccountId,
 		ServerAccountAddresses: make([]ids.ShortID, len(resp.Addresses)),
 		GrpcClient:             w.grpcClient,
@@ -180,7 +180,7 @@ func (w *APIWallet) ListAccounts(ctx context.Context) ([]*account.Account, error
 		}
 
 		// Create new API account
-		apiAccount := &account.APIAccount{
+		apiAccount := &account.ServerAccount{
 			AccountID:              accInfo.AccountId,
 			ServerAccountAddresses: make([]ids.ShortID, len(accInfo.Addresses)),
 			GrpcClient:             w.grpcClient,
@@ -217,7 +217,7 @@ func (w *APIWallet) ImportAccount(ctx context.Context, keyPath string) (*account
 	}
 
 	// Create API account
-	apiAccount := &account.APIAccount{
+	apiAccount := &account.ServerAccount{
 		AccountID:              resp.AccountId,
 		ServerAccountAddresses: make([]ids.ShortID, len(resp.Addresses)),
 		GrpcClient:             w.grpcClient,
