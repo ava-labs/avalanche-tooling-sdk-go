@@ -43,9 +43,6 @@ func main() {
 	fmt.Printf("   Fuji AVAX Address: %s\n", createResp.FujiAvaxAddress)
 	fmt.Printf("   Mainnet AVAX Address: %s\n", createResp.AvaxAddress)
 	fmt.Printf("   ETH Address: %s\n", createResp.EthAddress)
-	fmt.Printf("   Fuji Key ID: %s\n", createResp.FujiAvaxKeyId)
-	fmt.Printf("   Mainnet Key ID: %s\n", createResp.AvaxKeyId)
-	fmt.Printf("   ETH Key ID: %s\n", createResp.EthKeyId)
 	fmt.Println()
 
 	// 2. Try to get account (currently unimplemented)

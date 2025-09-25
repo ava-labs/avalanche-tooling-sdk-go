@@ -48,9 +48,6 @@ message CreateAccountResponse {
   string fuji_avax_address = 1;    // Fuji testnet address
   string avax_address = 2;         // Mainnet address
   string eth_address = 3;          // Ethereum address
-  string fuji_avax_key_id = 4;     // Fuji key ID
-  string avax_key_id = 5;          // Mainnet key ID
-  string eth_key_id = 6;           // Ethereum key ID
 }
 ```
 

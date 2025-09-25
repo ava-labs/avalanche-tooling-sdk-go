@@ -244,9 +244,6 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 		FujiAvaxAddress: derivedKeys[fujiKeyType].MaterialId,
 		AvaxAddress:     derivedKeys[mainnetKeyType].MaterialId,
 		EthAddress:      derivedKeys[ethKeytype].MaterialId,
-		FujiAvaxKeyId:   derivedKeys[fujiKeyType].KeyId,
-		AvaxKeyId:       derivedKeys[mainnetKeyType].KeyId,
-		EthKeyId:        derivedKeys[ethKeytype].KeyId,
 	}
 
 	// Store account data in JSON file before returning

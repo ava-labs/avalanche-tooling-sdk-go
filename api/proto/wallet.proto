@@ -37,9 +37,6 @@ message CreateAccountResponse {
   string fuji_avax_address = 1;
   string avax_address = 2;
   string eth_address = 3;
-  string fuji_avax_key_id = 4;
-  string avax_key_id = 5;
-  string eth_key_id = 6;
 }
 
 message GetAccountRequest {
