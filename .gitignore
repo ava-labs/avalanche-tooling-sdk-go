@@ -23,6 +23,3 @@ blockchain/KEY_PATH
 
 # ignore GoLand metafiles directory
 .idea/
-
-# ignore sensitive directories
-cubesigner/
