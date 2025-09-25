@@ -4,7 +4,11 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/cubist-labs/cubesigner-go-sdk/client"
 	"github.com/cubist-labs/cubesigner-go-sdk/models"
 	"github.com/cubist-labs/cubesigner-go-sdk/session"
@@ -24,7 +28,13 @@ const (
 	ethKeytype           = models.SecpEthAddr
 	avaKeyDerivationPath = "m/44'/9000'/0'/0/0"
 	ethKeyDerivationPath = "m/44'/60'/0'/0/0"
+	accountsDataFile     = "data/accounts.json"
 )
+
+// AccountStorage represents the JSON file structure with address as key
+type AccountStorage struct {
+	Accounts map[string]models.KeyInfo `json:"accounts"`
+}
 
 // KeyInfo represents a key from the CLI response
 type KeyInfo struct {
@@ -102,6 +112,90 @@ func NewWalletServer() (*WalletServer, error) {
 	}, nil
 }
 
+// loadAccountsFromFile loads accounts from the JSON file
+func (s *WalletServer) loadAccountsFromFile() (*AccountStorage, error) {
+	// Check if file exists
+	if _, err := os.Stat(accountsDataFile); os.IsNotExist(err) {
+		// File doesn't exist, return empty storage
+		return &AccountStorage{Accounts: make(map[string]models.KeyInfo)}, nil
+	}
+
+	// Read file
+	data, err := os.ReadFile(accountsDataFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read accounts file: %w", err)
+	}
+
+	// Parse JSON
+	var storage AccountStorage
+	if err := json.Unmarshal(data, &storage); err != nil {
+		return nil, fmt.Errorf("failed to parse accounts file: %w", err)
+	}
+
+	// Initialize map if nil
+	if storage.Accounts == nil {
+		storage.Accounts = make(map[string]models.KeyInfo)
+	}
+
+	return &storage, nil
+}
+
+// saveAccountsToFile saves accounts to the JSON file
+func (s *WalletServer) saveAccountsToFile(storage *AccountStorage) error {
+	// Ensure data directory exists
+	if err := os.MkdirAll(filepath.Dir(accountsDataFile), 0755); err != nil {
+		return fmt.Errorf("failed to create data directory: %w", err)
+	}
+
+	// Marshal to JSON
+	data, err := json.MarshalIndent(storage, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal accounts data: %w", err)
+	}
+
+	// Write to file
+	if err := os.WriteFile(accountsDataFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write accounts file: %w", err)
+	}
+
+	return nil
+}
+
+// addAccountToStorage adds new accounts to the storage and saves to file
+func (s *WalletServer) addAccountToStorage(accounts map[string]models.KeyInfo) error {
+	// Load existing accounts
+	storage, err := s.loadAccountsFromFile()
+	if err != nil {
+		return fmt.Errorf("failed to load existing accounts: %w", err)
+	}
+
+	// Add new accounts to the map
+	for address, keyInfo := range accounts {
+		storage.Accounts[address] = keyInfo
+	}
+
+	// Save back to file
+	if err := s.saveAccountsToFile(storage); err != nil {
+		return fmt.Errorf("failed to save accounts: %w", err)
+	}
+
+	return nil
+}
+
+// getAccountByAddress retrieves account info by address from storage
+func (s *WalletServer) getAccountByAddress(address string) (*models.KeyInfo, error) {
+	storage, err := s.loadAccountsFromFile()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load accounts: %w", err)
+	}
+
+	if keyInfo, exists := storage.Accounts[address]; exists {
+		return &keyInfo, nil
+	}
+
+	return nil, fmt.Errorf("account not found for address: %s", address)
+}
+
 // CreateAccount creates a new account
 func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccountRequest) (*proto.CreateAccountResponse, error) {
 	// Define all key types to iterate through
@@ -143,14 +237,29 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 		return nil, status.Errorf(codes.Internal, "failed to import any keys: %v", errors)
 	}
 
-	return &proto.CreateAccountResponse{
+	// Create response
+	response := &proto.CreateAccountResponse{
 		FujiAvaxAddress: derivedKeys[fujiKeyType].MaterialId,
 		AvaxAddress:     derivedKeys[mainnetKeyType].MaterialId,
 		EthAddress:      derivedKeys[ethKeytype].MaterialId,
 		FujiAvaxKeyId:   derivedKeys[fujiKeyType].KeyId,
 		AvaxKeyId:       derivedKeys[mainnetKeyType].KeyId,
 		EthKeyId:        derivedKeys[ethKeytype].KeyId,
-	}, nil
+	}
+
+	// Store account data in JSON file before returning
+	// Create a map with address as key and key info as value
+	accountsToStore := make(map[string]models.KeyInfo)
+	accountsToStore[derivedKeys[fujiKeyType].MaterialId] = derivedKeys[fujiKeyType]
+	accountsToStore[derivedKeys[mainnetKeyType].MaterialId] = derivedKeys[mainnetKeyType]
+	accountsToStore[derivedKeys[ethKeytype].MaterialId] = derivedKeys[ethKeytype]
+
+	// Save to JSON file
+	if err := s.addAccountToStorage(accountsToStore); err != nil {
+		return response, fmt.Errorf("Warning: failed to save account to storage: %v\n", err)
+	}
+
+	return response, nil
 }
 
 // GetAccount retrieves an account by address

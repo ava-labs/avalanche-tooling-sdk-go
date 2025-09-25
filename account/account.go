@@ -15,6 +15,8 @@ type Account interface {
 	Addresses() []ids.ShortID
 	// GetPChainAddress returns the P-Chain address for the given network
 	GetPChainAddress(network network.Network) (string, error)
-	// GetKeychain returns the keychain associated with this account
+	// NewAccount creates a new account of the same type
+	NewAccount() (Account, error)
+
 	GetKeychain() (*secp256k1fx.Keychain, error)
 }
