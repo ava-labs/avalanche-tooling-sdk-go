@@ -7,6 +7,7 @@
 package proto
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/known/emptypb"
@@ -210,7 +211,7 @@ var File_api_proto_account_proto protoreflect.FileDescriptor
 
 const file_api_proto_account_proto_rawDesc = "" +
 	"\n" +
-	"\x17api/proto/account.proto\x12\x14avalanche.account.v1\x1a\x1bgoogle/protobuf/empty.proto\"R\n" +
+	"\x17api/proto/account.proto\x12\x14avalanche.account.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\"R\n" +
 	"\x17GetPChainAddressRequest\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x18\n" +
@@ -221,10 +222,10 @@ const file_api_proto_account_proto_rawDesc = "" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\"3\n" +
 	"\x13GetKeychainResponse\x12\x1c\n" +
-	"\taddresses\x18\x01 \x03(\tR\taddresses2\xe7\x01\n" +
-	"\x0eAccountService\x12q\n" +
-	"\x10GetPChainAddress\x12-.avalanche.account.v1.GetPChainAddressRequest\x1a..avalanche.account.v1.GetPChainAddressResponse\x12b\n" +
-	"\vGetKeychain\x12(.avalanche.account.v1.GetKeychainRequest\x1a).avalanche.account.v1.GetKeychainResponseB8Z6github.com/ava-labs/avalanche-tooling-sdk-go/api/protob\x06proto3"
+	"\taddresses\x18\x01 \x03(\tR\taddresses2\xc6\x02\n" +
+	"\x0eAccountService\x12\xa3\x01\n" +
+	"\x10GetPChainAddress\x12-.avalanche.account.v1.GetPChainAddressRequest\x1a..avalanche.account.v1.GetPChainAddressResponse\"0\x82\xd3\xe4\x93\x02*\x12(/v1/account/{account_id}/p-chain-address\x12\x8d\x01\n" +
+	"\vGetKeychain\x12(.avalanche.account.v1.GetKeychainRequest\x1a).avalanche.account.v1.GetKeychainResponse\")\x82\xd3\xe4\x93\x02#\x12!/v1/account/{account_id}/keychainB8Z6github.com/ava-labs/avalanche-tooling-sdk-go/api/protob\x06proto3"
 
 var (
 	file_api_proto_account_proto_rawDescOnce sync.Once

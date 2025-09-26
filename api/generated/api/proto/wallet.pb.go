@@ -7,6 +7,7 @@
 package proto
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -1436,7 +1437,7 @@ var File_api_proto_wallet_proto protoreflect.FileDescriptor
 
 const file_api_proto_wallet_proto_rawDesc = "" +
 	"\n" +
-	"\x16api/proto/wallet.proto\x12\x13avalanche.wallet.v1\x1a\x1bgoogle/protobuf/empty.proto\"\x16\n" +
+	"\x16api/proto/wallet.proto\x12\x13avalanche.wallet.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\"\x16\n" +
 	"\x14CreateAccountRequest\"\x87\x01\n" +
 	"\x15CreateAccountResponse\x12*\n" +
 	"\x11fuji_avax_address\x18\x01 \x01(\tR\x0ffujiAvaxAddress\x12!\n" +
@@ -1542,19 +1543,20 @@ const file_api_proto_wallet_proto_rawDesc = "" +
 	"\x16SetChainClientsRequest\x12(\n" +
 	"\x10c_chain_endpoint\x18\x01 \x01(\tR\x0ecChainEndpoint\x12(\n" +
 	"\x10x_chain_endpoint\x18\x02 \x01(\tR\x0exChainEndpoint\x12(\n" +
-	"\x10p_chain_endpoint\x18\x03 \x01(\tR\x0epChainEndpoint2\xc8\a\n" +
-	"\rWalletService\x12f\n" +
-	"\rCreateAccount\x12).avalanche.wallet.v1.CreateAccountRequest\x1a*.avalanche.wallet.v1.CreateAccountResponse\x12]\n" +
+	"\x10p_chain_endpoint\x18\x03 \x01(\tR\x0epChainEndpoint2\xb9\n" +
 	"\n" +
-	"GetAccount\x12&.avalanche.wallet.v1.GetAccountRequest\x1a'.avalanche.wallet.v1.GetAccountResponse\x12Q\n" +
-	"\fListAccounts\x12\x16.google.protobuf.Empty\x1a).avalanche.wallet.v1.ListAccountsResponse\x12f\n" +
-	"\rImportAccount\x12).avalanche.wallet.v1.ImportAccountRequest\x1a*.avalanche.wallet.v1.ImportAccountResponse\x12o\n" +
-	"\x10BuildTransaction\x12,.avalanche.wallet.v1.BuildTransactionRequest\x1a-.avalanche.wallet.v1.BuildTransactionResponse\x12l\n" +
-	"\x0fSignTransaction\x12+.avalanche.wallet.v1.SignTransactionRequest\x1a,.avalanche.wallet.v1.SignTransactionResponse\x12l\n" +
-	"\x0fSendTransaction\x12+.avalanche.wallet.v1.SendTransactionRequest\x1a,.avalanche.wallet.v1.SendTransactionResponse\x12W\n" +
-	"\x0fGetChainClients\x12\x16.google.protobuf.Empty\x1a,.avalanche.wallet.v1.GetChainClientsResponse\x12V\n" +
-	"\x0fSetChainClients\x12+.avalanche.wallet.v1.SetChainClientsRequest\x1a\x16.google.protobuf.Empty\x127\n" +
-	"\x05Close\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB8Z6github.com/ava-labs/avalanche-tooling-sdk-go/api/protob\x06proto3"
+	"\rWalletService\x12\x86\x01\n" +
+	"\rCreateAccount\x12).avalanche.wallet.v1.CreateAccountRequest\x1a*.avalanche.wallet.v1.CreateAccountResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/wallet/accounts\x12\x84\x01\n" +
+	"\n" +
+	"GetAccount\x12&.avalanche.wallet.v1.GetAccountRequest\x1a'.avalanche.wallet.v1.GetAccountResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/wallet/accounts/{address}\x12n\n" +
+	"\fListAccounts\x12\x16.google.protobuf.Empty\x1a).avalanche.wallet.v1.ListAccountsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/wallet/accounts\x12\x8d\x01\n" +
+	"\rImportAccount\x12).avalanche.wallet.v1.ImportAccountRequest\x1a*.avalanche.wallet.v1.ImportAccountResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/wallet/accounts/import\x12\x99\x01\n" +
+	"\x10BuildTransaction\x12,.avalanche.wallet.v1.BuildTransactionRequest\x1a-.avalanche.wallet.v1.BuildTransactionResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/wallet/transactions/build\x12\x95\x01\n" +
+	"\x0fSignTransaction\x12+.avalanche.wallet.v1.SignTransactionRequest\x1a,.avalanche.wallet.v1.SignTransactionResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/wallet/transactions/sign\x12\x95\x01\n" +
+	"\x0fSendTransaction\x12+.avalanche.wallet.v1.SendTransactionRequest\x1a,.avalanche.wallet.v1.SendTransactionResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/wallet/transactions/send\x12y\n" +
+	"\x0fGetChainClients\x12\x16.google.protobuf.Empty\x1a,.avalanche.wallet.v1.GetChainClientsResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/wallet/chain-clients\x12{\n" +
+	"\x0fSetChainClients\x12+.avalanche.wallet.v1.SetChainClientsRequest\x1a\x16.google.protobuf.Empty\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\x1a\x18/v1/wallet/chain-clients\x12T\n" +
+	"\x05Close\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/wallet/closeB8Z6github.com/ava-labs/avalanche-tooling-sdk-go/api/protob\x06proto3"
 
 var (
 	file_api_proto_wallet_proto_rawDescOnce sync.Once

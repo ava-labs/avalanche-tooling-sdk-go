@@ -5,47 +5,45 @@ package wallet
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/api/generated/api/proto"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
 	"github.com/ava-labs/avalanchego/ids"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// APIWallet represents a wallet that communicates with a gRPC server
+// APIWallet represents a wallet that communicates with an HTTP API server
 type APIWallet struct {
-	grpcClient proto.WalletServiceClient
-	conn       *grpc.ClientConn
-	accounts   map[string]*account.ServerAccount // account_id -> account mapping
+	baseURL  string
+	client   *http.Client
+	accounts map[string]*account.ServerAccount // account_id -> account mapping
 }
 
-// NewAPIWallet creates a new API wallet that connects to a gRPC server
+// NewAPIWallet creates a new API wallet that connects to an HTTP API server
 func NewAPIWallet(serverAddr string) (*APIWallet, error) {
-	// Connect to gRPC server
-	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to gRPC server: %w", err)
+	// Ensure serverAddr has proper format
+	if serverAddr == "" {
+		serverAddr = "http://localhost:8080"
 	}
 
-	// Create gRPC client
-	grpcClient := proto.NewWalletServiceClient(conn)
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
 
 	return &APIWallet{
-		grpcClient: grpcClient,
-		conn:       conn,
-		accounts:   make(map[string]*account.ServerAccount),
+		baseURL:  serverAddr,
+		client:   client,
+		accounts: make(map[string]*account.ServerAccount),
 	}, nil
 }
 
-// Close closes the gRPC connection
+// Close closes the HTTP client connection
 func (w *APIWallet) Close(ctx context.Context) error {
-	if w.conn != nil {
-		return w.conn.Close()
-	}
+	// HTTP client doesn't need explicit closing
+	// Just clear the accounts cache
+	w.accounts = make(map[string]*account.ServerAccount)
 	return nil
 }
 
@@ -54,293 +52,71 @@ var _ Wallet = (*APIWallet)(nil)
 
 // Accounts returns all accounts in the wallet
 func (w *APIWallet) Accounts() []account.Account {
-	accounts := make([]account.Account, 0, len(w.accounts))
-	for _, acc := range w.accounts {
-		accounts = append(accounts, acc)
-	}
-	return accounts
+	// TODO: Implement accounts retrieval
+	return nil
 }
 
 // Clients returns chain clients (not implemented for API wallet)
 func (w *APIWallet) Clients() ChainClients {
-	// For API wallet, we don't maintain local chain clients
-	// The server handles chain client management
+	// TODO: Implement clients retrieval
 	return ChainClients{}
 }
 
-// CreateAccount creates a new account via the gRPC server
+// CreateAccount creates a new account via the HTTP API server
 func (w *APIWallet) CreateAccount(ctx context.Context) (*account.Account, error) {
-	// Call gRPC server
-	resp, err := w.grpcClient.CreateAccount(ctx, &proto.CreateAccountRequest{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create account: %w", err)
-	}
-
-	// Create addresses from the response
-	addresses := []ids.ShortID{}
-
-	// Add Fuji address
-	if resp.FujiAvaxAddress != "" {
-		addr, err := ids.ShortFromString(resp.FujiAvaxAddress)
-		if err != nil {
-			return nil, fmt.Errorf("invalid Fuji address from server: %s", resp.FujiAvaxAddress)
-		}
-		addresses = append(addresses, addr)
-	}
-
-	// Add Mainnet address
-	if resp.AvaxAddress != "" {
-		addr, err := ids.ShortFromString(resp.AvaxAddress)
-		if err != nil {
-			return nil, fmt.Errorf("invalid Mainnet address from server: %s", resp.AvaxAddress)
-		}
-		addresses = append(addresses, addr)
-	}
-
-	// Add ETH address
-	if resp.EthAddress != "" {
-		addr, err := ids.ShortFromString(resp.EthAddress)
-		if err != nil {
-			return nil, fmt.Errorf("invalid ETH address from server: %s", resp.EthAddress)
-		}
-		addresses = append(addresses, addr)
-	}
-
-	// Create API account
-	apiAccount := &account.ServerAccount{
-		AccountID:              resp.FujiAvaxAddress, // Use Fuji address as account ID
-		ServerAccountAddresses: addresses,
-		GrpcClient:             w.grpcClient,
-	}
-
-	// Store account
-	w.accounts[resp.FujiAvaxAddress] = apiAccount
-
-	// Return as account.Account interface
-	var accountInterface account.Account = apiAccount
-	return &accountInterface, nil
+	// TODO: Implement account creation
+	return nil, fmt.Errorf("not implemented")
 }
 
 // GetAccount retrieves an account by address
 func (w *APIWallet) GetAccount(ctx context.Context, address ids.ShortID) (*account.Account, error) {
-	// Call gRPC server
-	resp, err := w.grpcClient.GetAccount(ctx, &proto.GetAccountRequest{
-		Address: address.String(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get account: %w", err)
-	}
-
-	// Check if we already have this account cached
-	if apiAccount, exists := w.accounts[resp.AccountId]; exists {
-		var accountInterface account.Account = apiAccount
-		return &accountInterface, nil
-	}
-
-	// Create new API account
-	apiAccount := &account.ServerAccount{
-		AccountID:              resp.AccountId,
-		ServerAccountAddresses: make([]ids.ShortID, len(resp.Addresses)),
-		GrpcClient:             w.grpcClient,
-	}
-
-	// Convert addresses
-	for i, addrStr := range resp.Addresses {
-		addr, err := ids.ShortFromString(addrStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid address from server: %s", addrStr)
-		}
-		apiAccount.ServerAccountAddresses[i] = addr
-	}
-
-	// Store account
-	w.accounts[resp.AccountId] = apiAccount
-
-	// Return as account.Account interface
-	var accountInterface account.Account = apiAccount
-	return &accountInterface, nil
+	// TODO: Implement account retrieval
+	return nil, fmt.Errorf("not implemented")
 }
 
 // ListAccounts returns all accounts managed by this wallet
 func (w *APIWallet) ListAccounts(ctx context.Context) ([]*account.Account, error) {
-	// Call gRPC server
-	resp, err := w.grpcClient.ListAccounts(ctx, &emptypb.Empty{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list accounts: %w", err)
-	}
-
-	// Convert to account.Account interfaces
-	accounts := make([]*account.Account, 0, len(resp.Accounts))
-	for _, accInfo := range resp.Accounts {
-		// Check if we already have this account cached
-		if apiAccount, exists := w.accounts[accInfo.AccountId]; exists {
-			var accountInterface account.Account = apiAccount
-			accounts = append(accounts, &accountInterface)
-			continue
-		}
-
-		// Create new API account
-		apiAccount := &account.ServerAccount{
-			AccountID:              accInfo.AccountId,
-			ServerAccountAddresses: make([]ids.ShortID, len(accInfo.Addresses)),
-			GrpcClient:             w.grpcClient,
-		}
-
-		// Convert addresses
-		for i, addrStr := range accInfo.Addresses {
-			addr, err := ids.ShortFromString(addrStr)
-			if err != nil {
-				return nil, fmt.Errorf("invalid address from server: %s", addrStr)
-			}
-			apiAccount.ServerAccountAddresses[i] = addr
-		}
-
-		// Store account
-		w.accounts[accInfo.AccountId] = apiAccount
-
-		// Add to result
-		var accountInterface account.Account = apiAccount
-		accounts = append(accounts, &accountInterface)
-	}
-
-	return accounts, nil
+	// TODO: Implement list accounts
+	return nil, fmt.Errorf("not implemented")
 }
 
 // ImportAccount imports an existing account
 func (w *APIWallet) ImportAccount(ctx context.Context, keyPath string) (*account.Account, error) {
-	// Call gRPC server
-	resp, err := w.grpcClient.ImportAccount(ctx, &proto.ImportAccountRequest{
-		KeyPath: keyPath,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to import account: %w", err)
-	}
-
-	// Create API account
-	apiAccount := &account.ServerAccount{
-		AccountID:              resp.AccountId,
-		ServerAccountAddresses: make([]ids.ShortID, len(resp.Addresses)),
-		GrpcClient:             w.grpcClient,
-	}
-
-	// Convert addresses
-	for i, addrStr := range resp.Addresses {
-		addr, err := ids.ShortFromString(addrStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid address from server: %s", addrStr)
-		}
-		apiAccount.ServerAccountAddresses[i] = addr
-	}
-
-	// Store account
-	w.accounts[resp.AccountId] = apiAccount
-
-	// Return as account.Account interface
-	var accountInterface account.Account = apiAccount
-	return &accountInterface, nil
+	// TODO: Implement account import
+	return nil, fmt.Errorf("not implemented")
 }
 
-// BuildTx constructs a transaction via the gRPC server
+// BuildTx constructs a transaction via the HTTP API server
 func (w *APIWallet) BuildTx(ctx context.Context, params BuildTxParams) (tx.BuildTxResult, error) {
-	// Find account ID
-	var accountID string
-	for id, acc := range w.accounts {
-		for _, addr := range acc.Addresses() {
-			for _, paramAddr := range params.Account.Addresses() {
-				if addr == paramAddr {
-					accountID = id
-					break
-				}
-			}
-			if accountID != "" {
-				break
-			}
-		}
-		if accountID != "" {
-			break
-		}
-	}
-
-	if accountID == "" {
-		return tx.BuildTxResult{}, fmt.Errorf("account not found in wallet")
-	}
-
-	// Convert network to string
-	var networkStr string
-	switch params.Network {
-	case network.FujiNetwork():
-		networkStr = "fuji"
-	case network.MainnetNetwork():
-		networkStr = "mainnet"
-	default:
-		return tx.BuildTxResult{}, fmt.Errorf("unsupported network")
-	}
-
-	// Convert transaction params
-	txParams, err := w.convertBuildTxInput(params.BuildTxInput)
-	if err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("failed to convert transaction params: %w", err)
-	}
-
-	// Call gRPC server
-	_, err = w.grpcClient.BuildTransaction(ctx, &proto.BuildTransactionRequest{
-		AccountId:         accountID,
-		Network:           networkStr,
-		TransactionParams: txParams,
-	})
-	if err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("failed to build transaction: %w", err)
-	}
-
-	// Convert response to BuildTxResult
-	// Note: This is simplified - in a real implementation, you'd need to
-	// properly deserialize the transaction based on its type
-	return tx.BuildTxResult{
-		// This would need proper implementation based on your tx package
-	}, nil
+	// TODO: Implement build transaction
+	return tx.BuildTxResult{}, fmt.Errorf("not implemented")
 }
 
-// SignTx signs a transaction via the gRPC server
+// SignTx signs a transaction via the HTTP API server
 func (w *APIWallet) SignTx(ctx context.Context, params SignTxParams) (tx.SignTxResult, error) {
-	// Similar to BuildTx, this would call the gRPC server
-	return tx.SignTxResult{}, fmt.Errorf("SignTx not fully implemented for API wallet")
+	// TODO: Implement sign transaction
+	return tx.SignTxResult{}, fmt.Errorf("not implemented")
 }
 
-// SendTx sends a transaction via the gRPC server
+// SendTx sends a transaction via the HTTP API server
 func (w *APIWallet) SendTx(ctx context.Context, params SendTxParams) (tx.SendTxResult, error) {
-	// Similar to BuildTx, this would call the gRPC server
-	return tx.SendTxResult{}, fmt.Errorf("SendTx not fully implemented for API wallet")
+	// TODO: Implement send transaction
+	return tx.SendTxResult{}, fmt.Errorf("not implemented")
 }
 
 // GetAddresses returns all addresses managed by this wallet
 func (w *APIWallet) GetAddresses(ctx context.Context) ([]ids.ShortID, error) {
-	// Since GetAddresses is not implemented in the server, we'll return
-	// addresses from our local cache
-	addresses := []ids.ShortID{}
-	for _, account := range w.accounts {
-		addresses = append(addresses, account.Addresses()...)
-	}
-	return addresses, nil
+	// TODO: Implement get addresses
+	return nil, fmt.Errorf("not implemented")
 }
 
 // GetChainClients returns chain clients (not implemented for API wallet)
 func (w *APIWallet) GetChainClients() ChainClients {
-	// For API wallet, we don't maintain local chain clients
+	// TODO: Implement get chain clients
 	return ChainClients{}
 }
 
 // SetChainClients updates chain clients (not implemented for API wallet)
 func (w *APIWallet) SetChainClients(clients ChainClients) {
-	// For API wallet, chain clients are managed by the server
-}
-
-// convertBuildTxInput converts BuildTxInput to protobuf TransactionParams
-func (w *APIWallet) convertBuildTxInput(input BuildTxInput) (*proto.TransactionParams, error) {
-	// This is a simplified conversion - you'd need to implement
-	// proper conversion based on your transaction types
-	return &proto.TransactionParams{
-		TxType:    input.GetTxType(),
-		ChainType: input.GetChainType(),
-		// You'd need to populate the specific chain params based on the input type
-	}, nil
+	// TODO: Implement set chain clients
 }

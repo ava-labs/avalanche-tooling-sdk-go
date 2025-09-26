@@ -5,27 +5,75 @@ package avalanche.wallet.v1;
 option go_package = "github.com/ava-labs/avalanche-tooling-sdk-go/api/proto";
 
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 
 // WalletService provides wallet management operations
 service WalletService {
   // Account Management
-  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
-  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
-  rpc ListAccounts(google.protobuf.Empty) returns (ListAccountsResponse);
-  rpc ImportAccount(ImportAccountRequest) returns (ImportAccountResponse);
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/accounts"
+      body: "*"
+    };
+  }
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
+    option (google.api.http) = {
+      get: "/v1/wallet/accounts/{address}"
+    };
+  }
+  rpc ListAccounts(google.protobuf.Empty) returns (ListAccountsResponse) {
+    option (google.api.http) = {
+      get: "/v1/wallet/accounts"
+    };
+  }
+  rpc ImportAccount(ImportAccountRequest) returns (ImportAccountResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/accounts/import"
+      body: "*"
+    };
+  }
   
   
   // Transaction Operations
-  rpc BuildTransaction(BuildTransactionRequest) returns (BuildTransactionResponse);
-  rpc SignTransaction(SignTransactionRequest) returns (SignTransactionResponse);
-  rpc SendTransaction(SendTransactionRequest) returns (SendTransactionResponse);
+  rpc BuildTransaction(BuildTransactionRequest) returns (BuildTransactionResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/transactions/build"
+      body: "*"
+    };
+  }
+  rpc SignTransaction(SignTransactionRequest) returns (SignTransactionResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/transactions/sign"
+      body: "*"
+    };
+  }
+  rpc SendTransaction(SendTransactionRequest) returns (SendTransactionResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/transactions/send"
+      body: "*"
+    };
+  }
   
   // Chain Clients
-  rpc GetChainClients(google.protobuf.Empty) returns (GetChainClientsResponse);
-  rpc SetChainClients(SetChainClientsRequest) returns (google.protobuf.Empty);
+  rpc GetChainClients(google.protobuf.Empty) returns (GetChainClientsResponse) {
+    option (google.api.http) = {
+      get: "/v1/wallet/chain-clients"
+    };
+  }
+  rpc SetChainClients(SetChainClientsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/wallet/chain-clients"
+      body: "*"
+    };
+  }
   
   // Cleanup
-  rpc Close(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc Close(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/wallet/close"
+      body: "*"
+    };
+  }
 }
 
 // Account Management Messages

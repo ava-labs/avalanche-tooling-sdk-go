@@ -5,15 +5,24 @@ package avalanche.account.v1;
 option go_package = "github.com/ava-labs/avalanche-tooling-sdk-go/api/proto";
 
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 
 // AccountService provides account-specific operations
 service AccountService {
   
   // Get P-Chain address for specific network
-  rpc GetPChainAddress(GetPChainAddressRequest) returns (GetPChainAddressResponse);
+  rpc GetPChainAddress(GetPChainAddressRequest) returns (GetPChainAddressResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/{account_id}/p-chain-address"
+    };
+  }
   
   // Get keychain information
-  rpc GetKeychain(GetKeychainRequest) returns (GetKeychainResponse);
+  rpc GetKeychain(GetKeychainRequest) returns (GetKeychainResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/{account_id}/keychain"
+    };
+  }
 }
 
 
