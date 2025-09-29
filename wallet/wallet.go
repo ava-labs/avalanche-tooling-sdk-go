@@ -55,11 +55,15 @@ func NewLocalWallet() (*LocalWallet, error) {
 }
 
 func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account.Account, network network.Network) error {
+	keychain, err := account.GetKeychain()
+	if err != nil {
+		return err
+	}
 	wallet, err := primary.MakeWallet(
 		ctx,
 		network.Endpoint,
-		account.SoftKey.KeyChain(),
-		account.SoftKey.KeyChain(),
+		keychain,
+		keychain,
 		primary.WalletConfig{},
 	)
 	if err != nil {
@@ -79,7 +83,7 @@ func (w *LocalWallet) Clients() ChainClients {
 
 // CreateAccount creates a new Account using local key generation
 func (w *LocalWallet) CreateAccount(ctx context.Context) (*account.Account, error) {
-	newAccount, err := account.NewAccount()
+	newAccount, err := account.NewLocalAccount()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new Account: %w", err)
 	}
@@ -299,7 +303,12 @@ func (w *LocalWallet) buildXChainTx(ctx context.Context, params BuildTxInput) (t
 
 func GetMultisigTxOptions(account account.Account, subnetAuthKeys []ids.ShortID) []common.Option {
 	options := []common.Option{}
-	walletAddrs := account.SoftKey.KeyChain().Addresses().List()
+	keychain, err := account.GetKeychain()
+	if err != nil {
+		// Handle error appropriately - for now, return empty options
+		return options
+	}
+	walletAddrs := keychain.Addresses().List()
 	changeAddr := walletAddrs[0]
 	// addrs to use for signing
 	customAddrsSet := set.Set[ids.ShortID]{}

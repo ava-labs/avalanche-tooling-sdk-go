@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 // ConvertSubnetToL1TxParams contains all parameters needed to create a ConvertSubnetToL1Tx
@@ -20,7 +20,7 @@ type ConvertSubnetToL1TxParams struct {
 	// Address is address of the validator manager contract.
 	Address []byte
 	// Validators are the initial set of L1 validators after the conversion.
-	Validators []*txs.ConvertSubnetToL1Validator
+	Validators []*avagoTxs.ConvertSubnetToL1Validator
 }
 
 // GetTxType returns the transaction type identifier
