@@ -1312,127 +1312,6 @@ func (x *SendTransactionResponse) GetSuccess() bool {
 	return false
 }
 
-// Chain Clients Messages
-type GetChainClientsResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	CChainEndpoint string                 `protobuf:"bytes,1,opt,name=c_chain_endpoint,json=cChainEndpoint,proto3" json:"c_chain_endpoint,omitempty"`
-	XChainEndpoint string                 `protobuf:"bytes,2,opt,name=x_chain_endpoint,json=xChainEndpoint,proto3" json:"x_chain_endpoint,omitempty"`
-	PChainEndpoint string                 `protobuf:"bytes,3,opt,name=p_chain_endpoint,json=pChainEndpoint,proto3" json:"p_chain_endpoint,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *GetChainClientsResponse) Reset() {
-	*x = GetChainClientsResponse{}
-	mi := &file_api_proto_wallet_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetChainClientsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetChainClientsResponse) ProtoMessage() {}
-
-func (x *GetChainClientsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_wallet_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetChainClientsResponse.ProtoReflect.Descriptor instead.
-func (*GetChainClientsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_wallet_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *GetChainClientsResponse) GetCChainEndpoint() string {
-	if x != nil {
-		return x.CChainEndpoint
-	}
-	return ""
-}
-
-func (x *GetChainClientsResponse) GetXChainEndpoint() string {
-	if x != nil {
-		return x.XChainEndpoint
-	}
-	return ""
-}
-
-func (x *GetChainClientsResponse) GetPChainEndpoint() string {
-	if x != nil {
-		return x.PChainEndpoint
-	}
-	return ""
-}
-
-type SetChainClientsRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	CChainEndpoint string                 `protobuf:"bytes,1,opt,name=c_chain_endpoint,json=cChainEndpoint,proto3" json:"c_chain_endpoint,omitempty"`
-	XChainEndpoint string                 `protobuf:"bytes,2,opt,name=x_chain_endpoint,json=xChainEndpoint,proto3" json:"x_chain_endpoint,omitempty"`
-	PChainEndpoint string                 `protobuf:"bytes,3,opt,name=p_chain_endpoint,json=pChainEndpoint,proto3" json:"p_chain_endpoint,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *SetChainClientsRequest) Reset() {
-	*x = SetChainClientsRequest{}
-	mi := &file_api_proto_wallet_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetChainClientsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetChainClientsRequest) ProtoMessage() {}
-
-func (x *SetChainClientsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_wallet_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetChainClientsRequest.ProtoReflect.Descriptor instead.
-func (*SetChainClientsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_wallet_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *SetChainClientsRequest) GetCChainEndpoint() string {
-	if x != nil {
-		return x.CChainEndpoint
-	}
-	return ""
-}
-
-func (x *SetChainClientsRequest) GetXChainEndpoint() string {
-	if x != nil {
-		return x.XChainEndpoint
-	}
-	return ""
-}
-
-func (x *SetChainClientsRequest) GetPChainEndpoint() string {
-	if x != nil {
-		return x.PChainEndpoint
-	}
-	return ""
-}
-
 var File_api_proto_wallet_proto protoreflect.FileDescriptor
 
 const file_api_proto_wallet_proto_rawDesc = "" +
@@ -1535,16 +1414,7 @@ const file_api_proto_wallet_proto_rawDesc = "" +
 	"\x17SendTransactionResponse\x12%\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\x12\x17\n" +
 	"\atx_hash\x18\x02 \x01(\tR\x06txHash\x12\x18\n" +
-	"\asuccess\x18\x03 \x01(\bR\asuccess\"\x97\x01\n" +
-	"\x17GetChainClientsResponse\x12(\n" +
-	"\x10c_chain_endpoint\x18\x01 \x01(\tR\x0ecChainEndpoint\x12(\n" +
-	"\x10x_chain_endpoint\x18\x02 \x01(\tR\x0exChainEndpoint\x12(\n" +
-	"\x10p_chain_endpoint\x18\x03 \x01(\tR\x0epChainEndpoint\"\x96\x01\n" +
-	"\x16SetChainClientsRequest\x12(\n" +
-	"\x10c_chain_endpoint\x18\x01 \x01(\tR\x0ecChainEndpoint\x12(\n" +
-	"\x10x_chain_endpoint\x18\x02 \x01(\tR\x0exChainEndpoint\x12(\n" +
-	"\x10p_chain_endpoint\x18\x03 \x01(\tR\x0epChainEndpoint2\xb9\n" +
-	"\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess2\xeb\a\n" +
 	"\rWalletService\x12\x86\x01\n" +
 	"\rCreateAccount\x12).avalanche.wallet.v1.CreateAccountRequest\x1a*.avalanche.wallet.v1.CreateAccountResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/wallet/accounts\x12\x84\x01\n" +
 	"\n" +
@@ -1553,10 +1423,7 @@ const file_api_proto_wallet_proto_rawDesc = "" +
 	"\rImportAccount\x12).avalanche.wallet.v1.ImportAccountRequest\x1a*.avalanche.wallet.v1.ImportAccountResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/wallet/accounts/import\x12\x99\x01\n" +
 	"\x10BuildTransaction\x12,.avalanche.wallet.v1.BuildTransactionRequest\x1a-.avalanche.wallet.v1.BuildTransactionResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/wallet/transactions/build\x12\x95\x01\n" +
 	"\x0fSignTransaction\x12+.avalanche.wallet.v1.SignTransactionRequest\x1a,.avalanche.wallet.v1.SignTransactionResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/wallet/transactions/sign\x12\x95\x01\n" +
-	"\x0fSendTransaction\x12+.avalanche.wallet.v1.SendTransactionRequest\x1a,.avalanche.wallet.v1.SendTransactionResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/wallet/transactions/send\x12y\n" +
-	"\x0fGetChainClients\x12\x16.google.protobuf.Empty\x1a,.avalanche.wallet.v1.GetChainClientsResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/wallet/chain-clients\x12{\n" +
-	"\x0fSetChainClients\x12+.avalanche.wallet.v1.SetChainClientsRequest\x1a\x16.google.protobuf.Empty\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\x1a\x18/v1/wallet/chain-clients\x12T\n" +
-	"\x05Close\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/wallet/closeB8Z6github.com/ava-labs/avalanche-tooling-sdk-go/api/protob\x06proto3"
+	"\x0fSendTransaction\x12+.avalanche.wallet.v1.SendTransactionRequest\x1a,.avalanche.wallet.v1.SendTransactionResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/wallet/transactions/sendB8Z6github.com/ava-labs/avalanche-tooling-sdk-go/api/protob\x06proto3"
 
 var (
 	file_api_proto_wallet_proto_rawDescOnce sync.Once
@@ -1570,7 +1437,7 @@ func file_api_proto_wallet_proto_rawDescGZIP() []byte {
 	return file_api_proto_wallet_proto_rawDescData
 }
 
-var file_api_proto_wallet_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_api_proto_wallet_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_api_proto_wallet_proto_goTypes = []any{
 	(*CreateAccountRequest)(nil),       // 0: avalanche.wallet.v1.CreateAccountRequest
 	(*CreateAccountResponse)(nil),      // 1: avalanche.wallet.v1.CreateAccountResponse
@@ -1593,9 +1460,7 @@ var file_api_proto_wallet_proto_goTypes = []any{
 	(*SignTransactionResponse)(nil),    // 18: avalanche.wallet.v1.SignTransactionResponse
 	(*SendTransactionRequest)(nil),     // 19: avalanche.wallet.v1.SendTransactionRequest
 	(*SendTransactionResponse)(nil),    // 20: avalanche.wallet.v1.SendTransactionResponse
-	(*GetChainClientsResponse)(nil),    // 21: avalanche.wallet.v1.GetChainClientsResponse
-	(*SetChainClientsRequest)(nil),     // 22: avalanche.wallet.v1.SetChainClientsRequest
-	(*emptypb.Empty)(nil),              // 23: google.protobuf.Empty
+	(*emptypb.Empty)(nil),              // 21: google.protobuf.Empty
 }
 var file_api_proto_wallet_proto_depIdxs = []int32{
 	5,  // 0: avalanche.wallet.v1.ListAccountsResponse.accounts:type_name -> avalanche.wallet.v1.AccountInfo
@@ -1608,26 +1473,20 @@ var file_api_proto_wallet_proto_depIdxs = []int32{
 	13, // 7: avalanche.wallet.v1.ConvertSubnetToL1Params.validators:type_name -> avalanche.wallet.v1.ConvertSubnetToL1Validator
 	0,  // 8: avalanche.wallet.v1.WalletService.CreateAccount:input_type -> avalanche.wallet.v1.CreateAccountRequest
 	2,  // 9: avalanche.wallet.v1.WalletService.GetAccount:input_type -> avalanche.wallet.v1.GetAccountRequest
-	23, // 10: avalanche.wallet.v1.WalletService.ListAccounts:input_type -> google.protobuf.Empty
+	21, // 10: avalanche.wallet.v1.WalletService.ListAccounts:input_type -> google.protobuf.Empty
 	6,  // 11: avalanche.wallet.v1.WalletService.ImportAccount:input_type -> avalanche.wallet.v1.ImportAccountRequest
 	8,  // 12: avalanche.wallet.v1.WalletService.BuildTransaction:input_type -> avalanche.wallet.v1.BuildTransactionRequest
 	17, // 13: avalanche.wallet.v1.WalletService.SignTransaction:input_type -> avalanche.wallet.v1.SignTransactionRequest
 	19, // 14: avalanche.wallet.v1.WalletService.SendTransaction:input_type -> avalanche.wallet.v1.SendTransactionRequest
-	23, // 15: avalanche.wallet.v1.WalletService.GetChainClients:input_type -> google.protobuf.Empty
-	22, // 16: avalanche.wallet.v1.WalletService.SetChainClients:input_type -> avalanche.wallet.v1.SetChainClientsRequest
-	23, // 17: avalanche.wallet.v1.WalletService.Close:input_type -> google.protobuf.Empty
-	1,  // 18: avalanche.wallet.v1.WalletService.CreateAccount:output_type -> avalanche.wallet.v1.CreateAccountResponse
-	3,  // 19: avalanche.wallet.v1.WalletService.GetAccount:output_type -> avalanche.wallet.v1.GetAccountResponse
-	4,  // 20: avalanche.wallet.v1.WalletService.ListAccounts:output_type -> avalanche.wallet.v1.ListAccountsResponse
-	7,  // 21: avalanche.wallet.v1.WalletService.ImportAccount:output_type -> avalanche.wallet.v1.ImportAccountResponse
-	16, // 22: avalanche.wallet.v1.WalletService.BuildTransaction:output_type -> avalanche.wallet.v1.BuildTransactionResponse
-	18, // 23: avalanche.wallet.v1.WalletService.SignTransaction:output_type -> avalanche.wallet.v1.SignTransactionResponse
-	20, // 24: avalanche.wallet.v1.WalletService.SendTransaction:output_type -> avalanche.wallet.v1.SendTransactionResponse
-	21, // 25: avalanche.wallet.v1.WalletService.GetChainClients:output_type -> avalanche.wallet.v1.GetChainClientsResponse
-	23, // 26: avalanche.wallet.v1.WalletService.SetChainClients:output_type -> google.protobuf.Empty
-	23, // 27: avalanche.wallet.v1.WalletService.Close:output_type -> google.protobuf.Empty
-	18, // [18:28] is the sub-list for method output_type
-	8,  // [8:18] is the sub-list for method input_type
+	1,  // 15: avalanche.wallet.v1.WalletService.CreateAccount:output_type -> avalanche.wallet.v1.CreateAccountResponse
+	3,  // 16: avalanche.wallet.v1.WalletService.GetAccount:output_type -> avalanche.wallet.v1.GetAccountResponse
+	4,  // 17: avalanche.wallet.v1.WalletService.ListAccounts:output_type -> avalanche.wallet.v1.ListAccountsResponse
+	7,  // 18: avalanche.wallet.v1.WalletService.ImportAccount:output_type -> avalanche.wallet.v1.ImportAccountResponse
+	16, // 19: avalanche.wallet.v1.WalletService.BuildTransaction:output_type -> avalanche.wallet.v1.BuildTransactionResponse
+	18, // 20: avalanche.wallet.v1.WalletService.SignTransaction:output_type -> avalanche.wallet.v1.SignTransactionResponse
+	20, // 21: avalanche.wallet.v1.WalletService.SendTransaction:output_type -> avalanche.wallet.v1.SendTransactionResponse
+	15, // [15:22] is the sub-list for method output_type
+	8,  // [8:15] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -1648,7 +1507,7 @@ func file_api_proto_wallet_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_wallet_proto_rawDesc), len(file_api_proto_wallet_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

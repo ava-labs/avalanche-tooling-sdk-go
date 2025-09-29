@@ -54,26 +54,7 @@ service WalletService {
     };
   }
   
-  // Chain Clients
-  rpc GetChainClients(google.protobuf.Empty) returns (GetChainClientsResponse) {
-    option (google.api.http) = {
-      get: "/v1/wallet/chain-clients"
-    };
-  }
-  rpc SetChainClients(SetChainClientsRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      put: "/v1/wallet/chain-clients"
-      body: "*"
-    };
-  }
   
-  // Cleanup
-  rpc Close(google.protobuf.Empty) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/wallet/close"
-      body: "*"
-    };
-  }
 }
 
 // Account Management Messages
@@ -212,15 +193,3 @@ message SendTransactionResponse {
   bool success = 3;
 }
 
-// Chain Clients Messages
-message GetChainClientsResponse {
-  string c_chain_endpoint = 1;
-  string x_chain_endpoint = 2;
-  string p_chain_endpoint = 3;
-}
-
-message SetChainClientsRequest {
-  string c_chain_endpoint = 1;
-  string x_chain_endpoint = 2;
-  string p_chain_endpoint = 3;
-}

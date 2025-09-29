@@ -19,12 +19,11 @@ import (
 
 // CombinedServer represents a server that runs both gRPC and HTTP
 type CombinedServer struct {
-	grpcServer    *grpc.Server
-	httpServer    *HTTPServer
-	grpcAddr      string
-	httpAddr      string
-	walletServer  *WalletServer
-	accountServer *AccountServer
+	grpcServer   *grpc.Server
+	httpServer   *HTTPServer
+	grpcAddr     string
+	httpAddr     string
+	walletServer *WalletServer
 }
 
 // NewCombinedServer creates a new combined server
@@ -35,15 +34,11 @@ func NewCombinedServer(grpcAddr, httpAddr string) (*CombinedServer, error) {
 		return nil, fmt.Errorf("failed to create wallet server: %w", err)
 	}
 
-	// Create account server
-	accountServer := NewAccountServer(walletServer)
-
 	// Create gRPC server
 	grpcServer := grpc.NewServer()
 
 	// Register services
 	proto.RegisterWalletServiceServer(grpcServer, walletServer)
-	proto.RegisterAccountServiceServer(grpcServer, accountServer)
 
 	// Enable reflection for debugging
 	reflection.Register(grpcServer)
@@ -55,12 +50,11 @@ func NewCombinedServer(grpcAddr, httpAddr string) (*CombinedServer, error) {
 	}
 
 	return &CombinedServer{
-		grpcServer:    grpcServer,
-		httpServer:    httpServer,
-		grpcAddr:      grpcAddr,
-		httpAddr:      httpAddr,
-		walletServer:  walletServer,
-		accountServer: accountServer,
+		grpcServer:   grpcServer,
+		httpServer:   httpServer,
+		grpcAddr:     grpcAddr,
+		httpAddr:     httpAddr,
+		walletServer: walletServer,
 	}, nil
 }
 
@@ -129,9 +123,4 @@ func (s *CombinedServer) WaitForShutdown() {
 // GetWalletServer returns the wallet server instance
 func (s *CombinedServer) GetWalletServer() *WalletServer {
 	return s.walletServer
-}
-
-// GetAccountServer returns the account server instance
-func (s *CombinedServer) GetAccountServer() *AccountServer {
-	return s.accountServer
 }

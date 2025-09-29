@@ -18,11 +18,10 @@ import (
 
 // HTTPServer represents the HTTP server with gRPC gateway
 type HTTPServer struct {
-	httpServer    *http.Server
-	grpcAddr      string
-	httpAddr      string
-	walletServer  *WalletServer
-	accountServer *AccountServer
+	httpServer   *http.Server
+	grpcAddr     string
+	httpAddr     string
+	walletServer *WalletServer
 }
 
 // NewHTTPServer creates a new HTTP server with gRPC gateway
@@ -32,9 +31,6 @@ func NewHTTPServer(grpcAddr, httpAddr string) (*HTTPServer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create wallet server: %w", err)
 	}
-
-	// Create account server
-	accountServer := NewAccountServer(walletServer)
 
 	// Create gRPC connection for gateway
 	conn, err := grpc.Dial(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -50,10 +46,6 @@ func NewHTTPServer(grpcAddr, httpAddr string) (*HTTPServer, error) {
 		return nil, fmt.Errorf("failed to register wallet service handler: %w", err)
 	}
 
-	if err := proto.RegisterAccountServiceHandler(context.Background(), gwMux, conn); err != nil {
-		return nil, fmt.Errorf("failed to register account service handler: %w", err)
-	}
-
 	// Create HTTP server
 	httpServer := &http.Server{
 		Addr:         httpAddr,
@@ -63,11 +55,10 @@ func NewHTTPServer(grpcAddr, httpAddr string) (*HTTPServer, error) {
 	}
 
 	return &HTTPServer{
-		httpServer:    httpServer,
-		grpcAddr:      grpcAddr,
-		httpAddr:      httpAddr,
-		walletServer:  walletServer,
-		accountServer: accountServer,
+		httpServer:   httpServer,
+		grpcAddr:     grpcAddr,
+		httpAddr:     httpAddr,
+		walletServer: walletServer,
 	}, nil
 }
 
@@ -105,9 +96,4 @@ func (s *HTTPServer) Stop() error {
 // GetWalletServer returns the wallet server instance
 func (s *HTTPServer) GetWalletServer() *WalletServer {
 	return s.walletServer
-}
-
-// GetAccountServer returns the account server instance
-func (s *HTTPServer) GetAccountServer() *AccountServer {
-	return s.accountServer
 }

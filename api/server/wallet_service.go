@@ -91,7 +91,6 @@ func (s *WalletServer) DeriveKeyFromMnemonic(keyType models.KeyType, mnemonicId 
 		return models.KeyInfo{}, err
 	}
 
-	fmt.Printf("deriveKeyResp %s \n", deriveKeyResp.Keys)
 	if len(deriveKeyResp.Keys) > 0 {
 		return deriveKeyResp.Keys[0], nil
 	}
@@ -218,7 +217,6 @@ func (s *WalletServer) CreateAccount(ctx context.Context, req *proto.CreateAccou
 	}
 	createKeyResp, err := s.apiClient.CreateKey(createKeyRequest)
 	if err != nil {
-		fmt.Printf("we have error")
 		return nil, err
 	}
 	materialID := ""
@@ -332,19 +330,4 @@ func (s *WalletServer) SignTransaction(ctx context.Context, req *proto.SignTrans
 // SendTransaction sends a transaction
 func (s *WalletServer) SendTransaction(ctx context.Context, req *proto.SendTransactionRequest) (*proto.SendTransactionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendTransaction not implemented")
-}
-
-// GetChainClients returns chain client endpoints
-func (s *WalletServer) GetChainClients(ctx context.Context, req *emptypb.Empty) (*proto.GetChainClientsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetChainClients not implemented")
-}
-
-// SetChainClients updates chain client endpoints
-func (s *WalletServer) SetChainClients(ctx context.Context, req *proto.SetChainClientsRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetChainClients not implemented")
-}
-
-// Close performs cleanup
-func (s *WalletServer) Close(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Close not implemented")
 }

@@ -27,9 +27,6 @@ const (
 	WalletService_BuildTransaction_FullMethodName = "/avalanche.wallet.v1.WalletService/BuildTransaction"
 	WalletService_SignTransaction_FullMethodName  = "/avalanche.wallet.v1.WalletService/SignTransaction"
 	WalletService_SendTransaction_FullMethodName  = "/avalanche.wallet.v1.WalletService/SendTransaction"
-	WalletService_GetChainClients_FullMethodName  = "/avalanche.wallet.v1.WalletService/GetChainClients"
-	WalletService_SetChainClients_FullMethodName  = "/avalanche.wallet.v1.WalletService/SetChainClients"
-	WalletService_Close_FullMethodName            = "/avalanche.wallet.v1.WalletService/Close"
 )
 
 // WalletServiceClient is the client API for WalletService service.
@@ -47,11 +44,6 @@ type WalletServiceClient interface {
 	BuildTransaction(ctx context.Context, in *BuildTransactionRequest, opts ...grpc.CallOption) (*BuildTransactionResponse, error)
 	SignTransaction(ctx context.Context, in *SignTransactionRequest, opts ...grpc.CallOption) (*SignTransactionResponse, error)
 	SendTransaction(ctx context.Context, in *SendTransactionRequest, opts ...grpc.CallOption) (*SendTransactionResponse, error)
-	// Chain Clients
-	GetChainClients(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetChainClientsResponse, error)
-	SetChainClients(ctx context.Context, in *SetChainClientsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Cleanup
-	Close(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type walletServiceClient struct {
@@ -132,36 +124,6 @@ func (c *walletServiceClient) SendTransaction(ctx context.Context, in *SendTrans
 	return out, nil
 }
 
-func (c *walletServiceClient) GetChainClients(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetChainClientsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetChainClientsResponse)
-	err := c.cc.Invoke(ctx, WalletService_GetChainClients_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *walletServiceClient) SetChainClients(ctx context.Context, in *SetChainClientsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, WalletService_SetChainClients_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *walletServiceClient) Close(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, WalletService_Close_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // WalletServiceServer is the server API for WalletService service.
 // All implementations must embed UnimplementedWalletServiceServer
 // for forward compatibility.
@@ -177,11 +139,6 @@ type WalletServiceServer interface {
 	BuildTransaction(context.Context, *BuildTransactionRequest) (*BuildTransactionResponse, error)
 	SignTransaction(context.Context, *SignTransactionRequest) (*SignTransactionResponse, error)
 	SendTransaction(context.Context, *SendTransactionRequest) (*SendTransactionResponse, error)
-	// Chain Clients
-	GetChainClients(context.Context, *emptypb.Empty) (*GetChainClientsResponse, error)
-	SetChainClients(context.Context, *SetChainClientsRequest) (*emptypb.Empty, error)
-	// Cleanup
-	Close(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	mustEmbedUnimplementedWalletServiceServer()
 }
 
@@ -212,15 +169,6 @@ func (UnimplementedWalletServiceServer) SignTransaction(context.Context, *SignTr
 }
 func (UnimplementedWalletServiceServer) SendTransaction(context.Context, *SendTransactionRequest) (*SendTransactionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendTransaction not implemented")
-}
-func (UnimplementedWalletServiceServer) GetChainClients(context.Context, *emptypb.Empty) (*GetChainClientsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetChainClients not implemented")
-}
-func (UnimplementedWalletServiceServer) SetChainClients(context.Context, *SetChainClientsRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetChainClients not implemented")
-}
-func (UnimplementedWalletServiceServer) Close(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Close not implemented")
 }
 func (UnimplementedWalletServiceServer) mustEmbedUnimplementedWalletServiceServer() {}
 func (UnimplementedWalletServiceServer) testEmbeddedByValue()                       {}
@@ -369,60 +317,6 @@ func _WalletService_SendTransaction_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WalletService_GetChainClients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WalletServiceServer).GetChainClients(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WalletService_GetChainClients_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WalletServiceServer).GetChainClients(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WalletService_SetChainClients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetChainClientsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WalletServiceServer).SetChainClients(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WalletService_SetChainClients_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WalletServiceServer).SetChainClients(ctx, req.(*SetChainClientsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WalletService_Close_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WalletServiceServer).Close(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WalletService_Close_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WalletServiceServer).Close(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // WalletService_ServiceDesc is the grpc.ServiceDesc for WalletService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -457,18 +351,6 @@ var WalletService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendTransaction",
 			Handler:    _WalletService_SendTransaction_Handler,
-		},
-		{
-			MethodName: "GetChainClients",
-			Handler:    _WalletService_GetChainClients_Handler,
-		},
-		{
-			MethodName: "SetChainClients",
-			Handler:    _WalletService_SetChainClients_Handler,
-		},
-		{
-			MethodName: "Close",
-			Handler:    _WalletService_Close_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

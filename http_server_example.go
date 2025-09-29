@@ -29,11 +29,6 @@ func main() {
 	log.Println("    POST /v1/wallet/transactions/build - Build transaction")
 	log.Println("    POST /v1/wallet/transactions/sign - Sign transaction")
 	log.Println("    POST /v1/wallet/transactions/send - Send transaction")
-	log.Println("    GET  /v1/wallet/chain-clients - Get chain clients")
-	log.Println("    PUT  /v1/wallet/chain-clients - Set chain clients")
-	log.Println("    POST /v1/wallet/close - Close wallet")
-	log.Println("    GET  /v1/account/{account_id}/p-chain-address - Get P-chain address")
-	log.Println("    GET  /v1/account/{account_id}/keychain - Get keychain")
 
 	// Wait for shutdown signal
 	srv.WaitForShutdown()
