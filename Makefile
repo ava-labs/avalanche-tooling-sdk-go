@@ -36,6 +36,8 @@ install-tools:
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 
 # Run the HTTP server (gRPC + HTTP)
+# Usage: CUBE_SESSION_FILE="/path/to/session.json" make run-http-server
 run-http-server:
 	@echo "Starting combined server (gRPC on :8080, HTTP on :8081)..."
+	@echo "Using session file: $${CUBE_SESSION_FILE:-/Users/raymondsukanto/Desktop/management-session2.json}"
 	go run http_server_example.go

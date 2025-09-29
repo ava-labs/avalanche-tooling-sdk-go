@@ -99,7 +99,11 @@ func (s *WalletServer) DeriveKeyFromMnemonic(keyType models.KeyType, mnemonicId 
 
 // NewWalletServer creates a new WalletServer
 func NewWalletServer() (*WalletServer, error) {
-	filePath := "/Users/raymondsukanto/Desktop/management-session2.json"
+	// Get session file path from environment variable, with fallback to default
+	filePath := os.Getenv("CUBE_SESSION_FILE")
+	if filePath == "" {
+		return nil, fmt.Errorf("no cube session filepath found")
+	}
 	manager, err := session.NewJsonSessionManager(&filePath)
 	if err != nil {
 		return nil, err

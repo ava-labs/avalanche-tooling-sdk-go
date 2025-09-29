@@ -3,7 +3,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
@@ -96,12 +95,8 @@ func (s *CombinedServer) Stop() error {
 	// Stop gRPC server
 	s.grpcServer.GracefulStop()
 
-	// Close wallet
-	ctx := context.Background()
-	_, err := s.walletServer.Close(ctx, nil)
-	if err != nil {
-		log.Printf("Error closing wallet: %v", err)
-	}
+	// Wallet cleanup (if needed)
+	// Note: WalletServer doesn't have a Close method
 
 	log.Println("Combined server stopped")
 	return nil
