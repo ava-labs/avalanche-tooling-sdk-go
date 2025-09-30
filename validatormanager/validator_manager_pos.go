@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/precompiles"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/precompiles"
 )
 
 // initializes contract [managerAddress] at [rpcURL], to

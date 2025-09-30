@@ -13,6 +13,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/logging"
+	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core"
+	"github.com/ava-labs/subnet-evm/commontype"
+	"github.com/ava-labs/subnet-evm/params"
+	"github.com/ava-labs/subnet-evm/params/extras"
+	"go.uber.org/zap"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
@@ -21,17 +31,8 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/logging"
-	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
-	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
-	"github.com/ava-labs/libevm/common"
-	"github.com/ava-labs/libevm/core"
-	"github.com/ava-labs/subnet-evm/commontype"
-	"github.com/ava-labs/subnet-evm/params"
-	"github.com/ava-labs/subnet-evm/params/extras"
 
-	"go.uber.org/zap"
+	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 )
 
 var (

@@ -3,8 +3,6 @@
 package precompiles
 
 import (
-	_ "embed"
-
 	"github.com/ava-labs/subnet-evm/precompile/contracts/nativeminter"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 )

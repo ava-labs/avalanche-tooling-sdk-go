@@ -11,17 +11,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	mockethclient "github.com/ava-labs/avalanche-tooling-sdk-go/mocks/ethclient"
-	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
-	ethereum "github.com/ava-labs/libevm"
+	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/libevm/crypto"
-	subnetethclient "github.com/ava-labs/subnet-evm/ethclient"
-
+	"github.com/ava-labs/subnet-evm/ethclient"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+
+	mockethclient "github.com/ava-labs/avalanche-tooling-sdk-go/mocks/ethclient"
+	ethereum "github.com/ava-labs/libevm"
 )
 
 func TestHasScheme(t *testing.T) {
@@ -101,7 +102,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 	tests := []struct {
 		name           string
 		rpcURL         string
-		mockDialFunc   func(context.Context, string) (subnetethclient.Client, error)
+		mockDialFunc   func(context.Context, string) (ethclient.Client, error)
 		expectedScheme string
 		expectError    bool
 	}{
@@ -113,7 +114,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "success with ws scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return mockethclient.NewMockClient(gomock.NewController(t)), nil
 				}
@@ -125,7 +126,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "failure with ws scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return nil, errors.New("unexpected error on ws connection")
 				}
@@ -136,7 +137,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "success with wss scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return nil, errors.New("websocket: bad handshake")
 				}
@@ -151,7 +152,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "failure with wss scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return nil, errors.New("websocket: bad handshake")
 				}
@@ -165,7 +166,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "success with https scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return nil, errors.New("websocket: bad handshake")
 				}
@@ -185,7 +186,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "failure with https scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return nil, errors.New("websocket: bad handshake")
 				}
@@ -204,7 +205,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "success with http scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return nil, errors.New("websocket: bad handshake")
 				}
@@ -227,7 +228,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "error - url with scheme",
 			rpcURL: "http://localhost:8545",
-			mockDialFunc: func(_ context.Context, _ string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, _ string) (ethclient.Client, error) {
 				return nil, nil
 			},
 			expectError: true,
@@ -235,7 +236,7 @@ func TestGetClientWithoutScheme(t *testing.T) {
 		{
 			name:   "error - unknown protocol",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, _ string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, _ string) (ethclient.Client, error) {
 				return nil, errors.New("unknown protocol")
 			},
 			expectError: true,
@@ -274,7 +275,7 @@ func TestGetClient(t *testing.T) {
 	tests := []struct {
 		name         string
 		rpcURL       string
-		mockDialFunc func(context.Context, string) (subnetethclient.Client, error)
+		mockDialFunc func(context.Context, string) (ethclient.Client, error)
 		expectError  bool
 	}{
 		{
@@ -285,7 +286,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:   "with scheme, total failure",
 			rpcURL: "http://localhost:8545",
-			mockDialFunc: func(_ context.Context, _ string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, _ string) (ethclient.Client, error) {
 				failuresCount++
 				if failuresCount <= repeatsOnFailure {
 					return nil, errors.New("connection error")
@@ -297,7 +298,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:   "with scheme, 2 failures",
 			rpcURL: "http://localhost:8545",
-			mockDialFunc: func(_ context.Context, _ string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, _ string) (ethclient.Client, error) {
 				failuresCount++
 				if failuresCount < repeatsOnFailure {
 					return nil, errors.New("connection error")
@@ -309,7 +310,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:   "with scheme",
 			rpcURL: "http://localhost:8545",
-			mockDialFunc: func(_ context.Context, _ string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, _ string) (ethclient.Client, error) {
 				return mockethclient.NewMockClient(ctrl), nil
 			},
 			expectError: false,
@@ -317,7 +318,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:   "without scheme",
 			rpcURL: "localhost:8545",
-			mockDialFunc: func(_ context.Context, url string) (subnetethclient.Client, error) {
+			mockDialFunc: func(_ context.Context, url string) (ethclient.Client, error) {
 				if strings.HasPrefix(url, "ws://") {
 					return nil, errors.New("websocket: bad handshake")
 				}
@@ -1803,18 +1804,18 @@ func TestTransactWithWarpMessage(t *testing.T) {
 	contractAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
 	callData := []byte{1, 2, 3, 4, 5}
 	value := big.NewInt(1000000000000000000) // 1 ETH
-	unsignedMessage := avalancheWarp.UnsignedMessage{
+	unsignedMessage := warp.UnsignedMessage{
 		SourceChainID: [32]byte{1, 2, 3},
 		Payload:       []byte{4, 5, 6},
 	}
-	warpMessage := &avalancheWarp.Message{
+	warpMessage := &warp.Message{
 		UnsignedMessage: unsignedMessage,
 	}
 	tests := []struct {
 		name              string
 		from              common.Address
 		privateKey        string
-		warpMessage       *avalancheWarp.Message
+		warpMessage       *warp.Message
 		contract          common.Address
 		callData          []byte
 		value             *big.Int

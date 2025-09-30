@@ -14,12 +14,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	avagoConstants "github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/cavaliergopher/grab/v3"
 	"go.uber.org/zap"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+
+	avagoConstants "github.com/ava-labs/avalanchego/utils/constants"
 )
 
 const (
