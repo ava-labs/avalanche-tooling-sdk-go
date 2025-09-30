@@ -71,7 +71,7 @@ func buildConvertSubnetToL1Tx(ctx context.Context, wallet *primary.Wallet, accou
 		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
 	}
 	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
-	return tx.BuildTxResult{Tx: &builtTx}, nil
+	return *tx.NewPChainBuildTxResult(&builtTx), nil
 }
 
 // BuildCreateSubnetTx provides a default implementation that can be used by any wallet
@@ -92,7 +92,7 @@ func buildCreateSubnetTx(ctx context.Context, wallet *primary.Wallet, params *tx
 		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
 	}
 	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
-	return tx.BuildTxResult{Tx: &builtTx}, nil
+	return *tx.NewPChainBuildTxResult(&builtTx), nil
 }
 
 // getMultisigTxOptions is a helper function that can be shared

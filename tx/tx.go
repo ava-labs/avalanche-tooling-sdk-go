@@ -31,8 +31,136 @@ const (
 	PChainConvertSubnetToL1Tx
 )
 
+// BuildTxOutput represents a generic interface for transaction results
+type BuildTxOutput interface {
+	// GetTxType returns the transaction type identifier
+	GetTxType() string
+	// GetChainType returns which chain this transaction is for
+	GetChainType() string
+	// GetTx returns the actual transaction (interface{} to support different chain types)
+	GetTx() interface{}
+	// Validate validates the result
+	Validate() error
+}
+
+// PChainBuildTxResult represents a P-Chain transaction result
+type PChainBuildTxResult struct {
+	Tx *txs.Tx
+}
+
+func (p *PChainBuildTxResult) GetTxType() string {
+	if p.Tx == nil || p.Tx.Unsigned == nil {
+		return "Unknown"
+	}
+	// Extract tx type from unsigned transaction
+	switch p.Tx.Unsigned.(type) {
+	case *txs.CreateSubnetTx:
+		return "CreateSubnetTx"
+	case *txs.ConvertSubnetToL1Tx:
+		return "ConvertSubnetToL1Tx"
+	case *txs.AddSubnetValidatorTx:
+		return "AddSubnetValidatorTx"
+	case *txs.RemoveSubnetValidatorTx:
+		return "RemoveSubnetValidatorTx"
+	case *txs.CreateChainTx:
+		return "CreateChainTx"
+	case *txs.TransformSubnetTx:
+		return "TransformSubnetTx"
+	case *txs.AddPermissionlessValidatorTx:
+		return "AddPermissionlessValidatorTx"
+	case *txs.TransferSubnetOwnershipTx:
+		return "TransferSubnetOwnershipTx"
+	default:
+		return "Unknown"
+	}
+}
+
+func (p *PChainBuildTxResult) GetChainType() string {
+	return "P-Chain"
+}
+
+func (p *PChainBuildTxResult) GetTx() interface{} {
+	return p.Tx
+}
+
+func (p *PChainBuildTxResult) Validate() error {
+	if p.Tx == nil {
+		return fmt.Errorf("transaction cannot be nil")
+	}
+	return nil
+}
+
+// CChainBuildTxResult represents a C-Chain transaction result
+type CChainBuildTxResult struct {
+	Tx interface{} // Will be *types.Transaction when C-Chain is implemented
+}
+
+func (c *CChainBuildTxResult) GetTxType() string {
+	// TODO: Extract tx type from C-Chain transaction when implemented
+	return "EVMTransaction"
+}
+
+func (c *CChainBuildTxResult) GetChainType() string {
+	return "C-Chain"
+}
+
+func (c *CChainBuildTxResult) GetTx() interface{} {
+	return c.Tx
+}
+
+func (c *CChainBuildTxResult) Validate() error {
+	if c.Tx == nil {
+		return fmt.Errorf("transaction cannot be nil")
+	}
+	return nil
+}
+
+// XChainBuildTxResult represents an X-Chain transaction result
+type XChainBuildTxResult struct {
+	Tx interface{} // Will be *avm.Tx when X-Chain is implemented
+}
+
+func (x *XChainBuildTxResult) GetTxType() string {
+	// TODO: Extract tx type from X-Chain transaction when implemented
+	return "AVMTransaction"
+}
+
+func (x *XChainBuildTxResult) GetChainType() string {
+	return "X-Chain"
+}
+
+func (x *XChainBuildTxResult) GetTx() interface{} {
+	return x.Tx
+}
+
+func (x *XChainBuildTxResult) Validate() error {
+	if x.Tx == nil {
+		return fmt.Errorf("transaction cannot be nil")
+	}
+	return nil
+}
+
 type BuildTxResult struct {
-	*txs.Tx
+	BuildTxOutput
+}
+
+// Constructor functions for each chain type
+func NewPChainBuildTxResult(tx *txs.Tx) *BuildTxResult {
+	return &BuildTxResult{
+		BuildTxOutput: &PChainBuildTxResult{Tx: tx},
+	}
+}
+
+func NewCChainBuildTxResult(tx interface{}) *BuildTxResult {
+	return &BuildTxResult{
+		BuildTxOutput: &CChainBuildTxResult{Tx: tx},
+	}
+}
+
+func NewXChainBuildTxResult(tx interface{}) *BuildTxResult {
+	return &BuildTxResult{
+		BuildTxOutput: &XChainBuildTxResult{Tx: tx},
+	}
 }
 
 type SendTxResult struct {

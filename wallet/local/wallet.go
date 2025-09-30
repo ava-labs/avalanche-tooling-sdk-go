@@ -128,10 +128,8 @@ func (w *LocalWallet) SignTx(ctx context.Context, params wallet.SignTxParams) (t
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
 		return tx.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
-	if err := w.P().Signer().Sign(context.Background(), params.BuildTxResult.Tx); err != nil {
-		return tx.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
-	}
-	return tx.SignTxResult{Tx: params.BuildTxResult.Tx}, nil
+
+	return wallet.SignTx(ctx, w.Wallet, params)
 }
 
 // SendTx submits a signed transaction to the Network
