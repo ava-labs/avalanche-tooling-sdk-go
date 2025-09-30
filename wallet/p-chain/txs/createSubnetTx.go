@@ -2,13 +2,10 @@
 // See the file LICENSE for licensing terms.
 package txs
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // CreateSubnetTxParams contains all parameters needed to create a ConvertSubnetToL1Tx
 type CreateSubnetTxParams struct {
-	// SubnetAuthKeys are the keys used to sign `ConvertSubnetToL1Tx`
 	ControlKeys []string
 	Threshold   uint32
 }

@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package wallet
+package local
 
 import (
 	"context"
@@ -11,10 +11,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
-
-	"github.com/ava-labs/avalanchego/utils/set"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
@@ -22,35 +18,30 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/p-chain/txs"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanchego/ids"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
-	"github.com/ava-labs/subnet-evm/ethclient"
 )
 
-type ChainClients struct {
-	C *ethclient.Client // …/ext/bc/C/rpc
-	X string            // …/ext/bc/X
-	P string            // …/ext/bc/P
-}
+// ChainClients is now defined in the wallet package
 
 // LocalWallet represents a local wallet implementation
 type LocalWallet struct {
 	*primary.Wallet
 	accounts []account.Account
-	clients  ChainClients
+	clients  wallet.ChainClients
 }
 
 // Ensure LocalWallet implements Wallet interface
-var _ Wallet = (*LocalWallet)(nil)
+var _ wallet.Wallet = (*LocalWallet)(nil)
 
 // NewLocalWallet creates a new local wallet
 func NewLocalWallet() (*LocalWallet, error) {
 	return &LocalWallet{
 		Wallet:   nil,
 		accounts: []account.Account{},
-		clients:  ChainClients{},
+		clients:  wallet.ChainClients{},
 	}, nil
 }
 
@@ -77,7 +68,7 @@ func (w *LocalWallet) Accounts() []account.Account {
 	return w.accounts
 }
 
-func (w *LocalWallet) Clients() ChainClients {
+func (w *LocalWallet) Clients() wallet.ChainClients {
 	return w.clients
 }
 
@@ -125,30 +116,15 @@ func (w *LocalWallet) ImportAccount(ctx context.Context, keyPath string) (*accou
 }
 
 // BuildTx constructs a transaction for the specified operation
-func (w *LocalWallet) BuildTx(ctx context.Context, params BuildTxParams) (tx.BuildTxResult, error) {
+func (w *LocalWallet) BuildTx(ctx context.Context, params wallet.BuildTxParams) (tx.BuildTxResult, error) {
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("error signing tx: %w", err)
+		return tx.BuildTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
-	// Validate parameters first
-	if err := params.Validate(); err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("invalid parameters: %w", err)
-	}
-
-	// Route to appropriate chain handler based on chain type
-	switch chainType := params.GetChainType(); chainType {
-	case "P-Chain":
-		return w.buildPChainTx(ctx, params.Account, params.BuildTxInput)
-	case "C-Chain":
-		return w.buildCChainTx(ctx, params)
-	case "X-Chain":
-		return w.buildXChainTx(ctx, params)
-	default:
-		return tx.BuildTxResult{}, fmt.Errorf("unsupported chain type: %s", chainType)
-	}
+	return wallet.BuildTx(ctx, w.Wallet, params)
 }
 
 // SignTx signs a transaction
-func (w *LocalWallet) SignTx(ctx context.Context, params SignTxParams) (tx.SignTxResult, error) {
+func (w *LocalWallet) SignTx(ctx context.Context, params wallet.SignTxParams) (tx.SignTxResult, error) {
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
 		return tx.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
@@ -159,7 +135,7 @@ func (w *LocalWallet) SignTx(ctx context.Context, params SignTxParams) (tx.SignT
 }
 
 // SendTx submits a signed transaction to the Network
-func (w *LocalWallet) SendTx(ctx context.Context, params SendTxParams) (tx.SendTxResult, error) {
+func (w *LocalWallet) SendTx(ctx context.Context, params wallet.SendTxParams) (tx.SendTxResult, error) {
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
 		return tx.SendTxResult{}, fmt.Errorf("error sending tx: %w", err)
 	}
@@ -193,12 +169,12 @@ func (w *LocalWallet) GetAddresses(ctx context.Context) ([]ids.ShortID, error) {
 }
 
 // GetChainClients returns the blockchain clients associated with this wallet
-func (w *LocalWallet) GetChainClients() ChainClients {
+func (w *LocalWallet) GetChainClients() wallet.ChainClients {
 	return w.clients
 }
 
 // SetChainClients updates the blockchain clients for this wallet
-func (w *LocalWallet) SetChainClients(clients ChainClients) {
+func (w *LocalWallet) SetChainClients(clients wallet.ChainClients) {
 	w.clients = clients
 }
 
@@ -230,98 +206,6 @@ func (w *LocalWallet) GetAccountByAddress(address ids.ShortID) *account.Account 
 // GetAllAccounts returns all accounts in the wallet
 func (w *LocalWallet) GetAllAccounts() []account.Account {
 	return w.accounts
-}
-
-func (w *LocalWallet) buildPChainTx(ctx context.Context, account account.Account, params BuildTxInput) (tx.BuildTxResult, error) {
-	switch txType := params.GetTxType(); txType {
-	case "CreateSubnetTx":
-		createSubnetParams, ok := params.(*txs.CreateSubnetTxParams)
-		if !ok {
-			return tx.BuildTxResult{}, fmt.Errorf("invalid params type for ConvertSubnetToL1Tx, expected *txs.ConvertSubnetToL1TxParams")
-		}
-		return w.buildCreateSubnetTx(ctx, createSubnetParams)
-	case "ConvertSubnetToL1Tx":
-		convertParams, ok := params.(*txs.ConvertSubnetToL1TxParams)
-		if !ok {
-			return tx.BuildTxResult{}, fmt.Errorf("invalid params type for ConvertSubnetToL1Tx, expected *txs.ConvertSubnetToL1TxParams")
-		}
-		return w.buildConvertSubnetToL1Tx(ctx, account, convertParams)
-	default:
-		return tx.BuildTxResult{}, fmt.Errorf("unsupported P-Chain transaction type: %s", txType)
-	}
-}
-
-// buildConvertSubnetToL1Tx builds a ConvertSubnetToL1Tx transaction
-func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, account account.Account, params *txs.ConvertSubnetToL1TxParams) (tx.BuildTxResult, error) {
-	options := GetMultisigTxOptions(account, params.SubnetAuthKeys)
-	unsignedTx, err := w.P().Builder().NewConvertSubnetToL1Tx(
-		params.SubnetID,
-		params.ChainID,
-		params.Address,
-		params.Validators,
-		options...,
-	)
-	if err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
-	}
-	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
-	return tx.BuildTxResult{Tx: &builtTx}, nil
-}
-
-// buildConvertSubnetToL1Tx builds a ConvertSubnetToL1Tx transaction
-func (w *LocalWallet) buildCreateSubnetTx(ctx context.Context, params *txs.CreateSubnetTxParams) (tx.BuildTxResult, error) {
-	addrs, err := address.ParseToIDs(params.ControlKeys)
-	if err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("failure parsing control keys: %w", err)
-	}
-	owners := &secp256k1fx.OutputOwners{
-		Addrs:     addrs,
-		Threshold: params.Threshold,
-		Locktime:  0,
-	}
-	unsignedTx, err := w.P().Builder().NewCreateSubnetTx(
-		owners,
-	)
-	if err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
-	}
-	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
-	return tx.BuildTxResult{Tx: &builtTx}, nil
-}
-
-// buildCChainTx builds C-Chain transactions
-func (w *LocalWallet) buildCChainTx(ctx context.Context, params BuildTxInput) (tx.BuildTxResult, error) {
-	// TODO: Implement C-Chain transaction building
-	return tx.BuildTxResult{}, fmt.Errorf("C-Chain transactions not yet implemented")
-}
-
-// buildXChainTx builds X-Chain transactions
-func (w *LocalWallet) buildXChainTx(ctx context.Context, params BuildTxInput) (tx.BuildTxResult, error) {
-	// TODO: Implement X-Chain transaction building
-	return tx.BuildTxResult{}, fmt.Errorf("X-Chain transactions not yet implemented")
-}
-
-func GetMultisigTxOptions(account account.Account, subnetAuthKeys []ids.ShortID) []common.Option {
-	options := []common.Option{}
-	keychain, err := account.GetKeychain()
-	if err != nil {
-		// Handle error appropriately - for now, return empty options
-		return options
-	}
-	walletAddrs := keychain.Addresses().List()
-	changeAddr := walletAddrs[0]
-	// addrs to use for signing
-	customAddrsSet := set.Set[ids.ShortID]{}
-	customAddrsSet.Add(walletAddrs...)
-	customAddrsSet.Add(subnetAuthKeys...)
-	options = append(options, common.WithCustomAddresses(customAddrsSet))
-	// set change to go to wallet addr (instead of any other subnet auth key)
-	changeOwner := &secp256k1fx.OutputOwners{
-		Threshold: 1,
-		Addrs:     []ids.ShortID{changeAddr},
-	}
-	options = append(options, common.WithChangeOwner(changeOwner))
-	return options
 }
 
 func (w *LocalWallet) Commit(transaction tx.SignTxResult) (*avagoTxs.Tx, error) {
