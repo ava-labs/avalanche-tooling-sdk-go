@@ -15,7 +15,6 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/libevm/common"
 
 	_ "embed"
@@ -200,21 +199,14 @@ func (t *Deployer) LoadFromRelease(
 // Returns the messenger address, registry address, and any error encountered.
 // If the messenger is already deployed, returns ErrMessengerAlreadyDeployed.
 func (t *Deployer) Deploy(
-	logger logging.Logger,
-	subnetName string,
 	rpcURL string,
 	privateKey string,
 ) (string, string, error) {
-	messengerAddress, err := t.DeployMessenger(
-		logger,
-		subnetName,
-		rpcURL,
-		privateKey,
-	)
+	messengerAddress, err := t.DeployMessenger(rpcURL, privateKey)
 	if err != nil {
 		return messengerAddress, "", err
 	}
-	registryAddress, err := t.DeployRegistry(logger, subnetName, rpcURL, privateKey)
+	registryAddress, err := t.DeployRegistry(rpcURL, privateKey)
 	if err != nil {
 		return messengerAddress, "", err
 	}
@@ -225,8 +217,6 @@ func (t *Deployer) Deploy(
 // It automatically funds the deployer address if needed (minimum 10 AVAX).
 // Returns the messenger contract address and ErrMessengerAlreadyDeployed if already deployed.
 func (t *Deployer) DeployMessenger(
-	logger logging.Logger,
-	subnetName string,
 	rpcURL string,
 	privateKey string,
 ) (string, error) {
@@ -243,7 +233,6 @@ func (t *Deployer) DeployMessenger(
 		return "", fmt.Errorf("failure making a request to %s: %w", rpcURL, err)
 	}
 	if messengerAlreadyDeployed {
-		logger.Info(fmt.Sprintf("ICM Messenger has already been deployed to %s", subnetName))
 		return t.messengerContractAddress, ErrMessengerAlreadyDeployed
 	}
 	messengerDeployerBalance, err := client.GetAddressBalance(
@@ -266,19 +255,12 @@ func (t *Deployer) DeployMessenger(
 	if err := client.IssueTx(string(t.messengerDeployerTx)); err != nil {
 		return "", err
 	}
-	logger.Info(fmt.Sprintf(
-		"ICM Messenger successfully deployed to %s (%s)",
-		subnetName,
-		t.messengerContractAddress,
-	))
 	return t.messengerContractAddress, nil
 }
 
 // DeployRegistry deploys the TeleporterRegistry contract.
 // The registry is initialized with the messenger contract address at version 1.
 func (t *Deployer) DeployRegistry(
-	logger logging.Logger,
-	subnetName string,
 	rpcURL string,
 	privateKey string,
 ) (string, error) {
@@ -306,10 +288,5 @@ func (t *Deployer) DeployRegistry(
 	if err != nil {
 		return "", err
 	}
-	logger.Info(fmt.Sprintf(
-		"ICM Registry successfully deployed to %s (%s)",
-		subnetName,
-		registryAddress,
-	))
 	return registryAddress.Hex(), nil
 }
