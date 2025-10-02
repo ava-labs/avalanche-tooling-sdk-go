@@ -164,7 +164,7 @@ func NewXChainBuildTxResult(tx interface{}) *BuildTxResult {
 }
 
 type SendTxResult struct {
-	SignTxOutput
+	Tx *txs.Tx
 }
 
 // SignTxOutput represents a generic interface for signed transaction results
@@ -715,18 +715,16 @@ func NewXChainSignTxResult(tx interface{}) *SignTxResult {
 // Constructor functions for SendTxResult
 func NewPChainSendTxResult(tx *txs.Tx) *SendTxResult {
 	return &SendTxResult{
-		SignTxOutput: &PChainSignTxResult{Tx: tx},
+		Tx: tx,
 	}
 }
 
 func NewCChainSendTxResult(tx interface{}) *SendTxResult {
-	return &SendTxResult{
-		SignTxOutput: &CChainSignTxResult{Tx: tx},
-	}
+	// C-Chain not implemented
+	return nil
 }
 
 func NewXChainSendTxResult(tx interface{}) *SendTxResult {
-	return &SendTxResult{
-		SignTxOutput: &XChainSignTxResult{Tx: tx},
-	}
+	// X-Chain not implemented
+	return nil
 }
