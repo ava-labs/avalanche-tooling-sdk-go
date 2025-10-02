@@ -10,7 +10,14 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/subnet-evm/ethclient"
 )
+
+type ChainClients struct {
+	C *ethclient.Client // …/ext/bc/C/rpc
+	X string            // …/ext/bc/X
+	P string            // …/ext/bc/P
+}
 
 type BuildTxParams struct {
 	BuildTxInput
