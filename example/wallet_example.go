@@ -7,14 +7,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/p-chain/txs"
+	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
@@ -33,34 +33,40 @@ func CreateSubnet() error {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}
 
-	createSubnetParams := &txs.CreateSubnetTxParams{
+	createSubnetParams := &pchainTxs.CreateSubnetTxParams{
 		ControlKeys: []string{"P-fuji1377nx80rx3pzneup5qywgdgdsmzntql7trcqlg"},
 		Threshold:   1,
 	}
-	buildTxParams := wallet.BuildTxParams{
+	buildTxParams := types.BuildTxParams{
+		BaseParams: types.BaseParams{
+			Account: *existingAccount,
+			Network: network,
+		},
 		BuildTxInput: createSubnetParams,
-		Account:      *existingAccount,
-		Network:      network,
 	}
 	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
 	if err != nil {
 		return fmt.Errorf("failed to BuildTx: %w", err)
 	}
 
-	signTxParams := wallet.SignTxParams{
+	signTxParams := types.SignTxParams{
+		BaseParams: types.BaseParams{
+			Account: *existingAccount,
+			Network: network,
+		},
 		BuildTxResult: &buildTxResult,
-		Account:       *existingAccount,
-		Network:       network,
 	}
 	signTxResult, err := localWallet.SignTx(ctx, signTxParams)
 	if err != nil {
 		return fmt.Errorf("failed to signTx: %w", err)
 	}
 
-	sendTxParams := wallet.SendTxParams{
+	sendTxParams := types.SendTxParams{
+		BaseParams: types.BaseParams{
+			Account: *existingAccount,
+			Network: network,
+		},
 		SignTxResult: &signTxResult,
-		Account:      *existingAccount,
-		Network:      network,
 	}
 	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)
 	if err != nil {

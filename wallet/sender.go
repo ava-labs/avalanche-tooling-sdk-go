@@ -6,51 +6,41 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
-	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/cchain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/pchain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/xchain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
 // SendTx submits a signed transaction to the Network
-func SendTx(ctx context.Context, wallet *primary.Wallet, params SendTxParams) (tx.SendTxResult, error) {
+func SendTx(ctx context.Context, wallet *primary.Wallet, params types.SendTxParams) (types.SendTxResult, error) {
 	// Validate parameters first
 	if err := params.Validate(); err != nil {
-		return tx.SendTxResult{}, fmt.Errorf("invalid parameters: %w", err)
+		return types.SendTxResult{}, fmt.Errorf("invalid parameters: %w", err)
 	}
 
 	// Route to appropriate chain handler based on chain type
 	switch chainType := params.SignTxResult.GetChainType(); chainType {
-	case "P-Chain":
-		return sendPChainTx(ctx, wallet, params)
-	case "C-Chain":
-		return sendCChainTx(ctx, wallet, params)
-	case "X-Chain":
-		return sendXChainTx(ctx, wallet, params)
+	case pchain.ChainType:
+		result, err := pchain.SendTx(ctx, wallet, params)
+		if err != nil {
+			return types.SendTxResult{}, err
+		}
+		return types.SendTxResult{SendTxOutput: result.SendTxOutput}, nil
+	case cchain.ChainType:
+		result, err := cchain.SendTx(ctx, wallet, params)
+		if err != nil {
+			return types.SendTxResult{}, err
+		}
+		return types.SendTxResult{SendTxOutput: result.SendTxOutput}, nil
+	case xchain.ChainType:
+		result, err := xchain.SendTx(ctx, wallet, params)
+		if err != nil {
+			return types.SendTxResult{}, err
+		}
+		return types.SendTxResult{SendTxOutput: result.SendTxOutput}, nil
 	default:
-		return tx.SendTxResult{}, fmt.Errorf("unsupported chain type: %s", chainType)
+		return types.SendTxResult{}, fmt.Errorf("unsupported chain type: %s", chainType)
 	}
-}
-
-func sendPChainTx(ctx context.Context, wallet *primary.Wallet, params SendTxParams) (tx.SendTxResult, error) {
-	// Get the P-Chain transaction from the SignTxResult
-	pChainTx, ok := params.SignTxResult.GetTx().(*avagoTxs.Tx)
-	if !ok {
-		return tx.SendTxResult{}, fmt.Errorf("expected P-Chain transaction, got %T", params.SignTxResult.GetTx())
-	}
-
-	// Submit the signed transaction to the network
-	if err := wallet.P().IssueTx(pChainTx); err != nil {
-		return tx.SendTxResult{}, fmt.Errorf("error sending tx: %w", err)
-	}
-	return *tx.NewPChainSendTxResult(pChainTx), nil
-}
-
-func sendCChainTx(ctx context.Context, wallet *primary.Wallet, params SendTxParams) (tx.SendTxResult, error) {
-	// TODO: Implement C-Chain sending when C-Chain is implemented
-	return tx.SendTxResult{}, fmt.Errorf("C-Chain sending not yet implemented")
-}
-
-func sendXChainTx(ctx context.Context, wallet *primary.Wallet, params SendTxParams) (tx.SendTxResult, error) {
-	// TODO: Implement X-Chain sending when X-Chain is implemented
-	return tx.SendTxResult{}, fmt.Errorf("X-Chain sending not yet implemented")
 }
