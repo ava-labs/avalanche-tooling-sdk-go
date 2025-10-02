@@ -135,21 +135,10 @@ func (w *LocalWallet) SignTx(ctx context.Context, params wallet.SignTxParams) (t
 // SendTx submits a signed transaction to the Network
 func (w *LocalWallet) SendTx(ctx context.Context, params wallet.SendTxParams) (tx.SendTxResult, error) {
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
-		return tx.SendTxResult{}, fmt.Errorf("error sending tx: %w", err)
+		return tx.SendTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
-	sentTx, err := w.Commit(*params.SignTxResult)
-	if err != nil {
-		return tx.SendTxResult{}, fmt.Errorf("error sending tx: %w", err)
-	}
-	return *tx.NewPChainSendTxResult(sentTx), nil
-}
 
-func (w *LocalWallet) SignPChainTx(ctx context.Context, unsignedTx avagoTxs.UnsignedTx, account account.Account) (*avagoTxs.Tx, error) {
-	tx := avagoTxs.Tx{Unsigned: unsignedTx}
-	if err := w.Wallet.P().Signer().Sign(ctx, &tx); err != nil {
-		return nil, fmt.Errorf("error signing tx: %w", err)
-	}
-	return &tx, nil
+	return wallet.SendTx(ctx, w.Wallet, params)
 }
 
 // GetAddresses returns all addresses managed by this wallet
