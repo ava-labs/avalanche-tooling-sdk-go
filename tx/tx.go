@@ -163,8 +163,117 @@ func NewXChainBuildTxResult(tx interface{}) *BuildTxResult {
 	}
 }
 
+// SendTxOutput represents a generic interface for sent transaction results
+type SendTxOutput interface {
+	// GetTxType returns the transaction type identifier
+	GetTxType() string
+	// GetChainType returns which chain this transaction is for
+	GetChainType() string
+	// GetTx returns the actual sent transaction (interface{} to support different chain types)
+	GetTx() interface{}
+	// Validate validates the result
+	Validate() error
+}
+
+// PChainSendTxResult represents a P-Chain sent transaction result
+type PChainSendTxResult struct {
+	Tx *txs.Tx
+}
+
+func (p *PChainSendTxResult) GetTxType() string {
+	if p.Tx == nil || p.Tx.Unsigned == nil {
+		return "Unknown"
+	}
+	// Extract tx type from unsigned transaction
+	switch p.Tx.Unsigned.(type) {
+	case *txs.CreateSubnetTx:
+		return "CreateSubnetTx"
+	case *txs.ConvertSubnetToL1Tx:
+		return "ConvertSubnetToL1Tx"
+	case *txs.AddSubnetValidatorTx:
+		return "AddSubnetValidatorTx"
+	case *txs.RemoveSubnetValidatorTx:
+		return "RemoveSubnetValidatorTx"
+	case *txs.CreateChainTx:
+		return "CreateChainTx"
+	case *txs.TransformSubnetTx:
+		return "TransformSubnetTx"
+	case *txs.AddPermissionlessValidatorTx:
+		return "AddPermissionlessValidatorTx"
+	case *txs.TransferSubnetOwnershipTx:
+		return "TransferSubnetOwnershipTx"
+	default:
+		return "Unknown"
+	}
+}
+
+func (p *PChainSendTxResult) GetChainType() string {
+	return "P-Chain"
+}
+
+func (p *PChainSendTxResult) GetTx() interface{} {
+	return p.Tx
+}
+
+func (p *PChainSendTxResult) Validate() error {
+	if p.Tx == nil {
+		return fmt.Errorf("transaction cannot be nil")
+	}
+	return nil
+}
+
+// CChainSendTxResult represents a C-Chain sent transaction result
+type CChainSendTxResult struct {
+	Tx interface{} // Will be *types.Transaction when C-Chain is implemented
+}
+
+func (c *CChainSendTxResult) GetTxType() string {
+	// TODO: Extract tx type from C-Chain transaction when implemented
+	return "EVMTransaction"
+}
+
+func (c *CChainSendTxResult) GetChainType() string {
+	return "C-Chain"
+}
+
+func (c *CChainSendTxResult) GetTx() interface{} {
+	return c.Tx
+}
+
+func (c *CChainSendTxResult) Validate() error {
+	if c.Tx == nil {
+		return fmt.Errorf("transaction cannot be nil")
+	}
+	return nil
+}
+
+// XChainSendTxResult represents an X-Chain sent transaction result
+type XChainSendTxResult struct {
+	Tx interface{} // Will be *avm.Tx when X-Chain is implemented
+}
+
+func (x *XChainSendTxResult) GetTxType() string {
+	// TODO: Extract tx type from X-Chain transaction when implemented
+	return "AVMTransaction"
+}
+
+func (x *XChainSendTxResult) GetChainType() string {
+	return "X-Chain"
+}
+
+func (x *XChainSendTxResult) GetTx() interface{} {
+	return x.Tx
+}
+
+func (x *XChainSendTxResult) Validate() error {
+	if x.Tx == nil {
+		return fmt.Errorf("transaction cannot be nil")
+	}
+	return nil
+}
+
 type SendTxResult struct {
-	SignTxOutput
+	SendTxOutput
 }
 
 // SignTxOutput represents a generic interface for signed transaction results
@@ -715,18 +824,18 @@ func NewXChainSignTxResult(tx interface{}) *SignTxResult {
 // Constructor functions for SendTxResult
 func NewPChainSendTxResult(tx *txs.Tx) *SendTxResult {
 	return &SendTxResult{
-		SignTxOutput: &PChainSignTxResult{Tx: tx},
+		SendTxOutput: &PChainSendTxResult{Tx: tx},
 	}
 }
 
 func NewCChainSendTxResult(tx interface{}) *SendTxResult {
 	return &SendTxResult{
-		SignTxOutput: &CChainSignTxResult{Tx: tx},
+		SendTxOutput: &CChainSendTxResult{Tx: tx},
 	}
 }
 
 func NewXChainSendTxResult(tx interface{}) *SendTxResult {
 	return &SendTxResult{
-		SignTxOutput: &XChainSignTxResult{Tx: tx},
+		SendTxOutput: &XChainSendTxResult{Tx: tx},
 	}
 }
