@@ -5,12 +5,13 @@ package keychain
 import (
 	"fmt"
 
+	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
+	"golang.org/x/exp/maps"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/ledger"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
-	"golang.org/x/exp/maps"
 )
 
 type Keychain struct {
