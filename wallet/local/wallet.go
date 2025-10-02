@@ -141,7 +141,7 @@ func (w *LocalWallet) SendTx(ctx context.Context, params wallet.SendTxParams) (t
 	if err != nil {
 		return tx.SendTxResult{}, fmt.Errorf("error sending tx: %w", err)
 	}
-	return tx.SendTxResult{Tx: sentTx}, nil
+	return *tx.NewPChainSendTxResult(sentTx), nil
 }
 
 func (w *LocalWallet) SignPChainTx(ctx context.Context, unsignedTx avagoTxs.UnsignedTx, account account.Account) (*avagoTxs.Tx, error) {

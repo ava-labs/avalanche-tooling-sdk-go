@@ -23,9 +23,9 @@ func SignTx(ctx context.Context, wallet *primary.Wallet, params SignTxParams) (t
 	case "P-Chain":
 		return signPChainTx(ctx, wallet, params)
 	case "C-Chain":
-		return tx.SignTxResult{}, fmt.Errorf("C-Chain signing not yet implemented")
+		return signCChainTx(ctx, wallet, params)
 	case "X-Chain":
-		return tx.SignTxResult{}, fmt.Errorf("X-Chain signing not yet implemented")
+		return signXChainTx(ctx, wallet, params)
 	default:
 		return tx.SignTxResult{}, fmt.Errorf("unsupported chain type: %s", chainType)
 	}
@@ -41,5 +41,15 @@ func signPChainTx(ctx context.Context, wallet *primary.Wallet, params SignTxPara
 	if err := wallet.P().Signer().Sign(context.Background(), pChainTx); err != nil {
 		return tx.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
-	return tx.SignTxResult{Tx: pChainTx}, nil
+	return *tx.NewPChainSignTxResult(pChainTx), nil
+}
+
+func signCChainTx(ctx context.Context, wallet *primary.Wallet, params SignTxParams) (tx.SignTxResult, error) {
+	// TODO: Implement C-Chain signing when C-Chain is implemented
+	return tx.SignTxResult{}, fmt.Errorf("C-Chain signing not yet implemented")
+}
+
+func signXChainTx(ctx context.Context, wallet *primary.Wallet, params SignTxParams) (tx.SignTxResult, error) {
+	// TODO: Implement X-Chain signing when X-Chain is implemented
+	return tx.SignTxResult{}, fmt.Errorf("X-Chain signing not yet implemented")
 }

@@ -8,12 +8,14 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/p-chain/txs"
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 func CreateSubnet() error {
@@ -21,7 +23,7 @@ func CreateSubnet() error {
 	defer cancel()
 	network := network.FujiNetwork()
 
-	localWallet, err := wallet.NewLocalWallet()
+	localWallet, err := local.NewLocalWallet()
 	if err != nil {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
@@ -64,7 +66,13 @@ func CreateSubnet() error {
 	if err != nil {
 		return fmt.Errorf("failed to sendTx: %w", err)
 	}
-	fmt.Printf("sendTxResult %s \n", sendTxResult.Tx.ID())
+	if tx := sendTxResult.GetTx(); tx != nil {
+		if pChainTx, ok := tx.(*avagoTxs.Tx); ok {
+			fmt.Printf("sendTxResult %s \n", pChainTx.ID())
+		} else {
+			fmt.Printf("sendTxResult %s transaction \n", sendTxResult.GetChainType())
+		}
+	}
 	return nil
 }
 
