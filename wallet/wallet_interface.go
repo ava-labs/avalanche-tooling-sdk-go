@@ -6,46 +6,12 @@ import (
 	"context"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/subnet-evm/ethclient"
 )
 
-type ChainClients struct {
-	C *ethclient.Client // …/ext/bc/C/rpc
-	X string            // …/ext/bc/X
-	P string            // …/ext/bc/P
-}
-
-type BuildTxParams struct {
-	BuildTxInput
-	Account account.Account
-	Network network.Network
-}
-
-// BuildTxInput represents a generic interface for transaction parameters
-type BuildTxInput interface {
-	// GetTxType returns the transaction type identifier
-	GetTxType() string
-	// Validate validates the parameters
-	Validate() error
-	// GetChainType returns which chain this transaction is for
-	GetChainType() string
-}
-
-type SignTxParams struct {
-	*tx.BuildTxResult
-	Account account.Account
-	Network network.Network
-}
-
-type SendTxParams struct {
-	*tx.SignTxResult
-	Account account.Account
-	Network network.Network
-}
+// ChainClients is now defined in wallet/types/common.go
 
 // Wallet represents the core wallet interface that can be implemented
 // by different wallet types (local, API-based, etc.)
@@ -54,7 +20,7 @@ type Wallet interface {
 	Accounts() []account.Account
 
 	// Signer returns the clients in the Wallet
-	Clients() ChainClients
+	Clients() types.ChainClients
 	// Account Management
 	// CreateAccount creates a new Account
 	CreateAccount(ctx context.Context) (*account.Account, error)
@@ -70,22 +36,22 @@ type Wallet interface {
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation
-	BuildTx(ctx context.Context, params BuildTxParams) (tx.BuildTxResult, error)
+	BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error)
 
 	// SignTx signs a transaction
-	SignTx(ctx context.Context, params SignTxParams) (tx.SignTxResult, error)
+	SignTx(ctx context.Context, params types.SignTxParams) (types.SignTxResult, error)
 
 	// SendTx submits a signed transaction to the Network
-	SendTx(ctx context.Context, params SendTxParams) (tx.SendTxResult, error)
+	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
 
 	// GetAddresses returns all addresses managed by this wallet
 	GetAddresses(ctx context.Context) ([]ids.ShortID, error)
 
 	// GetChainClients returns the blockchain clients associated with this wallet
-	GetChainClients() ChainClients
+	GetChainClients() types.ChainClients
 
 	// SetChainClients updates the blockchain clients for this wallet
-	SetChainClients(clients ChainClients)
+	SetChainClients(clients types.ChainClients)
 
 	// Close performs cleanup operations for the wallet
 	Close(ctx context.Context) error

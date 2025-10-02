@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package tx
+package types
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/vms/components/verify"
@@ -15,266 +16,6 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 )
-
-type TxKind int64
-
-var ErrUndefinedTx = fmt.Errorf("tx is undefined")
-
-const (
-	Undefined TxKind = iota
-	PChainRemoveSubnetValidatorTx
-	PChainAddSubnetValidatorTx
-	PChainCreateChainTx
-	PChainTransformSubnetTx
-	PChainAddPermissionlessValidatorTx
-	PChainTransferSubnetOwnershipTx
-	PChainConvertSubnetToL1Tx
-)
-
-// BuildTxOutput represents a generic interface for transaction results
-type BuildTxOutput interface {
-	// GetTxType returns the transaction type identifier
-	GetTxType() string
-	// GetChainType returns which chain this transaction is for
-	GetChainType() string
-	// GetTx returns the actual transaction (interface{} to support different chain types)
-	GetTx() interface{}
-	// Validate validates the result
-	Validate() error
-}
-
-// PChainBuildTxResult represents a P-Chain transaction result
-type PChainBuildTxResult struct {
-	Tx *txs.Tx
-}
-
-func (p *PChainBuildTxResult) GetTxType() string {
-	if p.Tx == nil || p.Tx.Unsigned == nil {
-		return "Unknown"
-	}
-	// Extract tx type from unsigned transaction
-	switch p.Tx.Unsigned.(type) {
-	case *txs.CreateSubnetTx:
-		return "CreateSubnetTx"
-	case *txs.ConvertSubnetToL1Tx:
-		return "ConvertSubnetToL1Tx"
-	case *txs.AddSubnetValidatorTx:
-		return "AddSubnetValidatorTx"
-	case *txs.RemoveSubnetValidatorTx:
-		return "RemoveSubnetValidatorTx"
-	case *txs.CreateChainTx:
-		return "CreateChainTx"
-	case *txs.TransformSubnetTx:
-		return "TransformSubnetTx"
-	case *txs.AddPermissionlessValidatorTx:
-		return "AddPermissionlessValidatorTx"
-	case *txs.TransferSubnetOwnershipTx:
-		return "TransferSubnetOwnershipTx"
-	default:
-		return "Unknown"
-	}
-}
-
-func (p *PChainBuildTxResult) GetChainType() string {
-	return "P-Chain"
-}
-
-func (p *PChainBuildTxResult) GetTx() interface{} {
-	return p.Tx
-}
-
-func (p *PChainBuildTxResult) Validate() error {
-	if p.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-// CChainBuildTxResult represents a C-Chain transaction result
-type CChainBuildTxResult struct {
-	Tx interface{} // Will be *types.Transaction when C-Chain is implemented
-}
-
-func (c *CChainBuildTxResult) GetTxType() string {
-	// TODO: Extract tx type from C-Chain transaction when implemented
-	return "EVMTransaction"
-}
-
-func (c *CChainBuildTxResult) GetChainType() string {
-	return "C-Chain"
-}
-
-func (c *CChainBuildTxResult) GetTx() interface{} {
-	return c.Tx
-}
-
-func (c *CChainBuildTxResult) Validate() error {
-	if c.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-// XChainBuildTxResult represents an X-Chain transaction result
-type XChainBuildTxResult struct {
-	Tx interface{} // Will be *avm.Tx when X-Chain is implemented
-}
-
-func (x *XChainBuildTxResult) GetTxType() string {
-	// TODO: Extract tx type from X-Chain transaction when implemented
-	return "AVMTransaction"
-}
-
-func (x *XChainBuildTxResult) GetChainType() string {
-	return "X-Chain"
-}
-
-func (x *XChainBuildTxResult) GetTx() interface{} {
-	return x.Tx
-}
-
-func (x *XChainBuildTxResult) Validate() error {
-	if x.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-type BuildTxResult struct {
-	BuildTxOutput
-}
-
-// Constructor functions for each chain type
-func NewPChainBuildTxResult(tx *txs.Tx) *BuildTxResult {
-	return &BuildTxResult{
-		BuildTxOutput: &PChainBuildTxResult{Tx: tx},
-	}
-}
-
-func NewCChainBuildTxResult(tx interface{}) *BuildTxResult {
-	return &BuildTxResult{
-		BuildTxOutput: &CChainBuildTxResult{Tx: tx},
-	}
-}
-
-func NewXChainBuildTxResult(tx interface{}) *BuildTxResult {
-	return &BuildTxResult{
-		BuildTxOutput: &XChainBuildTxResult{Tx: tx},
-	}
-}
-
-// SendTxOutput represents a generic interface for sent transaction results
-type SendTxOutput interface {
-	// GetTxType returns the transaction type identifier
-	GetTxType() string
-	// GetChainType returns which chain this transaction is for
-	GetChainType() string
-	// GetTx returns the actual sent transaction (interface{} to support different chain types)
-	GetTx() interface{}
-	// Validate validates the result
-	Validate() error
-}
-
-// PChainSendTxResult represents a P-Chain sent transaction result
-type PChainSendTxResult struct {
-	Tx *txs.Tx
-}
-
-func (p *PChainSendTxResult) GetTxType() string {
-	if p.Tx == nil || p.Tx.Unsigned == nil {
-		return "Unknown"
-	}
-	// Extract tx type from unsigned transaction
-	switch p.Tx.Unsigned.(type) {
-	case *txs.CreateSubnetTx:
-		return "CreateSubnetTx"
-	case *txs.ConvertSubnetToL1Tx:
-		return "ConvertSubnetToL1Tx"
-	case *txs.AddSubnetValidatorTx:
-		return "AddSubnetValidatorTx"
-	case *txs.RemoveSubnetValidatorTx:
-		return "RemoveSubnetValidatorTx"
-	case *txs.CreateChainTx:
-		return "CreateChainTx"
-	case *txs.TransformSubnetTx:
-		return "TransformSubnetTx"
-	case *txs.AddPermissionlessValidatorTx:
-		return "AddPermissionlessValidatorTx"
-	case *txs.TransferSubnetOwnershipTx:
-		return "TransferSubnetOwnershipTx"
-	default:
-		return "Unknown"
-	}
-}
-
-func (p *PChainSendTxResult) GetChainType() string {
-	return "P-Chain"
-}
-
-func (p *PChainSendTxResult) GetTx() interface{} {
-	return p.Tx
-}
-
-func (p *PChainSendTxResult) Validate() error {
-	if p.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-// CChainSendTxResult represents a C-Chain sent transaction result
-type CChainSendTxResult struct {
-	Tx interface{} // Will be *types.Transaction when C-Chain is implemented
-}
-
-func (c *CChainSendTxResult) GetTxType() string {
-	// TODO: Extract tx type from C-Chain transaction when implemented
-	return "EVMTransaction"
-}
-
-func (c *CChainSendTxResult) GetChainType() string {
-	return "C-Chain"
-}
-
-func (c *CChainSendTxResult) GetTx() interface{} {
-	return c.Tx
-}
-
-func (c *CChainSendTxResult) Validate() error {
-	if c.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-// XChainSendTxResult represents an X-Chain sent transaction result
-type XChainSendTxResult struct {
-	Tx interface{} // Will be *avm.Tx when X-Chain is implemented
-}
-
-func (x *XChainSendTxResult) GetTxType() string {
-	// TODO: Extract tx type from X-Chain transaction when implemented
-	return "AVMTransaction"
-}
-
-func (x *XChainSendTxResult) GetChainType() string {
-	return "X-Chain"
-}
-
-func (x *XChainSendTxResult) GetTx() interface{} {
-	return x.Tx
-}
-
-func (x *XChainSendTxResult) Validate() error {
-	if x.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-type SendTxResult struct {
-	SendTxOutput
-}
 
 // SignTxOutput represents a generic interface for signed transaction results
 type SignTxOutput interface {
@@ -288,6 +29,172 @@ type SignTxOutput interface {
 	Validate() error
 	// IsReadyToCommit checks if the transaction is ready to be committed
 	IsReadyToCommit() (bool, error)
+}
+
+// SignTxParams contains parameters for signing transactions
+type SignTxParams struct {
+	BaseParams
+	*BuildTxResult
+}
+
+// Validate validates the sign transaction parameters
+func (p *SignTxParams) Validate() error {
+	if err := p.BaseParams.Validate(); err != nil {
+		return err
+	}
+	if p.BuildTxResult == nil {
+		return fmt.Errorf("build tx result is required")
+	}
+	return p.BuildTxResult.Validate()
+}
+
+// SignTxResult represents the result of signing a transaction
+type SignTxResult struct {
+	SignTxOutput
+}
+
+// Validate validates the sign transaction result
+func (r *SignTxResult) Validate() error {
+	if r.SignTxOutput == nil {
+		return fmt.Errorf("sign tx output is required")
+	}
+	return r.SignTxOutput.Validate()
+}
+
+// IsReadyToCommit checks if the transaction is ready to be committed
+func (r *SignTxResult) IsReadyToCommit() (bool, error) {
+	if r.SignTxOutput == nil {
+		return false, fmt.Errorf("sign tx output is required")
+	}
+	return r.SignTxOutput.IsReadyToCommit()
+}
+
+// GetRemainingAuthSigners gets subnet auth addresses that have not signed a given tx
+func (r *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
+	if r.SignTxOutput == nil {
+		return nil, nil, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetRemainingAuthSigners()
+	}
+	return nil, nil, fmt.Errorf("GetRemainingAuthSigners only supported for P-Chain transactions")
+}
+
+// GetAuthSigners gets all subnet auth addresses that are required to sign a given tx
+func (r *SignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
+	if r.SignTxOutput == nil {
+		return nil, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetAuthSigners()
+	}
+	return nil, fmt.Errorf("GetAuthSigners only supported for P-Chain transactions")
+}
+
+// GetTxKind returns the transaction kind
+func (r *SignTxResult) GetTxKind() (pchainTxs.TxKind, error) {
+	if r.SignTxOutput == nil {
+		return pchainTxs.Undefined, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetTxKind()
+	}
+	return pchainTxs.Undefined, fmt.Errorf("GetTxKind only supported for P-Chain transactions")
+}
+
+// GetNetworkID returns the network ID associated with the transaction
+func (r *SignTxResult) GetNetworkID() (uint32, error) {
+	if r.SignTxOutput == nil {
+		return 0, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetNetworkID()
+	}
+	return 0, fmt.Errorf("GetNetworkID only supported for P-Chain transactions")
+}
+
+// GetNetwork returns the network associated with the transaction
+func (r *SignTxResult) GetNetwork() (network.Network, error) {
+	if r.SignTxOutput == nil {
+		return network.UndefinedNetwork, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetNetwork()
+	}
+	return network.UndefinedNetwork, fmt.Errorf("GetNetwork only supported for P-Chain transactions")
+}
+
+// GetBlockchainID returns the blockchain ID associated with the transaction
+func (r *SignTxResult) GetBlockchainID() (ids.ID, error) {
+	if r.SignTxOutput == nil {
+		return ids.Empty, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetBlockchainID()
+	}
+	return ids.Empty, fmt.Errorf("GetBlockchainID only supported for P-Chain transactions")
+}
+
+// GetSubnetID returns the subnet ID associated with the transaction
+func (r *SignTxResult) GetSubnetID() (ids.ID, error) {
+	if r.SignTxOutput == nil {
+		return ids.Empty, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetSubnetID()
+	}
+	return ids.Empty, fmt.Errorf("GetSubnetID only supported for P-Chain transactions")
+}
+
+// GetSubnetOwners returns the subnet owners
+func (r *SignTxResult) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
+	if r.SignTxOutput == nil {
+		return nil, 0, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.GetSubnetOwners()
+	}
+	return nil, 0, fmt.Errorf("GetSubnetOwners only supported for P-Chain transactions")
+}
+
+// GetWrappedPChainTx returns the wrapped P-Chain transaction
+func (r *SignTxResult) GetWrappedPChainTx() (*txs.Tx, error) {
+	if r.SignTxOutput == nil {
+		return nil, fmt.Errorf("sign tx output is required")
+	}
+	// Delegate to the underlying SignTxOutput implementation
+	if pChainResult, ok := r.SignTxOutput.(*PChainSignTxResult); ok {
+		return pChainResult.Tx, nil
+	}
+	return nil, fmt.Errorf("GetWrappedPChainTx only supported for P-Chain transactions")
+}
+
+// String returns a string representation of the signed transaction
+func (r *SignTxResult) String() string {
+	if r.SignTxOutput != nil {
+		if tx := r.GetTx(); tx != nil {
+			// For P-Chain transactions, we can get the ID
+			if pChainTx, ok := tx.(*txs.Tx); ok {
+				return pChainTx.ID().String()
+			}
+			// For other chains, return a generic representation
+			return fmt.Sprintf("%s transaction", r.GetChainType())
+		}
+	}
+	return ""
+}
+
+// Undefined checks if the transaction is undefined
+func (r *SignTxResult) Undefined() bool {
+	return r.SignTxOutput == nil || r.GetTx() == nil
 }
 
 // PChainSignTxResult represents a P-Chain signed transaction result
@@ -341,7 +248,7 @@ func (p *PChainSignTxResult) Validate() error {
 
 func (p *PChainSignTxResult) IsReadyToCommit() (bool, error) {
 	if p.Tx == nil {
-		return false, ErrUndefinedTx
+		return false, pchainTxs.ErrUndefinedTx
 	}
 	unsignedTx := p.Tx.Unsigned
 	switch unsignedTx.(type) {
@@ -416,26 +323,17 @@ func (x *XChainSignTxResult) IsReadyToCommit() (bool, error) {
 	return true, nil
 }
 
-type SignTxResult struct {
-	SignTxOutput
+// Constructor functions for each chain type
+func NewPChainSignTxResult(tx *txs.Tx) *PChainSignTxResult {
+	return &PChainSignTxResult{Tx: tx}
 }
 
-func (ms *SignTxResult) String() string {
-	if ms.SignTxOutput != nil {
-		if tx := ms.GetTx(); tx != nil {
-			// For P-Chain transactions, we can get the ID
-			if pChainTx, ok := tx.(*txs.Tx); ok {
-				return pChainTx.ID().String()
-			}
-			// For other chains, return a generic representation
-			return fmt.Sprintf("%s transaction", ms.GetChainType())
-		}
-	}
-	return ""
+func NewCChainSignTxResult(tx interface{}) *CChainSignTxResult {
+	return &CChainSignTxResult{Tx: tx}
 }
 
-func (ms *SignTxResult) Undefined() bool {
-	return ms.SignTxOutput == nil || ms.GetTx() == nil
+func NewXChainSignTxResult(tx interface{}) *XChainSignTxResult {
+	return &XChainSignTxResult{Tx: tx}
 }
 
 // GetRemainingAuthSigners gets subnet auth addresses that have not signed a given tx
@@ -449,7 +347,7 @@ func (ms *SignTxResult) Undefined() bool {
 // if the tx is fully signed, returns empty slice
 func (p *PChainSignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
 	if p.Tx == nil {
-		return nil, nil, ErrUndefinedTx
+		return nil, nil, pchainTxs.ErrUndefinedTx
 	}
 	authSigners, err := p.GetAuthSigners()
 	if err != nil {
@@ -493,16 +391,6 @@ func (p *PChainSignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.Sho
 	return authSigners, remainingSigners, nil
 }
 
-func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID, error) {
-	if ms.Undefined() {
-		return nil, nil, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.GetRemainingAuthSigners()
-	}
-	return nil, nil, fmt.Errorf("GetRemainingAuthSigners only supported for P-Chain transactions")
-}
-
 // GetAuthSigners gets all subnet auth addresses that are required to sign a given tx
 //   - get subnet control keys as string slice using P-Chain API (GetOwners)
 //   - get subnet auth indices from the tx, field tx.UnsignedTx.SubnetAuth
@@ -510,7 +398,7 @@ func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID,
 //     the indices to the control keys slice
 func (p *PChainSignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
 	if p.Tx == nil {
-		return nil, ErrUndefinedTx
+		return nil, pchainTxs.ErrUndefinedTx
 	}
 	controlKeys, _, err := p.GetSubnetOwners()
 	if err != nil {
@@ -552,59 +440,35 @@ func (p *PChainSignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
 	return authSigners, nil
 }
 
-func (ms *SignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
-	if ms.Undefined() {
-		return nil, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.GetAuthSigners()
-	}
-	return nil, fmt.Errorf("GetAuthSigners only supported for P-Chain transactions")
-}
-
-func (*SignTxResult) GetSpendSigners() ([]ids.ShortID, error) {
-	return nil, fmt.Errorf("not implemented yet")
-}
-
-func (p *PChainSignTxResult) GetTxKind() (TxKind, error) {
+func (p *PChainSignTxResult) GetTxKind() (pchainTxs.TxKind, error) {
 	if p.Tx == nil {
-		return Undefined, ErrUndefinedTx
+		return pchainTxs.Undefined, pchainTxs.ErrUndefinedTx
 	}
 	unsignedTx := p.Tx.Unsigned
 	switch unsignedTx := unsignedTx.(type) {
 	case *txs.RemoveSubnetValidatorTx:
-		return PChainRemoveSubnetValidatorTx, nil
+		return pchainTxs.PChainRemoveSubnetValidatorTx, nil
 	case *txs.AddSubnetValidatorTx:
-		return PChainAddSubnetValidatorTx, nil
+		return pchainTxs.PChainAddSubnetValidatorTx, nil
 	case *txs.CreateChainTx:
-		return PChainCreateChainTx, nil
+		return pchainTxs.PChainCreateChainTx, nil
 	case *txs.TransformSubnetTx:
-		return PChainTransformSubnetTx, nil
+		return pchainTxs.PChainTransformSubnetTx, nil
 	case *txs.AddPermissionlessValidatorTx:
-		return PChainAddPermissionlessValidatorTx, nil
+		return pchainTxs.PChainAddPermissionlessValidatorTx, nil
 	case *txs.TransferSubnetOwnershipTx:
-		return PChainTransferSubnetOwnershipTx, nil
+		return pchainTxs.PChainTransferSubnetOwnershipTx, nil
 	case *txs.ConvertSubnetToL1Tx:
-		return PChainConvertSubnetToL1Tx, nil
+		return pchainTxs.PChainConvertSubnetToL1Tx, nil
 	default:
-		return Undefined, fmt.Errorf("unable to GetTxKind due to unexpected unsigned tx type %T", unsignedTx)
+		return pchainTxs.Undefined, fmt.Errorf("unable to GetTxKind due to unexpected unsigned tx type %T", unsignedTx)
 	}
-}
-
-func (ms *SignTxResult) GetTxKind() (TxKind, error) {
-	if ms.Undefined() {
-		return Undefined, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.GetTxKind()
-	}
-	return Undefined, fmt.Errorf("GetTxKind only supported for P-Chain transactions")
 }
 
 // get network id associated to tx
 func (p *PChainSignTxResult) GetNetworkID() (uint32, error) {
 	if p.Tx == nil {
-		return 0, ErrUndefinedTx
+		return 0, pchainTxs.ErrUndefinedTx
 	}
 	unsignedTx := p.Tx.Unsigned
 	var networkID uint32
@@ -631,7 +495,7 @@ func (p *PChainSignTxResult) GetNetworkID() (uint32, error) {
 
 func (p *PChainSignTxResult) GetNetwork() (network.Network, error) {
 	if p.Tx == nil {
-		return network.UndefinedNetwork, ErrUndefinedTx
+		return network.UndefinedNetwork, pchainTxs.ErrUndefinedTx
 	}
 	networkID, err := p.GetNetworkID()
 	if err != nil {
@@ -644,35 +508,9 @@ func (p *PChainSignTxResult) GetNetwork() (network.Network, error) {
 	return newNetwork, nil
 }
 
-func (ms *SignTxResult) GetNetworkID() (uint32, error) {
-	if ms.Undefined() {
-		return 0, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.GetNetworkID()
-	}
-	return 0, fmt.Errorf("GetNetworkID only supported for P-Chain transactions")
-}
-
-// get network model associated to tx
-func (ms *SignTxResult) GetNetwork() (network.Network, error) {
-	if ms.Undefined() {
-		return network.UndefinedNetwork, ErrUndefinedTx
-	}
-	networkID, err := ms.GetNetworkID()
-	if err != nil {
-		return network.UndefinedNetwork, err
-	}
-	newNetwork := network.NetworkFromNetworkID(networkID)
-	if newNetwork.Kind == network.Undefined {
-		return network.UndefinedNetwork, fmt.Errorf("undefined network model for tx")
-	}
-	return newNetwork, nil
-}
-
 func (p *PChainSignTxResult) GetBlockchainID() (ids.ID, error) {
 	if p.Tx == nil {
-		return ids.Empty, ErrUndefinedTx
+		return ids.Empty, pchainTxs.ErrUndefinedTx
 	}
 	unsignedTx := p.Tx.Unsigned
 	var blockchainID ids.ID
@@ -697,20 +535,10 @@ func (p *PChainSignTxResult) GetBlockchainID() (ids.ID, error) {
 	return blockchainID, nil
 }
 
-func (ms *SignTxResult) GetBlockchainID() (ids.ID, error) {
-	if ms.Undefined() {
-		return ids.Empty, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.GetBlockchainID()
-	}
-	return ids.Empty, fmt.Errorf("GetBlockchainID only supported for P-Chain transactions")
-}
-
 // GetSubnetID gets subnet id associated to tx
 func (p *PChainSignTxResult) GetSubnetID() (ids.ID, error) {
 	if p.Tx == nil {
-		return ids.Empty, ErrUndefinedTx
+		return ids.Empty, pchainTxs.ErrUndefinedTx
 	}
 	unsignedTx := p.Tx.Unsigned
 	var subnetID ids.ID
@@ -735,19 +563,9 @@ func (p *PChainSignTxResult) GetSubnetID() (ids.ID, error) {
 	return subnetID, nil
 }
 
-func (ms *SignTxResult) GetSubnetID() (ids.ID, error) {
-	if ms.Undefined() {
-		return ids.Empty, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.GetSubnetID()
-	}
-	return ids.Empty, fmt.Errorf("GetSubnetID only supported for P-Chain transactions")
-}
-
 func (p *PChainSignTxResult) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 	if p.Tx == nil {
-		return nil, 0, ErrUndefinedTx
+		return nil, 0, pchainTxs.ErrUndefinedTx
 	}
 	if p.controlKeys == nil {
 		subnetID, err := p.GetSubnetID()
@@ -769,16 +587,6 @@ func (p *PChainSignTxResult) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
 	return p.controlKeys, p.threshold, nil
 }
 
-func (ms *SignTxResult) GetSubnetOwners() ([]ids.ShortID, uint32, error) {
-	if ms.Undefined() {
-		return nil, 0, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.GetSubnetOwners()
-	}
-	return nil, 0, fmt.Errorf("GetSubnetOwners only supported for P-Chain transactions")
-}
-
 func GetOwners(network network.Network, subnetID ids.ID) ([]ids.ShortID, uint32, error) {
 	pClient := platformvm.NewClient(network.Endpoint)
 	ctx, cancel := utils.GetAPIContext()
@@ -790,52 +598,4 @@ func GetOwners(network network.Network, subnetID ids.ID) ([]ids.ShortID, uint32,
 	controlKeys := subnetResponse.ControlKeys
 	threshold := subnetResponse.Threshold
 	return controlKeys, threshold, nil
-}
-
-func (ms *SignTxResult) GetWrappedPChainTx() (*txs.Tx, error) {
-	if ms.Undefined() {
-		return nil, ErrUndefinedTx
-	}
-	if pChainResult, ok := ms.SignTxOutput.(*PChainSignTxResult); ok {
-		return pChainResult.Tx, nil
-	}
-	return nil, fmt.Errorf("GetWrappedPChainTx only supported for P-Chain transactions")
-}
-
-// Constructor functions for each chain type
-func NewPChainSignTxResult(tx *txs.Tx) *SignTxResult {
-	return &SignTxResult{
-		SignTxOutput: &PChainSignTxResult{Tx: tx},
-	}
-}
-
-func NewCChainSignTxResult(tx interface{}) *SignTxResult {
-	return &SignTxResult{
-		SignTxOutput: &CChainSignTxResult{Tx: tx},
-	}
-}
-
-func NewXChainSignTxResult(tx interface{}) *SignTxResult {
-	return &SignTxResult{
-		SignTxOutput: &XChainSignTxResult{Tx: tx},
-	}
-}
-
-// Constructor functions for SendTxResult
-func NewPChainSendTxResult(tx *txs.Tx) *SendTxResult {
-	return &SendTxResult{
-		SendTxOutput: &PChainSendTxResult{Tx: tx},
-	}
-}
-
-func NewCChainSendTxResult(tx interface{}) *SendTxResult {
-	return &SendTxResult{
-		SendTxOutput: &CChainSendTxResult{Tx: tx},
-	}
-}
-
-func NewXChainSendTxResult(tx interface{}) *SendTxResult {
-	return &SendTxResult{
-		SendTxOutput: &XChainSendTxResult{Tx: tx},
-	}
 }

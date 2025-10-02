@@ -13,12 +13,11 @@ import (
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/tx"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 	"github.com/ava-labs/avalanchego/ids"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -30,7 +29,7 @@ import (
 type LocalWallet struct {
 	*primary.Wallet
 	accounts []account.Account
-	clients  wallet.ChainClients
+	clients  types.ChainClients
 }
 
 // Ensure LocalWallet implements Wallet interface
@@ -41,7 +40,7 @@ func NewLocalWallet() (*LocalWallet, error) {
 	return &LocalWallet{
 		Wallet:   nil,
 		accounts: []account.Account{},
-		clients:  wallet.ChainClients{},
+		clients:  types.ChainClients{},
 	}, nil
 }
 
@@ -68,7 +67,7 @@ func (w *LocalWallet) Accounts() []account.Account {
 	return w.accounts
 }
 
-func (w *LocalWallet) Clients() wallet.ChainClients {
+func (w *LocalWallet) Clients() types.ChainClients {
 	return w.clients
 }
 
@@ -116,26 +115,26 @@ func (w *LocalWallet) ImportAccount(ctx context.Context, keyPath string) (*accou
 }
 
 // BuildTx constructs a transaction for the specified operation
-func (w *LocalWallet) BuildTx(ctx context.Context, params wallet.BuildTxParams) (tx.BuildTxResult, error) {
+func (w *LocalWallet) BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error) {
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
+		return types.BuildTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 	return wallet.BuildTx(ctx, w.Wallet, params)
 }
 
 // SignTx signs a transaction
-func (w *LocalWallet) SignTx(ctx context.Context, params wallet.SignTxParams) (tx.SignTxResult, error) {
+func (w *LocalWallet) SignTx(ctx context.Context, params types.SignTxParams) (types.SignTxResult, error) {
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
-		return tx.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
+		return types.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
 
 	return wallet.SignTx(ctx, w.Wallet, params)
 }
 
 // SendTx submits a signed transaction to the Network
-func (w *LocalWallet) SendTx(ctx context.Context, params wallet.SendTxParams) (tx.SendTxResult, error) {
+func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error) {
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
-		return tx.SendTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
+		return types.SendTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 
 	return wallet.SendTx(ctx, w.Wallet, params)
@@ -156,12 +155,12 @@ func (w *LocalWallet) GetAddresses(ctx context.Context) ([]ids.ShortID, error) {
 }
 
 // GetChainClients returns the blockchain clients associated with this wallet
-func (w *LocalWallet) GetChainClients() wallet.ChainClients {
+func (w *LocalWallet) GetChainClients() types.ChainClients {
 	return w.clients
 }
 
 // SetChainClients updates the blockchain clients for this wallet
-func (w *LocalWallet) SetChainClients(clients wallet.ChainClients) {
+func (w *LocalWallet) SetChainClients(clients types.ChainClients) {
 	w.clients = clients
 }
 
@@ -195,7 +194,7 @@ func (w *LocalWallet) GetAllAccounts() []account.Account {
 	return w.accounts
 }
 
-func (w *LocalWallet) Commit(transaction tx.SignTxResult) (*avagoTxs.Tx, error) {
+func (w *LocalWallet) Commit(transaction types.SignTxResult) (*avagoTxs.Tx, error) {
 	if transaction.Undefined() {
 		return nil, multisig.ErrUndefinedTx
 	}
