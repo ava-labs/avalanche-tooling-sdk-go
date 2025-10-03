@@ -46,6 +46,12 @@ func buildPChainTx(ctx context.Context, wallet *primary.Wallet, account account.
 			return tx.BuildTxResult{}, fmt.Errorf("invalid params type for ConvertSubnetToL1Tx, expected *txs.ConvertSubnetToL1TxParams")
 		}
 		return buildCreateSubnetTx(ctx, wallet, createSubnetParams)
+	case "CreateChainTx":
+		createSubnetParams, ok := params.(*txs.CreateSubnetTxParams)
+		if !ok {
+			return tx.BuildTxResult{}, fmt.Errorf("invalid params type for ConvertSubnetToL1Tx, expected *txs.ConvertSubnetToL1TxParams")
+		}
+		return buildCreateSubnetTx(ctx, wallet, createSubnetParams)
 	case "ConvertSubnetToL1Tx":
 		convertParams, ok := params.(*txs.ConvertSubnetToL1TxParams)
 		if !ok {
@@ -57,24 +63,7 @@ func buildPChainTx(ctx context.Context, wallet *primary.Wallet, account account.
 	}
 }
 
-// buildConvertSubnetToL1Tx provides a default implementation that can be used by any wallet
-func buildConvertSubnetToL1Tx(ctx context.Context, wallet *primary.Wallet, account account.Account, params *txs.ConvertSubnetToL1TxParams) (tx.BuildTxResult, error) {
-	options := getMultisigTxOptions(account, params.SubnetAuthKeys)
-	unsignedTx, err := wallet.P().Builder().NewConvertSubnetToL1Tx(
-		params.SubnetID,
-		params.ChainID,
-		params.Address,
-		params.Validators,
-		options...,
-	)
-	if err != nil {
-		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
-	}
-	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
-	return *tx.NewPChainBuildTxResult(&builtTx), nil
-}
-
-// BuildCreateSubnetTx provides a default implementation that can be used by any wallet
+// buildCreateSubnetTx provides a default implementation that can be used by any wallet
 func buildCreateSubnetTx(ctx context.Context, wallet *primary.Wallet, params *txs.CreateSubnetTxParams) (tx.BuildTxResult, error) {
 	addrs, err := address.ParseToIDs(params.ControlKeys)
 	if err != nil {
@@ -93,6 +82,90 @@ func buildCreateSubnetTx(ctx context.Context, wallet *primary.Wallet, params *tx
 	}
 	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
 	return *tx.NewPChainBuildTxResult(&builtTx), nil
+}
+
+// buildCreateChainTx provides a default implementation that can be used by any wallet
+func buildCreateChainTx(ctx context.Context, wallet *primary.Wallet, account account.Account, params *txs.CreateChainTxParams) (tx.BuildTxResult, error) {
+	subnetAuthKeys, err := convertSubnetAuthKeys(params.SubnetAuthKeys)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("failed to convert subnet auth keys: %w", err)
+	}
+	options := getMultisigTxOptions(account, subnetAuthKeys)
+	fxIDs := make([]ids.ID, 0)
+	subnetID, err := ids.FromString(params.SubnetID)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("failed to parse subnet ID: %w", err)
+	}
+	vmID, err := ids.FromString(params.VMID)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("failed to parse VM ID: %w", err)
+	}
+	unsignedTx, err := wallet.P().Builder().NewCreateChainTx(
+		subnetID,
+		params.Genesis,
+		vmID,
+		fxIDs,
+		params.ChainName,
+		options...,
+	)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
+	}
+	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
+	return *tx.NewPChainBuildTxResult(&builtTx), nil
+}
+
+// buildConvertSubnetToL1Tx provides a default implementation that can be used by any wallet
+func buildConvertSubnetToL1Tx(ctx context.Context, wallet *primary.Wallet, account account.Account, params *txs.ConvertSubnetToL1TxParams) (tx.BuildTxResult, error) {
+	subnetAuthKeys, err := convertSubnetAuthKeys(params.SubnetAuthKeys)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("failed to convert subnet auth keys: %w", err)
+	}
+	subnetID, err := ids.FromString(params.SubnetID)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("failed to parse subnet ID: %w", err)
+	}
+	chainID, err := ids.FromString(params.ChainID)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("failed to parse chain ID: %w", err)
+	}
+	addressBytes, err := convertAddressToBytes(params.Address)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("failed to convert address to bytes: %w", err)
+	}
+	options := getMultisigTxOptions(account, subnetAuthKeys)
+	unsignedTx, err := wallet.P().Builder().NewConvertSubnetToL1Tx(
+		subnetID,
+		chainID,
+		addressBytes,
+		params.Validators,
+		options...,
+	)
+	if err != nil {
+		return tx.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
+	}
+	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
+	return *tx.NewPChainBuildTxResult(&builtTx), nil
+}
+
+// convertSubnetAuthKeys converts a slice of string addresses to a slice of ShortIDs
+func convertSubnetAuthKeys(subnetAuthKeys []string) ([]ids.ShortID, error) {
+	shortIDs := make([]ids.ShortID, len(subnetAuthKeys))
+	for i, key := range subnetAuthKeys {
+		shortID, err := ids.ShortFromString(key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert subnet auth key %q to ShortID: %w", key, err)
+		}
+		shortIDs[i] = shortID
+	}
+	return shortIDs, nil
+}
+
+// convertAddressToBytes converts an address string to []byte
+func convertAddressToBytes(addressStr string) ([]byte, error) {
+	// Convert the address string to bytes
+	addressBytes := []byte(addressStr)
+	return addressBytes, nil
 }
 
 // getMultisigTxOptions is a helper function that can be shared
