@@ -100,7 +100,7 @@ func (w *LocalWallet) GetAccount(ctx context.Context, address ids.ShortID) (*acc
 // ListAccounts returns all accounts managed by this wallet
 func (w *LocalWallet) ListAccounts(ctx context.Context) ([]*account.Account, error) {
 	// Return all accounts in the wallet
-	accounts := w.GetAllAccounts()
+	accounts := w.accounts
 	result := make([]*account.Account, len(accounts))
 	for i := range accounts {
 		result[i] = &accounts[i]
@@ -178,7 +178,7 @@ func (w *LocalWallet) SignPChainTx(ctx context.Context, unsignedTx avagoTxs.Unsi
 func (w *LocalWallet) GetAddresses(ctx context.Context) ([]ids.ShortID, error) {
 	// Get addresses from all accounts in the wallet
 	var allAddresses []ids.ShortID
-	accounts := w.GetAllAccounts()
+	accounts := w.accounts
 
 	for _, acc := range accounts {
 		addresses := acc.Addresses()
@@ -223,11 +223,6 @@ func (w *LocalWallet) GetAccountByAddress(address ids.ShortID) *account.Account 
 	return nil
 }
 
-// GetAllAccounts returns all accounts in the wallet
-func (w *LocalWallet) GetAllAccounts() []account.Account {
-	return w.accounts
-}
-
 func (w *LocalWallet) buildPChainTx(ctx context.Context, account account.Account, params BuildTxInput) (tx.BuildTxResult, error) {
 	switch txType := params.GetTxType(); txType {
 	case "CreateSubnetTx":
@@ -264,7 +259,7 @@ func (w *LocalWallet) buildConvertSubnetToL1Tx(ctx context.Context, account acco
 	return tx.BuildTxResult{Tx: &builtTx}, nil
 }
 
-// buildConvertSubnetToL1Tx builds a ConvertSubnetToL1Tx transaction
+// buildCreateSubnetTx builds a CreateSubnetTx transaction
 func (w *LocalWallet) buildCreateSubnetTx(ctx context.Context, params *txs.CreateSubnetTxParams) (tx.BuildTxResult, error) {
 	addrs, err := address.ParseToIDs(params.ControlKeys)
 	if err != nil {
@@ -315,7 +310,24 @@ func GetMultisigTxOptions(account account.Account, subnetAuthKeys []ids.ShortID)
 	return options
 }
 
-func (w *LocalWallet) Commit(transaction tx.SignTxResult) (*avagoTxs.Tx, error) {
+// CommitOptions configures the retry behavior for transaction commitment
+type CommitOptions struct {
+	// MaxRetries specifies the maximum number of retry attempts (0 = no retries)
+	MaxRetries int
+	// RetryDelay specifies the delay between retry attempts
+	RetryDelay time.Duration
+}
+
+// DefaultCommitOptions returns sensible default retry options
+func DefaultCommitOptions() CommitOptions {
+	return CommitOptions{
+		MaxRetries: 3,
+		RetryDelay: 2 * time.Second,
+	}
+}
+
+// Commit commits a signed transaction to the network with configurable retry options
+func (w *LocalWallet) Commit(transaction tx.SignTxResult, opts ...CommitOptions) (*avagoTxs.Tx, error) {
 	if transaction.Undefined() {
 		return nil, multisig.ErrUndefinedTx
 	}
@@ -330,32 +342,35 @@ func (w *LocalWallet) Commit(transaction tx.SignTxResult) (*avagoTxs.Tx, error) 
 	if err != nil {
 		return nil, err
 	}
-	const (
-		repeats             = 3
-		sleepBetweenRepeats = 2 * time.Second
-	)
-	var issueTxErr error
-	if err != nil {
-		return nil, err
+
+	// Use provided options or defaults
+	options := DefaultCommitOptions()
+	if len(opts) > 0 {
+		options = opts[0]
 	}
-	for i := 0; i < repeats; i++ {
+
+	var issueTxErr error
+	for i := 0; i <= options.MaxRetries; i++ {
 		ctx, cancel := utils.GetAPILargeContext()
 		defer cancel()
-		options := []common.Option{common.WithContext(ctx)}
+		apiOptions := []common.Option{common.WithContext(ctx)}
+
 		// TODO: split error checking and recovery between issuing and waiting for status
-		issueTxErr = w.P().IssueTx(tx, options...)
+		issueTxErr = w.P().IssueTx(tx, apiOptions...)
 		if issueTxErr == nil {
 			break
 		}
+
 		if ctx.Err() != nil {
 			issueTxErr = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", tx.ID(), issueTxErr)
 		} else {
 			issueTxErr = fmt.Errorf("error issuing tx with ID %s: %w", tx.ID(), issueTxErr)
 		}
-		time.Sleep(sleepBetweenRepeats)
+		time.Sleep(options.RetryDelay)
 	}
+
 	if issueTxErr != nil {
-		return nil, fmt.Errorf("issue tx error %w", issueTxErr)
+		return nil, fmt.Errorf("issue tx error after %d attempts: %w", options.MaxRetries+1, issueTxErr)
 	}
-	return tx, issueTxErr
+	return tx, nil
 }
