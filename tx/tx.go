@@ -121,10 +121,7 @@ func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID,
 	}
 	// signatures for output owners should be filled (all creds except last one)
 	for credIndex := range ms.Tx.Creds[:numCreds-1] {
-		cred, ok := ms.Tx.Creds[credIndex].(*secp256k1fx.Credential)
-		if !ok {
-			return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.Tx.Creds[credIndex])
-		}
+		cred := ms.Tx.Creds[credIndex].(*secp256k1fx.Credential)
 		for i, sig := range cred.Sigs {
 			if sig == emptySig {
 				return nil, nil, fmt.Errorf("expected funding sig %d of cred %d to be filled", i, credIndex)
@@ -132,10 +129,7 @@ func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID,
 		}
 	}
 	// signatures for subnet auth (last cred)
-	cred, ok := ms.Tx.Creds[numCreds-1].(*secp256k1fx.Credential)
-	if !ok {
-		return nil, nil, fmt.Errorf("expected cred to be of type *secp256k1fx.Credential, got %T", ms.Tx.Creds[1])
-	}
+	cred := ms.Tx.Creds[numCreds-1].(*secp256k1fx.Credential)
 	if len(cred.Sigs) != len(authSigners) {
 		return nil, nil, fmt.Errorf("expected number of cred's signatures %d to equal number of auth signers %d",
 			len(cred.Sigs),
@@ -154,7 +148,7 @@ func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID,
 // GetAuthSigners gets all subnet auth addresses that are required to sign a given tx
 //   - Get subnet control keys as string slice using P-Chain API (GetOwners)
 //   - Get subnet auth indices from the tx, field ms.Tx.Unsigned.SubnetAuth
-//   - Creates the slice of required subnet auth addresses by applying the indices to the  
+//   - Creates the slice of required subnet auth addresses by applying the indices to the
 //     control keys slice
 func (ms *SignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
 	if ms.Undefined() {

@@ -31,11 +31,33 @@ var (
 	ErrInvalidPrivateKeyEncoding = errors.New("invalid private key encoding")
 )
 
+// SoftKey represents a software-based cryptographic key stored locally on the machine.
+// It encapsulates a secp256k1 private key along with its various representations
+// and provides functionality for local key management, including generation,
+// storage, and retrieval from the local filesystem. SoftKey is designed for
+// development, testing, and scenarios where keys are managed directly on the
+// local machine rather than through hardware security modules or external
+// key management systems.
+//
+// WARNING: SoftKey is NOT recommended for production use due to security concerns.
+// Private keys stored in plaintext on the local filesystem are vulnerable to
+// various attack vectors including malware, unauthorized file access, and
+// physical device compromise. For production environments, use hardware security
+// modules (HSMs), secure key management services, or other secure key storage
+// solutions that provide proper key protection and access controls.
+//
+// This implementation is suitable ONLY for local development environments and
+// applications where key security is managed through filesystem permissions
+// and local access controls rather than specialized hardware.
 type SoftKey struct {
-	privKey        *secp256k1.PrivateKey
-	privKeyRaw     []byte
+	// privKey is the actual secp256k1 private key used for cryptographic operations
+	privKey *secp256k1.PrivateKey
+	// privKeyRaw contains raw bytes of the private key for direct access
+	privKeyRaw []byte
+	// privKeyEncoded is the CB58-encoded string representation for storage/transmission
 	privKeyEncoded string
-	keyChain       *secp256k1fx.Keychain
+	// keyChain is the Avalanche keychain containing the public key for transaction signing
+	keyChain *secp256k1fx.Keychain
 }
 
 const (
