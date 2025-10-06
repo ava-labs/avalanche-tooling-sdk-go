@@ -152,10 +152,10 @@ func (ms *SignTxResult) GetRemainingAuthSigners() ([]ids.ShortID, []ids.ShortID,
 }
 
 // GetAuthSigners gets all subnet auth addresses that are required to sign a given tx
-//   - get subnet control keys as string slice using P-Chain API (GetOwners)
-//   - get subnet auth indices from the tx, field tx.UnsignedTx.SubnetAuth
-//   - creates the string slice of required subnet auth addresses by applying
-//     the indices to the control keys slice
+//   - Get subnet control keys as string slice using P-Chain API (GetOwners)
+//   - Get subnet auth indices from the tx, field ms.Tx.Unsigned.SubnetAuth
+//   - Creates the slice of required subnet auth addresses by applying the indices to the  
+//     control keys slice
 func (ms *SignTxResult) GetAuthSigners() ([]ids.ShortID, error) {
 	if ms.Undefined() {
 		return nil, ErrUndefinedTx
