@@ -6,12 +6,13 @@ package validatormanager
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/subnet-evm/accounts/abi"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 )
 
 type GetValidatorReturn struct {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
@@ -23,7 +24,6 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/p-chain/txs"
-	"github.com/ava-labs/avalanchego/ids"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/subnet-evm/ethclient"

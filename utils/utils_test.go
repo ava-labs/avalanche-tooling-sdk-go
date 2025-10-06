@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
 func TestUnique(t *testing.T) {
