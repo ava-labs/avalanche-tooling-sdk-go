@@ -10,6 +10,12 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 )
 
+// Account represents the interface for different account implementations
+// in the Avalanche ecosystem. An account provides a unified interface
+// for managing cryptographic identities across various Avalanche networks
+// and chains. It abstracts the underlying key management implementation,
+// allowing for different account types (software wallets, hardware wallets,
+// server wallets etc.).
 type Account struct {
 	*key.SoftKey
 }
