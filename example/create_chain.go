@@ -4,16 +4,10 @@ package main
 
 import (
 	"fmt"
-	"math/big"
 	"os"
 	"time"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/blockchain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
-	"github.com/ava-labs/libevm/common"
-	"github.com/ava-labs/subnet-evm/core"
-	"github.com/ava-labs/subnet-evm/params/extras"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
 
@@ -38,7 +32,7 @@ func CreateChain(subnetID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}
-	evmGenesisParams := getDefaultSubnetEVMGenesis("initial_allocation_addr")
+	evmGenesisParams := blockchain.GetDefaultSubnetEVMGenesis("initial_allocation_addr")
 	evmGenesisBytes, _ := blockchain.CreateEvmGenesis(&evmGenesisParams)
 	blockchainName := "TestBlockchain"
 	vmID, err := blockchain.VmID(blockchainName)
@@ -49,7 +43,7 @@ func CreateChain(subnetID string) error {
 		SubnetAuthKeys: []string{"P-fuji1377nx80rx3pzneup5qywgdgdsmzntql7trcqlg"},
 		SubnetID:       subnetID,
 		VMID:           vmID.String(),
-		ChainName:      "TestBlockchain",
+		ChainName:      blockchainName,
 		Genesis:        evmGenesisBytes,
 	}
 	buildTxParams := wallet.BuildTxParams{
@@ -87,31 +81,11 @@ func CreateChain(subnetID string) error {
 	return nil
 }
 
-func getDefaultSubnetEVMGenesis(initialAllocationAddress string) blockchain.SubnetEVMParams {
-	allocation := core.GenesisAlloc{}
-	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
-	allocation[common.HexToAddress(initialAllocationAddress)] = core.GenesisAccount{
-		Balance: defaultAmount,
-	}
-	return blockchain.SubnetEVMParams{
-		ChainID:     big.NewInt(123456),
-		FeeConfig:   vm.StarterFeeConfig,
-		Allocation:  allocation,
-		Precompiles: extras.Precompiles{},
-	}
-}
-
-func mainCreateChain() {
-	// Use a hardcoded subnet ID for this example
-	// In a real scenario, you would get this from creating a subnet first
+func main() {
+	// Run create chain example
 	subnetID := "2b175hLJhG1m7HZ7aCLL4BTXFp2FEZsy5jfZ6wvFavr2Sx8g5n"
 	if err := CreateChain(subnetID); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func main() {
-	// Run the create chain example
-	mainCreateChain()
 }
