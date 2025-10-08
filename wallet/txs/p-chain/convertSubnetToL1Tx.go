@@ -25,7 +25,7 @@ type ConvertSubnetToL1TxParams struct {
 }
 
 // GetTxType returns the transaction type identifier
-func (p ConvertSubnetToL1TxParams) GetTxType() string {
+func (_ ConvertSubnetToL1TxParams) GetTxType() string {
 	return "ConvertSubnetToL1Tx"
 }
 
@@ -47,6 +47,6 @@ func (p ConvertSubnetToL1TxParams) Validate() error {
 }
 
 // GetChainType returns which chain this transaction is for
-func (p ConvertSubnetToL1TxParams) GetChainType() string {
+func (_ ConvertSubnetToL1TxParams) GetChainType() string {
 	return "P-Chain"
 }

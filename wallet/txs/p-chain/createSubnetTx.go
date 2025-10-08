@@ -11,7 +11,7 @@ type CreateSubnetTxParams struct {
 }
 
 // GetTxType returns the transaction type identifier
-func (p CreateSubnetTxParams) GetTxType() string {
+func (_ CreateSubnetTxParams) GetTxType() string {
 	return "CreateSubnetTx"
 }
 
@@ -27,6 +27,6 @@ func (p CreateSubnetTxParams) Validate() error {
 }
 
 // GetChainType returns which chain this transaction is for
-func (p CreateSubnetTxParams) GetChainType() string {
+func (_ CreateSubnetTxParams) GetChainType() string {
 	return "P-Chain"
 }
