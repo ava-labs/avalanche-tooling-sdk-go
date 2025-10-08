@@ -3,6 +3,7 @@
 package icm
 
 import (
+	_ "embed"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -11,8 +12,6 @@ import (
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/core"
-
-	_ "embed"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )

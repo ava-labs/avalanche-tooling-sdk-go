@@ -12,23 +12,22 @@ import (
 	"strings"
 	"time"
 
+	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
+	ethereum "github.com/ava-labs/libevm"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/libevm/crypto"
+	ethparams "github.com/ava-labs/libevm/params"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/ethclient"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/plugin/evm/upgrade/legacy"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	"github.com/ava-labs/subnet-evm/predicate"
+	subnetEvmUtils "github.com/ava-labs/subnet-evm/utils"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
-	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
-	ethereum "github.com/ava-labs/libevm"
-	ethparams "github.com/ava-labs/libevm/params"
-	subnetEvmUtils "github.com/ava-labs/subnet-evm/utils"
 )
 
 const (

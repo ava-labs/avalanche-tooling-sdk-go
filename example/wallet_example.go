@@ -7,15 +7,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
 	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
-	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
 func CreateSubnet() error {

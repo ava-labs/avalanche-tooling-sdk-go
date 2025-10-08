@@ -10,14 +10,13 @@
 package icm
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"math/big"
 	"os"
 
 	"github.com/ava-labs/libevm/common"
-
-	_ "embed"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"

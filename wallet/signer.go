@@ -6,11 +6,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/cchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/pchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/xchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
-	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 )
 
 // SignTx constructs a transaction for the specified operation
