@@ -3,7 +3,6 @@
 package wallet
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -13,7 +12,7 @@ import (
 )
 
 // BuildTx constructs a transaction for the specified operation
-func BuildTx(ctx context.Context, wallet *primary.Wallet, params types.BuildTxParams) (types.BuildTxResult, error) {
+func BuildTx(wallet *primary.Wallet, params types.BuildTxParams) (types.BuildTxResult, error) {
 	// Validate parameters first
 	if err := params.Validate(); err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("invalid parameters: %w", err)

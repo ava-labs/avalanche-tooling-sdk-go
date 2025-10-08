@@ -117,7 +117,7 @@ func (w *LocalWallet) BuildTx(ctx context.Context, params types.BuildTxParams) (
 	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
-	return wallet.BuildTx(ctx, w.Wallet, params)
+	return wallet.BuildTx(w.Wallet, params)
 }
 
 // SignTx signs a transaction
