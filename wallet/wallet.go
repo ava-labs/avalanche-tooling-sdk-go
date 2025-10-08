@@ -23,16 +23,16 @@ type Wallet interface {
 	Clients() types.ChainClients
 	// Account Management
 	// CreateAccount creates a new Account
-	CreateAccount(ctx context.Context) (*account.Account, error)
+	CreateAccount() (*account.Account, error)
 
 	// GetAccount retrieves an existing Account by address or identifier
-	GetAccount(ctx context.Context, address ids.ShortID) (*account.Account, error)
+	GetAccount(address ids.ShortID) (*account.Account, error)
 
 	// ListAccounts returns all accounts managed by this wallet
-	ListAccounts(ctx context.Context) ([]*account.Account, error)
+	ListAccounts() ([]*account.Account, error)
 
 	// ImportAccount imports an existing Account into the wallet
-	ImportAccount(ctx context.Context, keyPath string) (*account.Account, error)
+	ImportAccount(keyPath string) (*account.Account, error)
 
 	// Transaction Operations
 	// BuildTx constructs a transaction for the specified operation
@@ -45,7 +45,7 @@ type Wallet interface {
 	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
 
 	// GetAddresses returns all addresses managed by this wallet
-	GetAddresses(ctx context.Context) ([]ids.ShortID, error)
+	GetAddresses() ([]ids.ShortID, error)
 
 	// GetChainClients returns the blockchain clients associated with this wallet
 	GetChainClients() types.ChainClients
@@ -54,5 +54,5 @@ type Wallet interface {
 	SetChainClients(clients types.ChainClients)
 
 	// Close performs cleanup operations for the wallet
-	Close(ctx context.Context) error
+	Close() error
 }

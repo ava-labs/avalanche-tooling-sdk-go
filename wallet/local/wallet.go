@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
@@ -18,8 +19,6 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
-
-	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 // ChainClients is now defined in the wallet package
@@ -71,7 +70,7 @@ func (w *LocalWallet) Clients() types.ChainClients {
 }
 
 // CreateAccount creates a new Account using local key generation
-func (w *LocalWallet) CreateAccount(ctx context.Context) (*account.Account, error) {
+func (w *LocalWallet) CreateAccount() (*account.Account, error) {
 	newAccount, err := account.NewLocalAccount()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new Account: %w", err)
@@ -84,14 +83,14 @@ func (w *LocalWallet) CreateAccount(ctx context.Context) (*account.Account, erro
 }
 
 // GetAccount retrieves an existing Account by address or identifier
-func (w *LocalWallet) GetAccount(ctx context.Context, address ids.ShortID) (*account.Account, error) {
+func (w *LocalWallet) GetAccount(address ids.ShortID) (*account.Account, error) {
 	// TODO: Implement Account retrieval logic based on address
 	// This could search through w.accounts or use the embedded primary.Wallet
 	return nil, fmt.Errorf("not implemented")
 }
 
 // ListAccounts returns all accounts managed by this wallet
-func (w *LocalWallet) ListAccounts(ctx context.Context) ([]*account.Account, error) {
+func (w *LocalWallet) ListAccounts() ([]*account.Account, error) {
 	// Return all accounts in the wallet
 	accounts := w.GetAllAccounts()
 	result := make([]*account.Account, len(accounts))
@@ -102,12 +101,12 @@ func (w *LocalWallet) ListAccounts(ctx context.Context) ([]*account.Account, err
 }
 
 // ImportAccount imports an existing Account into the wallet
-func (w *LocalWallet) ImportAccount(ctx context.Context, keyPath string) (*account.Account, error) {
+func (w *LocalWallet) ImportAccount(keyPath string) (*account.Account, error) {
 	// TODO: Implement Account import logic
 	// This would add the provided Account to the wallet
 	existingAccount, err := account.Import(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("error when importing Account %w", err)
+		return nil, fmt.Errorf("error when importing Account %w \n", err)
 	}
 	w.AddAccount(existingAccount)
 	return &existingAccount, nil
@@ -140,7 +139,7 @@ func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (ty
 }
 
 // GetAddresses returns all addresses managed by this wallet
-func (w *LocalWallet) GetAddresses(ctx context.Context) ([]ids.ShortID, error) {
+func (w *LocalWallet) GetAddresses() ([]ids.ShortID, error) {
 	// Get addresses from all accounts in the wallet
 	var allAddresses []ids.ShortID
 	accounts := w.GetAllAccounts()
@@ -164,7 +163,7 @@ func (w *LocalWallet) SetChainClients(clients types.ChainClients) {
 }
 
 // Close performs cleanup operations for the wallet
-func (w *LocalWallet) Close(ctx context.Context) error {
+func (w *LocalWallet) Close() error {
 	// TODO: Implement cleanup logic if needed
 	return nil
 }
