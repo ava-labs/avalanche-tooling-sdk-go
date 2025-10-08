@@ -6,8 +6,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
 // SendTx sends C-Chain transactions

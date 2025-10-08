@@ -6,9 +6,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
 // SignTx signs P-Chain transactions

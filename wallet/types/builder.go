@@ -114,7 +114,7 @@ type CChainBuildTxResult struct {
 
 func (c *CChainBuildTxResult) GetTxType() string {
 	// TODO: Extract tx type from C-Chain transaction when implemented
-	return "EVMTransaction"
+	return TxTypeEVMTransaction
 }
 
 func (c *CChainBuildTxResult) GetChainType() string {
@@ -139,7 +139,7 @@ type XChainBuildTxResult struct {
 
 func (x *XChainBuildTxResult) GetTxType() string {
 	// TODO: Extract tx type from X-Chain transaction when implemented
-	return "AVMTransaction"
+	return TxTypeAVMTransaction
 }
 
 func (x *XChainBuildTxResult) GetChainType() string {

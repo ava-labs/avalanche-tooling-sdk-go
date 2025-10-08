@@ -6,9 +6,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/utils/set"
@@ -16,6 +13,10 @@ import (
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
+	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
 // BuildTx builds P-Chain transactions

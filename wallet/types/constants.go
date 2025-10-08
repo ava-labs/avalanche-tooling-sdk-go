@@ -39,5 +39,7 @@ const (
 
 // Transaction type constants
 const (
-	TxTypeUnknown = "Unknown"
+	TxTypeUnknown        = "Unknown"
+	TxTypeEVMTransaction = "EVMTransaction"
+	TxTypeAVMTransaction = "AVMTransaction"
 )
