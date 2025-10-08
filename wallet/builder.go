@@ -24,7 +24,7 @@ func BuildTx(ctx context.Context, wallet *primary.Wallet, params types.BuildTxPa
 	// Route to appropriate chain handler based on chain type
 	switch chainType := params.GetChainType(); chainType {
 	case pchain.ChainType:
-		result, err := pchain.BuildTx(ctx, wallet, params.Account, params)
+		result, err := pchain.BuildTx(wallet, params.Account, params)
 		if err != nil {
 			return types.BuildTxResult{}, err
 		}

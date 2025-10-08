@@ -3,7 +3,6 @@
 package pchain
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -14,7 +13,7 @@ import (
 )
 
 // SendTx sends P-Chain transactions
-func SendTx(ctx context.Context, wallet *primary.Wallet, params types.SendTxParams) (types.SendTxResult, error) {
+func SendTx(wallet *primary.Wallet, params types.SendTxParams) (types.SendTxResult, error) {
 	// Get the P-Chain transaction from the SignTxResult
 	pChainTx, ok := params.SignTxResult.GetTx().(*avagoTxs.Tx)
 	if !ok {

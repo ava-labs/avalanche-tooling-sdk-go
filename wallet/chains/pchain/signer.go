@@ -14,7 +14,7 @@ import (
 )
 
 // SignTx signs P-Chain transactions
-func SignTx(ctx context.Context, wallet *primary.Wallet, params types.SignTxParams) (types.SignTxResult, error) {
+func SignTx(wallet *primary.Wallet, params types.SignTxParams) (types.SignTxResult, error) {
 	// Get the P-Chain transaction from the BuildTxResult
 	pChainTx, ok := params.BuildTxResult.GetTx().(*avagoTxs.Tx)
 	if !ok {

@@ -24,7 +24,7 @@ func SendTx(ctx context.Context, wallet *primary.Wallet, params types.SendTxPara
 	// Route to appropriate chain handler based on chain type
 	switch chainType := params.SignTxResult.GetChainType(); chainType {
 	case pchain.ChainType:
-		result, err := pchain.SendTx(ctx, wallet, params)
+		result, err := pchain.SendTx(wallet, params)
 		if err != nil {
 			return types.SendTxResult{}, err
 		}

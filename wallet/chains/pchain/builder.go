@@ -3,7 +3,6 @@
 package pchain
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -21,19 +20,19 @@ import (
 )
 
 // BuildTx builds P-Chain transactions
-func BuildTx(ctx context.Context, wallet *primary.Wallet, account account.Account, params types.BuildTxParams) (types.BuildTxResult, error) {
+func BuildTx(wallet *primary.Wallet, account account.Account, params types.BuildTxParams) (types.BuildTxResult, error) {
 	switch txType := params.BuildTxInput.(type) {
 	case *pchainTxs.CreateSubnetTxParams:
-		return buildCreateSubnetTx(ctx, wallet, txType)
+		return buildCreateSubnetTx(wallet, txType)
 	case *pchainTxs.ConvertSubnetToL1TxParams:
-		return buildConvertSubnetToL1Tx(ctx, wallet, account, txType)
+		return buildConvertSubnetToL1Tx(wallet, account, txType)
 	default:
 		return types.BuildTxResult{}, fmt.Errorf("unsupported P-Chain transaction type: %T", params.BuildTxInput)
 	}
 }
 
 // buildConvertSubnetToL1Tx provides a default implementation that can be used by any wallet
-func buildConvertSubnetToL1Tx(ctx context.Context, wallet *primary.Wallet, account account.Account, params *pchainTxs.ConvertSubnetToL1TxParams) (types.BuildTxResult, error) {
+func buildConvertSubnetToL1Tx(wallet *primary.Wallet, account account.Account, params *pchainTxs.ConvertSubnetToL1TxParams) (types.BuildTxResult, error) {
 	options := getMultisigTxOptions(account, params.SubnetAuthKeys)
 	unsignedTx, err := wallet.P().Builder().NewConvertSubnetToL1Tx(
 		params.SubnetID,
@@ -51,7 +50,7 @@ func buildConvertSubnetToL1Tx(ctx context.Context, wallet *primary.Wallet, accou
 }
 
 // buildCreateSubnetTx provides a default implementation that can be used by any wallet
-func buildCreateSubnetTx(ctx context.Context, wallet *primary.Wallet, params *pchainTxs.CreateSubnetTxParams) (types.BuildTxResult, error) {
+func buildCreateSubnetTx(wallet *primary.Wallet, params *pchainTxs.CreateSubnetTxParams) (types.BuildTxResult, error) {
 	addrs, err := address.ParseToIDs(params.ControlKeys)
 	if err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("failure parsing control keys: %w", err)
