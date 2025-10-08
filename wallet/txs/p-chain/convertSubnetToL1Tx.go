@@ -5,21 +5,19 @@ package txs
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanchego/ids"
-
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 // ConvertSubnetToL1TxParams contains all parameters needed to create a ConvertSubnetToL1Tx
 type ConvertSubnetToL1TxParams struct {
 	// SubnetAuthKeys are the keys used to sign `ConvertSubnetToL1Tx`
-	SubnetAuthKeys []ids.ShortID
+	SubnetAuthKeys []string
 	// SubnetID is Subnet ID of the subnet to convert to an L1.
-	SubnetID ids.ID
+	SubnetID string
 	// ChainID is Blockchain ID of the L1 where the validator manager contract is deployed.
-	ChainID ids.ID
+	ChainID string
 	// Address is address of the validator manager contract.
-	Address []byte
+	Address string
 	// Validators are the initial set of L1 validators after the conversion.
 	Validators []*avagoTxs.ConvertSubnetToL1Validator
 }
@@ -31,17 +29,20 @@ func (p ConvertSubnetToL1TxParams) GetTxType() string {
 
 // Validate validates the parameters
 func (p ConvertSubnetToL1TxParams) Validate() error {
-	if p.SubnetID == ids.Empty {
+	if len(p.SubnetAuthKeys) == 0 {
+		return fmt.Errorf("SubnetAuthKeys cannot be empty")
+	}
+	if p.SubnetID == "" {
 		return fmt.Errorf("SubnetID cannot be empty")
 	}
-	if p.ChainID == ids.Empty {
+	if p.ChainID == "" {
 		return fmt.Errorf("ChainID cannot be empty")
 	}
 	if len(p.Address) == 0 {
-		return fmt.Errorf("address cannot be empty")
+		return fmt.Errorf("Address cannot be empty")
 	}
 	if len(p.Validators) == 0 {
-		return fmt.Errorf("validators cannot be empty")
+		return fmt.Errorf("Validators cannot be empty")
 	}
 	return nil
 }
