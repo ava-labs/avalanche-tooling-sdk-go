@@ -57,33 +57,33 @@ type PChainSendTxResult struct {
 
 func (p *PChainSendTxResult) GetTxType() string {
 	if p.Tx == nil || p.Tx.Unsigned == nil {
-		return "Unknown"
+		return TxTypeUnknown
 	}
 	// Extract tx type from unsigned transaction
 	switch p.Tx.Unsigned.(type) {
 	case *txs.CreateSubnetTx:
-		return "CreateSubnetTx"
+		return PChainCreateSubnetTx
 	case *txs.ConvertSubnetToL1Tx:
-		return "ConvertSubnetToL1Tx"
+		return PChainConvertSubnetToL1Tx
 	case *txs.AddSubnetValidatorTx:
-		return "AddSubnetValidatorTx"
+		return PChainAddSubnetValidatorTx
 	case *txs.RemoveSubnetValidatorTx:
-		return "RemoveSubnetValidatorTx"
+		return PChainRemoveSubnetValidatorTx
 	case *txs.CreateChainTx:
-		return "CreateChainTx"
+		return PChainCreateChainTx
 	case *txs.TransformSubnetTx:
-		return "TransformSubnetTx"
+		return PChainTransformSubnetTx
 	case *txs.AddPermissionlessValidatorTx:
-		return "AddPermissionlessValidatorTx"
+		return PChainAddPermissionlessValidatorTx
 	case *txs.TransferSubnetOwnershipTx:
-		return "TransferSubnetOwnershipTx"
+		return PChainTransferSubnetOwnershipTx
 	default:
-		return "Unknown"
+		return TxTypeUnknown
 	}
 }
 
 func (p *PChainSendTxResult) GetChainType() string {
-	return "P-Chain"
+	return ChainTypePChain
 }
 
 func (p *PChainSendTxResult) GetTx() interface{} {
@@ -108,7 +108,7 @@ func (c *CChainSendTxResult) GetTxType() string {
 }
 
 func (c *CChainSendTxResult) GetChainType() string {
-	return "C-Chain"
+	return ChainTypeCChain
 }
 
 func (c *CChainSendTxResult) GetTx() interface{} {
@@ -133,7 +133,7 @@ func (x *XChainSendTxResult) GetTxType() string {
 }
 
 func (x *XChainSendTxResult) GetChainType() string {
-	return "X-Chain"
+	return ChainTypeXChain
 }
 
 func (x *XChainSendTxResult) GetTx() interface{} {

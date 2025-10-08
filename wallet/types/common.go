@@ -5,9 +5,10 @@ package types
 import (
 	"fmt"
 
+	"github.com/ava-labs/subnet-evm/ethclient"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/subnet-evm/ethclient"
 )
 
 type ChainClients struct {

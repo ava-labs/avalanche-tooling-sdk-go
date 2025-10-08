@@ -13,18 +13,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
-
-	sdkConstants "github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/cb58"
 	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
+	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/libevm/crypto"
+
+	sdkConstants "github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 var (

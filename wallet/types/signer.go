@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/vms/components/verify"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
 )
 
 // SignTxOutput represents a generic interface for signed transaction results

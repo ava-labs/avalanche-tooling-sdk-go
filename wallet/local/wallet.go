@@ -8,19 +8,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
-	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 	"github.com/ava-labs/avalanchego/ids"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
+	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
 // ChainClients is now defined in the wallet package
@@ -108,7 +106,7 @@ func (w *LocalWallet) ImportAccount(ctx context.Context, keyPath string) (*accou
 	// This would add the provided Account to the wallet
 	existingAccount, err := account.Import(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("error when importing Account %s \n", err)
+		return nil, fmt.Errorf("error when importing Account %w \n", err)
 	}
 	w.AddAccount(existingAccount)
 	return &existingAccount, nil

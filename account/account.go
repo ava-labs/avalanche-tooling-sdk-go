@@ -3,10 +3,10 @@
 package account
 
 import (
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
-	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 )
 
 // Account represents the interface for different account implementations

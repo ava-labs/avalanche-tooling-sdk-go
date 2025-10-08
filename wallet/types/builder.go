@@ -8,33 +8,6 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
-// Transaction type constants for all chains
-
-// P-Chain transaction types
-const (
-	// P-Chain transaction types
-	PChainCreateSubnetTx               = "CreateSubnetTx"
-	PChainConvertSubnetToL1Tx          = "ConvertSubnetToL1Tx"
-	PChainAddSubnetValidatorTx         = "AddSubnetValidatorTx"
-	PChainRemoveSubnetValidatorTx      = "RemoveSubnetValidatorTx"
-	PChainCreateChainTx                = "CreateChainTx"
-	PChainTransformSubnetTx            = "TransformSubnetTx"
-	PChainAddPermissionlessValidatorTx = "AddPermissionlessValidatorTx"
-	PChainTransferSubnetOwnershipTx    = "TransferSubnetOwnershipTx"
-)
-
-// Chain type constants
-const (
-	ChainTypePChain = "P-Chain"
-	ChainTypeCChain = "C-Chain"
-	ChainTypeXChain = "X-Chain"
-)
-
-// Transaction type constants
-const (
-	TxTypeUnknown = "Unknown"
-)
-
 // BuildTxOutput represents a generic interface for transaction results
 type BuildTxOutput interface {
 	// GetTxType returns the transaction type identifier
