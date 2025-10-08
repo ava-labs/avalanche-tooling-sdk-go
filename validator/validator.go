@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 
 	"github.com/ava-labs/avalanchego/ids"
-	avalanchegojson "github.com/ava-labs/avalanchego/utils/json"
 	"github.com/ava-labs/avalanchego/utils/rpc"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+
+	avalanchegojson "github.com/ava-labs/avalanchego/utils/json"
 )
 
 type ValidatorKind int64

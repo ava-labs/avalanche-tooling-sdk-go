@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/ids"
+
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 

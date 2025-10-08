@@ -8,18 +8,19 @@ import (
 	"math/big"
 
 	"github.com/ava-labs/avalanchego/ids"
-	avagoconstants "github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
-	warpMessage "github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
-	warpPayload "github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager/validatormanagertypes"
+
+	avagoconstants "github.com/ava-labs/avalanchego/utils/constants"
+	warpMessage "github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
+	warpPayload "github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
 )
 
 type ACP99ValidatorManagerSettings struct {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/libevm/core/types"
+
 	subnetEvmWarp "github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 )
 

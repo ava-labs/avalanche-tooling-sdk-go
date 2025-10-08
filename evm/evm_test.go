@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
-	ethereum "github.com/ava-labs/libevm"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/libevm/crypto"
@@ -21,7 +20,9 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+
 	mockethclient "github.com/ava-labs/avalanche-tooling-sdk-go/mocks/ethclient"
+	ethereum "github.com/ava-labs/libevm"
 )
 
 func TestHasScheme(t *testing.T) {
