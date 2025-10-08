@@ -214,14 +214,14 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 	case subnetParams.GenesisFilePath != "":
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
-		genesisBytes, err = createEvmGenesis(subnetParams.SubnetEVM)
+		genesisBytes, err = CreateEvmGenesis(subnetParams.SubnetEVM)
 	default:
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	vmID, err := vmID(subnetParams.Name)
+	vmID, err := VmID(subnetParams.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create VM ID from %s: %w", subnetParams.Name, err)
 	}
@@ -237,7 +237,7 @@ func (c *Subnet) SetSubnetID(subnetID ids.ID) {
 	c.SubnetID = subnetID
 }
 
-func createEvmGenesis(
+func CreateEvmGenesis(
 	subnetEVMParams *SubnetEVMParams,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
@@ -291,7 +291,7 @@ func createEvmGenesis(
 	return prettyJSON.Bytes(), nil
 }
 
-func vmID(vmName string) (ids.ID, error) {
+func VmID(vmName string) (ids.ID, error) {
 	if len(vmName) > 32 {
 		return ids.Empty, fmt.Errorf("VM name must be <= 32 bytes, found %d", len(vmName))
 	}

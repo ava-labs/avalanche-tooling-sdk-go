@@ -24,11 +24,31 @@ func BuildTx(wallet *primary.Wallet, account account.Account, params types.Build
 	switch txType := params.BuildTxInput.(type) {
 	case *pchainTxs.CreateSubnetTxParams:
 		return buildCreateSubnetTx(wallet, txType)
+	case *pchainTxs.CreateChainTxParams:
+		return buildcrea(wallet, account, txType)
 	case *pchainTxs.ConvertSubnetToL1TxParams:
 		return buildConvertSubnetToL1Tx(wallet, account, txType)
 	default:
 		return types.BuildTxResult{}, fmt.Errorf("unsupported P-Chain transaction type: %T", params.BuildTxInput)
 	}
+}
+
+// buildConvertSubnetToL1Tx provides a default implementation that can be used by any wallet
+func buildCreateChainTx(wallet *primary.Wallet, account account.Account, params *pchainTxs.ConvertSubnetToL1TxParams) (types.BuildTxResult, error) {
+	options := getMultisigTxOptions(account, params.SubnetAuthKeys)
+	unsignedTx, err := wallet.P().Builder().NewConvertSubnetToL1Tx(
+		params.SubnetID,
+		params.ChainID,
+		params.Address,
+		params.Validators,
+		options...,
+	)
+	if err != nil {
+		return types.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
+	}
+	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
+	pChainResult := types.NewPChainBuildTxResult(&builtTx)
+	return types.BuildTxResult{BuildTxOutput: pChainResult}, nil
 }
 
 // buildConvertSubnetToL1Tx provides a default implementation that can be used by any wallet
