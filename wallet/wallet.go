@@ -26,7 +26,7 @@ type Wallet interface {
 	CreateAccount() (*account.Account, error)
 
 	// GetAccount retrieves an existing Account by address or identifier
-	GetAccount(address ids.ShortID) (*account.Account, error)
+	GetAccount() (*account.Account, error)
 
 	// ListAccounts returns all accounts managed by this wallet
 	ListAccounts() ([]*account.Account, error)
