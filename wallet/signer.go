@@ -8,9 +8,7 @@ import (
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/cchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/pchain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/chains/xchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
@@ -25,18 +23,6 @@ func SignTx(ctx context.Context, wallet *primary.Wallet, params types.SignTxPara
 	switch chainType := params.GetChainType(); chainType {
 	case pchain.ChainType:
 		result, err := pchain.SignTx(wallet, params)
-		if err != nil {
-			return types.SignTxResult{}, err
-		}
-		return types.SignTxResult{SignTxOutput: result.SignTxOutput}, nil
-	case cchain.ChainType:
-		result, err := cchain.SignTx(wallet, params)
-		if err != nil {
-			return types.SignTxResult{}, err
-		}
-		return types.SignTxResult{SignTxOutput: result.SignTxOutput}, nil
-	case xchain.ChainType:
-		result, err := xchain.SignTx(wallet, params)
 		if err != nil {
 			return types.SignTxResult{}, err
 		}
