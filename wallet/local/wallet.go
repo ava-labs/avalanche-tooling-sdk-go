@@ -139,20 +139,6 @@ func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (ty
 	return wallet.SendTx(w.Wallet, params)
 }
 
-// GetAddresses returns all addresses managed by this wallet
-func (w *LocalWallet) GetAddresses() ([]ids.ShortID, error) {
-	// Get addresses from all accounts in the wallet
-	var allAddresses []ids.ShortID
-	accounts := w.GetAllAccounts()
-
-	for _, acc := range accounts {
-		addresses := acc.Addresses()
-		allAddresses = append(allAddresses, addresses...)
-	}
-
-	return allAddresses, nil
-}
-
 // GetChainClients returns the blockchain clients associated with this wallet
 func (w *LocalWallet) GetChainClients() types.ChainClients {
 	return w.clients
@@ -161,12 +147,6 @@ func (w *LocalWallet) GetChainClients() types.ChainClients {
 // SetChainClients updates the blockchain clients for this wallet
 func (w *LocalWallet) SetChainClients(clients types.ChainClients) {
 	w.clients = clients
-}
-
-// Close performs cleanup operations for the wallet
-func (w *LocalWallet) Close() error {
-	// TODO: Implement cleanup logic if needed
-	return nil
 }
 
 // AddAccount adds an Account to the wallet

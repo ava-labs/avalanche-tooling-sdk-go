@@ -5,8 +5,6 @@ package wallet
 import (
 	"context"
 
-	"github.com/ava-labs/avalanchego/ids"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
@@ -44,15 +42,9 @@ type Wallet interface {
 	// SendTx submits a signed transaction to the Network
 	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
 
-	// GetAddresses returns all addresses managed by this wallet
-	GetAddresses() ([]ids.ShortID, error)
-
 	// GetChainClients returns the blockchain clients associated with this wallet
 	GetChainClients() types.ChainClients
 
 	// SetChainClients updates the blockchain clients for this wallet
 	SetChainClients(clients types.ChainClients)
-
-	// Close performs cleanup operations for the wallet
-	Close() error
 }
