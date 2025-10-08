@@ -233,7 +233,7 @@ func (p *PChainSignTxResult) GetTxType() string {
 	}
 }
 
-func (_ *PChainSignTxResult) GetChainType() string {
+func (p *PChainSignTxResult) GetChainType() string {
 	return "P-Chain"
 }
 
@@ -270,12 +270,12 @@ type CChainSignTxResult struct {
 	Tx interface{} // Will be *types.Transaction when C-Chain is implemented
 }
 
-func (_ *CChainSignTxResult) GetTxType() string {
+func (c *CChainSignTxResult) GetTxType() string {
 	// TODO: Extract tx type from C-Chain transaction when implemented
 	return TxTypeEVMTransaction
 }
 
-func (_ *CChainSignTxResult) GetChainType() string {
+func (c *CChainSignTxResult) GetChainType() string {
 	return "C-Chain"
 }
 
@@ -300,12 +300,12 @@ type XChainSignTxResult struct {
 	Tx interface{} // Will be *avm.Tx when X-Chain is implemented
 }
 
-func (_ *XChainSignTxResult) GetTxType() string {
+func (x *XChainSignTxResult) GetTxType() string {
 	// TODO: Extract tx type from X-Chain transaction when implemented
 	return TxTypeAVMTransaction
 }
 
-func (_ *XChainSignTxResult) GetChainType() string {
+func (x *XChainSignTxResult) GetChainType() string {
 	return "X-Chain"
 }
 
