@@ -83,7 +83,7 @@ func (w *LocalWallet) CreateAccount() (*account.Account, error) {
 }
 
 // GetAccount retrieves an existing Account by address or identifier
-func (w *LocalWallet) GetAccount(address ids.ShortID) (*account.Account, error) {
+func (w *LocalWallet) GetAccount() (*account.Account, error) {
 	// TODO: Implement Account retrieval logic based on address
 	// This could search through w.accounts or use the embedded primary.Wallet
 	return nil, fmt.Errorf("not implemented")
@@ -106,7 +106,7 @@ func (w *LocalWallet) ImportAccount(keyPath string) (*account.Account, error) {
 	// This would add the provided Account to the wallet
 	existingAccount, err := account.Import(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("error when importing Account %w \n", err)
+		return nil, fmt.Errorf("error when importing Account %w", err)
 	}
 	w.AddAccount(existingAccount)
 	return &existingAccount, nil
