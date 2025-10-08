@@ -4,25 +4,23 @@ package main
 
 import (
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
-	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"math/big"
 	"os"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/blockchain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/subnet-evm/core"
 	"github.com/ava-labs/subnet-evm/params/extras"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
+	"github.com/ava-labs/avalanche-tooling-sdk-go/blockchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 
 	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 func CreateChain(subnetID string) error {
