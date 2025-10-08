@@ -6,7 +6,8 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 // ConvertSubnetToL1TxParams contains all parameters needed to create a ConvertSubnetToL1Tx
@@ -20,7 +21,7 @@ type ConvertSubnetToL1TxParams struct {
 	// Address is address of the validator manager contract.
 	Address []byte
 	// Validators are the initial set of L1 validators after the conversion.
-	Validators []*txs.ConvertSubnetToL1Validator
+	Validators []*avagoTxs.ConvertSubnetToL1Validator
 }
 
 // GetTxType returns the transaction type identifier
@@ -37,10 +38,10 @@ func (p ConvertSubnetToL1TxParams) Validate() error {
 		return fmt.Errorf("ChainID cannot be empty")
 	}
 	if len(p.Address) == 0 {
-		return fmt.Errorf("Address cannot be empty")
+		return fmt.Errorf("address cannot be empty")
 	}
 	if len(p.Validators) == 0 {
-		return fmt.Errorf("Validators cannot be empty")
+		return fmt.Errorf("validators cannot be empty")
 	}
 	return nil
 }

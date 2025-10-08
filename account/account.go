@@ -3,47 +3,20 @@
 package account
 
 import (
-	"fmt"
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 )
 
 // Account represents the interface for different account implementations
-// in the Avalanche ecosystem. An account provides a unified interface
-// for managing cryptographic identities across various Avalanche networks
-// and chains. It abstracts the underlying key management implementation,
-// allowing for different account types (software wallets, hardware wallets,
-// server wallets etc.).
-type Account struct {
-	*key.SoftKey
-}
+type Account interface {
+	// Addresses returns all addresses associated with this account
+	Addresses() []ids.ShortID
+	// GetPChainAddress returns the P-Chain address for the given network
+	GetPChainAddress(network network.Network) (string, error)
+	// NewAccount creates a new account of the same type
+	NewAccount() (Account, error)
 
-func NewAccount() (Account, error) {
-	k, err := key.NewSoft()
-	if err != nil {
-		return Account{}, err
-	}
-	return Account{
-		SoftKey: k,
-	}, nil
-}
-
-func Import(keyPath string) (Account, error) {
-	k, err := key.LoadSoft(keyPath)
-	if err != nil {
-		return Account{}, err
-	}
-	return Account{
-		SoftKey: k,
-	}, nil
-}
-
-func (a *Account) GetPChainAddress(network network.Network) (string, error) {
-	if a.SoftKey == nil {
-		return "", fmt.Errorf("SoftKey not initialized")
-	}
-	pchainAddrs, err := a.SoftKey.GetNetworkChainAddress(network, "P")
-	return pchainAddrs[0], err
+	GetKeychain() (*secp256k1fx.Keychain, error)
 }
