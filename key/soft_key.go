@@ -8,20 +8,23 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 
+	sdkConstants "github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/cb58"
+	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/libevm/crypto"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 var (
@@ -285,9 +288,32 @@ func (m *SoftKey) PrivKeyHex() string {
 
 // Saves the private key to disk with hex encoding.
 func (m *SoftKey) Save(p string) error {
-	return os.WriteFile(p, []byte(m.PrivKeyHex()), constants.WriteReadUserOnlyPerms)
+	return os.WriteFile(p, []byte(m.PrivKeyHex()), sdkConstants.WriteReadUserOnlyPerms)
 }
 
 func (m *SoftKey) Addresses() []ids.ShortID {
 	return []ids.ShortID{m.privKey.PublicKey().Address()}
+}
+
+func GetHRP(networkID uint32) string {
+	switch networkID {
+	case constants.LocalID:
+		return constants.LocalHRP
+	case constants.FujiID:
+		return constants.FujiHRP
+	case constants.MainnetID:
+		return constants.MainnetHRP
+	default:
+		return constants.FallbackHRP
+	}
+}
+
+func (m *SoftKey) GetNetworkChainAddress(network network.Network, chain string) ([]string, error) {
+	if chain != "P" && chain != "X" {
+		return nil, fmt.Errorf("only P or X is accepted as a chain option")
+	}
+	// Parse HRP to create valid address
+	hrp := GetHRP(network.ID)
+	addressStr, error := address.Format(chain, hrp, m.privKey.PublicKey().Address().Bytes())
+	return []string{addressStr}, error
 }
