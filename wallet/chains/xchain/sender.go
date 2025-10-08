@@ -3,7 +3,6 @@
 package xchain
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -12,7 +11,7 @@ import (
 )
 
 // SendTx sends X-Chain transactions
-func SendTx(ctx context.Context, wallet *primary.Wallet, params types.SendTxParams) (types.SendTxResult, error) {
+func SendTx(wallet *primary.Wallet, params types.SendTxParams) (types.SendTxResult, error) {
 	// TODO: Implement X-Chain sending when X-Chain is implemented
 	return types.SendTxResult{}, fmt.Errorf("X-Chain sending not yet implemented")
 }

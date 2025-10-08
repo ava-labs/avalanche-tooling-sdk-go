@@ -30,13 +30,13 @@ func SendTx(ctx context.Context, wallet *primary.Wallet, params types.SendTxPara
 		}
 		return types.SendTxResult{SendTxOutput: result.SendTxOutput}, nil
 	case cchain.ChainType:
-		result, err := cchain.SendTx(ctx, wallet, params)
+		result, err := cchain.SendTx(wallet, params)
 		if err != nil {
 			return types.SendTxResult{}, err
 		}
 		return types.SendTxResult{SendTxOutput: result.SendTxOutput}, nil
 	case xchain.ChainType:
-		result, err := xchain.SendTx(ctx, wallet, params)
+		result, err := xchain.SendTx(wallet, params)
 		if err != nil {
 			return types.SendTxResult{}, err
 		}

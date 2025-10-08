@@ -30,13 +30,13 @@ func SignTx(ctx context.Context, wallet *primary.Wallet, params types.SignTxPara
 		}
 		return types.SignTxResult{SignTxOutput: result.SignTxOutput}, nil
 	case cchain.ChainType:
-		result, err := cchain.SignTx(ctx, wallet, params)
+		result, err := cchain.SignTx(wallet, params)
 		if err != nil {
 			return types.SignTxResult{}, err
 		}
 		return types.SignTxResult{SignTxOutput: result.SignTxOutput}, nil
 	case xchain.ChainType:
-		result, err := xchain.SignTx(ctx, wallet, params)
+		result, err := xchain.SignTx(wallet, params)
 		if err != nil {
 			return types.SignTxResult{}, err
 		}

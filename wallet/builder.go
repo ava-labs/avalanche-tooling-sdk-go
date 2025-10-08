@@ -30,13 +30,13 @@ func BuildTx(ctx context.Context, wallet *primary.Wallet, params types.BuildTxPa
 		}
 		return types.BuildTxResult{BuildTxOutput: result.BuildTxOutput}, nil
 	case cchain.ChainType:
-		result, err := cchain.BuildTx(ctx, wallet, params)
+		result, err := cchain.BuildTx(wallet, params)
 		if err != nil {
 			return types.BuildTxResult{}, err
 		}
 		return types.BuildTxResult{BuildTxOutput: result.BuildTxOutput}, nil
 	case xchain.ChainType:
-		result, err := xchain.BuildTx(ctx, wallet, params)
+		result, err := xchain.BuildTx(wallet, params)
 		if err != nil {
 			return types.BuildTxResult{}, err
 		}

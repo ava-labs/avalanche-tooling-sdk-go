@@ -3,7 +3,6 @@
 package cchain
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -12,7 +11,7 @@ import (
 )
 
 // SignTx signs C-Chain transactions
-func SignTx(ctx context.Context, wallet *primary.Wallet, params types.SignTxParams) (types.SignTxResult, error) {
+func SignTx(wallet *primary.Wallet, params types.SignTxParams) (types.SignTxResult, error) {
 	// TODO: Implement C-Chain signing when C-Chain is implemented
 	return types.SignTxResult{}, fmt.Errorf("C-Chain signing not yet implemented")
 }
