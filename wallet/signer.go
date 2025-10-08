@@ -3,7 +3,6 @@
 package wallet
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -13,7 +12,7 @@ import (
 )
 
 // SignTx constructs a transaction for the specified operation
-func SignTx(ctx context.Context, wallet *primary.Wallet, params types.SignTxParams) (types.SignTxResult, error) {
+func SignTx(wallet *primary.Wallet, params types.SignTxParams) (types.SignTxResult, error) {
 	// Validate parameters first
 	if err := params.Validate(); err != nil {
 		return types.SignTxResult{}, fmt.Errorf("invalid parameters: %w", err)

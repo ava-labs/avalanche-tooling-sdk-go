@@ -3,7 +3,6 @@
 package wallet
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -13,7 +12,7 @@ import (
 )
 
 // SendTx submits a signed transaction to the Network
-func SendTx(ctx context.Context, wallet *primary.Wallet, params types.SendTxParams) (types.SendTxResult, error) {
+func SendTx(wallet *primary.Wallet, params types.SendTxParams) (types.SendTxResult, error) {
 	// Validate parameters first
 	if err := params.Validate(); err != nil {
 		return types.SendTxResult{}, fmt.Errorf("invalid parameters: %w", err)

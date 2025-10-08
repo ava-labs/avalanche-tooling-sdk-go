@@ -126,7 +126,7 @@ func (w *LocalWallet) SignTx(ctx context.Context, params types.SignTxParams) (ty
 		return types.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
 
-	return wallet.SignTx(ctx, w.Wallet, params)
+	return wallet.SignTx(w.Wallet, params)
 }
 
 // SendTx submits a signed transaction to the Network
@@ -135,7 +135,7 @@ func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (ty
 		return types.SendTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 
-	return wallet.SendTx(ctx, w.Wallet, params)
+	return wallet.SendTx(w.Wallet, params)
 }
 
 // GetAddresses returns all addresses managed by this wallet
