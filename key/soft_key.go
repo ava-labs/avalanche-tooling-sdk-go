@@ -295,25 +295,12 @@ func (m *SoftKey) Addresses() []ids.ShortID {
 	return []ids.ShortID{m.privKey.PublicKey().Address()}
 }
 
-func GetHRP(networkID uint32) string {
-	switch networkID {
-	case constants.LocalID:
-		return constants.LocalHRP
-	case constants.FujiID:
-		return constants.FujiHRP
-	case constants.MainnetID:
-		return constants.MainnetHRP
-	default:
-		return constants.FallbackHRP
-	}
-}
-
 func (m *SoftKey) GetNetworkChainAddress(network network.Network, chain string) ([]string, error) {
 	if chain != "P" && chain != "X" {
 		return nil, fmt.Errorf("only P or X is accepted as a chain option")
 	}
 	// Parse HRP to create valid address
-	hrp := GetHRP(network.ID)
+	hrp := constants.GetHRP(network.ID)
 	addressStr, error := address.Format(chain, hrp, m.privKey.PublicKey().Address().Bytes())
 	return []string{addressStr}, error
 }
