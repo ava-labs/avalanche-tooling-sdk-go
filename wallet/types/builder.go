@@ -8,6 +8,33 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
+// Transaction type constants for all chains
+
+// P-Chain transaction types
+const (
+	// P-Chain transaction types
+	PChainCreateSubnetTx               = "CreateSubnetTx"
+	PChainConvertSubnetToL1Tx          = "ConvertSubnetToL1Tx"
+	PChainAddSubnetValidatorTx         = "AddSubnetValidatorTx"
+	PChainRemoveSubnetValidatorTx      = "RemoveSubnetValidatorTx"
+	PChainCreateChainTx                = "CreateChainTx"
+	PChainTransformSubnetTx            = "TransformSubnetTx"
+	PChainAddPermissionlessValidatorTx = "AddPermissionlessValidatorTx"
+	PChainTransferSubnetOwnershipTx    = "TransferSubnetOwnershipTx"
+)
+
+// Chain type constants
+const (
+	ChainTypePChain = "P-Chain"
+	ChainTypeCChain = "C-Chain"
+	ChainTypeXChain = "X-Chain"
+)
+
+// Transaction type constants
+const (
+	TxTypeUnknown = "Unknown"
+)
+
 // BuildTxOutput represents a generic interface for transaction results
 type BuildTxOutput interface {
 	// GetTxType returns the transaction type identifier
@@ -67,33 +94,33 @@ type PChainBuildTxResult struct {
 
 func (p *PChainBuildTxResult) GetTxType() string {
 	if p.Tx == nil || p.Tx.Unsigned == nil {
-		return "Unknown"
+		return TxTypeUnknown
 	}
 	// Extract tx type from unsigned transaction
 	switch p.Tx.Unsigned.(type) {
 	case *txs.CreateSubnetTx:
-		return "CreateSubnetTx"
+		return PChainCreateSubnetTx
 	case *txs.ConvertSubnetToL1Tx:
-		return "ConvertSubnetToL1Tx"
+		return PChainConvertSubnetToL1Tx
 	case *txs.AddSubnetValidatorTx:
-		return "AddSubnetValidatorTx"
+		return PChainAddSubnetValidatorTx
 	case *txs.RemoveSubnetValidatorTx:
-		return "RemoveSubnetValidatorTx"
+		return PChainRemoveSubnetValidatorTx
 	case *txs.CreateChainTx:
-		return "CreateChainTx"
+		return PChainCreateChainTx
 	case *txs.TransformSubnetTx:
-		return "TransformSubnetTx"
+		return PChainTransformSubnetTx
 	case *txs.AddPermissionlessValidatorTx:
-		return "AddPermissionlessValidatorTx"
+		return PChainAddPermissionlessValidatorTx
 	case *txs.TransferSubnetOwnershipTx:
-		return "TransferSubnetOwnershipTx"
+		return PChainTransferSubnetOwnershipTx
 	default:
-		return "Unknown"
+		return TxTypeUnknown
 	}
 }
 
 func (p *PChainBuildTxResult) GetChainType() string {
-	return "P-Chain"
+	return ChainTypePChain
 }
 
 func (p *PChainBuildTxResult) GetTx() interface{} {
@@ -118,7 +145,7 @@ func (c *CChainBuildTxResult) GetTxType() string {
 }
 
 func (c *CChainBuildTxResult) GetChainType() string {
-	return "C-Chain"
+	return ChainTypeCChain
 }
 
 func (c *CChainBuildTxResult) GetTx() interface{} {
@@ -143,7 +170,7 @@ func (x *XChainBuildTxResult) GetTxType() string {
 }
 
 func (x *XChainBuildTxResult) GetChainType() string {
-	return "X-Chain"
+	return ChainTypeXChain
 }
 
 func (x *XChainBuildTxResult) GetTx() interface{} {
