@@ -21,7 +21,7 @@ func (p CreateSubnetTxParams) Validate() error {
 		return fmt.Errorf("control keys cannot be empty")
 	}
 	if p.Threshold == 0 {
-		return fmt.Errorf("threshhold cannot be zero")
+		return fmt.Errorf("threshold cannot be zero")
 	}
 	return nil
 }

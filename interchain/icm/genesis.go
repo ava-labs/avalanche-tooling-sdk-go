@@ -12,9 +12,9 @@ import (
 	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/core"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
 	_ "embed"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 const (

@@ -107,7 +107,7 @@ func (w *LocalWallet) ImportAccount(ctx context.Context, keyPath string) (*accou
 	// This would add the provided Account to the wallet
 	existingAccount, err := account.Import(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("error when importing Account %w \n", err)
+		return nil, fmt.Errorf("error when importing Account %w", err)
 	}
 	w.AddAccount(existingAccount)
 	return &existingAccount, nil

@@ -17,11 +17,11 @@ import (
 
 	"github.com/ava-labs/libevm/common"
 
+	_ "embed"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
-	_ "embed"
 )
 
 //go:embed smart_contracts/messenger_deployment_transaction_v1.0.0.txt
