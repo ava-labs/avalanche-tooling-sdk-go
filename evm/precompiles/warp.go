@@ -3,10 +3,9 @@
 package precompiles
 
 import (
-	_ "embed"
+	"github.com/ava-labs/avalanchego/ids"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
-	"github.com/ava-labs/avalanchego/ids"
 )
 
 func WarpPrecompileGetBlockchainID(

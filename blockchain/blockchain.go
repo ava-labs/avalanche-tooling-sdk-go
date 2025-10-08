@@ -12,11 +12,6 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
@@ -25,8 +20,13 @@ import (
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/params/extras"
-
 	"go.uber.org/zap"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 )
 
 var (

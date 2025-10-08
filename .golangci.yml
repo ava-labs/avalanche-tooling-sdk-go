@@ -19,6 +19,7 @@ linters:
     - depguard
     - errcheck
     - errorlint
+    - gci
     - goconst
     - gocritic
     - gofmt
@@ -112,3 +113,14 @@ linters-settings:
             desc: io/ioutil is deprecated. Use package io or os instead.
           - pkg: "github.com/stretchr/testify/assert"
             desc: github.com/stretchr/testify/require should be used instead.
+  gci:
+    sections:
+      - standard
+      - default
+      - blank
+      - prefix(github.com/ava-labs/avalanche-tooling-sdk-go)
+      - alias
+      - dot
+    custom-order: true
+  gofumpt:
+    extra-rules: false

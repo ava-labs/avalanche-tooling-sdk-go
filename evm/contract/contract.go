@@ -3,7 +3,6 @@
 package contract
 
 import (
-	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -11,15 +10,16 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	sdkUtils "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanchego/utils/logging"
-	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
+	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/common/hexutil"
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 var ErrFailedReceiptStatus = fmt.Errorf("failed receipt status")
@@ -252,7 +252,7 @@ func ParseSpec(
 	}
 	if event {
 		for i := range inputsMaps {
-			if sdkUtils.Belongs(indexedFields, i) {
+			if utils.Belongs(indexedFields, i) {
 				inputsMaps[i]["indexed"] = true
 			} else {
 				inputsMaps[i]["indexed"] = false
@@ -407,7 +407,7 @@ func TxToMethodWithWarpMessage(
 	from common.Address,
 	privateKey string,
 	contractAddress common.Address,
-	warpMessage *avalancheWarp.Message,
+	warpMessage *warp.Message,
 	payment *big.Int,
 	description string,
 	errorSignatureToError map[string]error,

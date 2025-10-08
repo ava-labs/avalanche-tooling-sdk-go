@@ -12,17 +12,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/utils/formatting/address"
+
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/cb58"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
-	"github.com/ava-labs/avalanchego/vms/components/avax"
-	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/libevm/crypto"
 
-	"go.uber.org/zap"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 var (
@@ -32,24 +31,39 @@ var (
 	ErrInvalidPrivateKeyEncoding = errors.New("invalid private key encoding")
 )
 
-var _ Key = &SoftKey{}
-
+// SoftKey represents a software-based cryptographic key stored locally on the machine.
+// It encapsulates a secp256k1 private key along with its various representations
+// and provides functionality for local key management, including generation,
+// storage, and retrieval from the local filesystem. SoftKey is designed for
+// development, testing, and scenarios where keys are managed directly on the
+// local machine rather than through hardware security modules or external
+// key management systems.
+//
+// WARNING: SoftKey is NOT recommended for production use due to security concerns.
+// Private keys stored in plaintext on the local filesystem are vulnerable to
+// various attack vectors including malware, unauthorized file access, and
+// physical device compromise. For production environments, use hardware security
+// modules (HSMs), secure key management services, or other secure key storage
+// solutions that provide proper key protection and access controls.
+//
+// This implementation is suitable ONLY for local development environments and
+// applications where key security is managed through filesystem permissions
+// and local access controls rather than specialized hardware.
 type SoftKey struct {
-	privKey        *secp256k1.PrivateKey
-	privKeyRaw     []byte
+	// privKey is the actual secp256k1 private key used for cryptographic operations
+	privKey *secp256k1.PrivateKey
+	// privKeyRaw contains raw bytes of the private key for direct access
+	privKeyRaw []byte
+	// privKeyEncoded is the CB58-encoded string representation for storage/transmission
 	privKeyEncoded string
-	keyChain       *secp256k1fx.Keychain
+	// keyChain is the Avalanche keychain containing the public key for transaction signing
+	keyChain *secp256k1fx.Keychain
 }
 
 const (
 	privKeyEncPfx = "PrivateKey-"
 	privKeySize   = 64
-
-	rawEwoqPk      = "ewoqjP7PxY4yr3iLTpLisriqt94hdyDFNgchSxGGztUrTXtNN"
-	EwoqPrivateKey = privKeyEncPfx + rawEwoqPk
 )
-
-var ewoqKeyBytes = []byte("56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027")
 
 type SOp struct {
 	privKey        *secp256k1.PrivateKey
@@ -243,6 +257,14 @@ func decodePrivateKey(enc string) (*secp256k1.PrivateKey, error) {
 	return privKey, nil
 }
 
+func (m *SoftKey) P(networkHRP string) (string, error) {
+	return address.Format("P", networkHRP, m.privKey.PublicKey().Address().Bytes())
+}
+
+func (m *SoftKey) X(networkHRP string) (string, error) {
+	return address.Format("X", networkHRP, m.privKey.PublicKey().Address().Bytes())
+}
+
 func (m *SoftKey) C() string {
 	ecdsaPrv := m.privKey.ToECDSA()
 	pub := ecdsaPrv.PublicKey
@@ -256,21 +278,6 @@ func (m *SoftKey) KeyChain() *secp256k1fx.Keychain {
 	return m.keyChain
 }
 
-// Returns the private key.
-func (m *SoftKey) PrivKey() *secp256k1.PrivateKey {
-	return m.privKey
-}
-
-// Returns the private key in raw bytes.
-func (m *SoftKey) PrivKeyRaw() []byte {
-	return m.privKeyRaw
-}
-
-// Returns the private key encoded in CB58 and "PrivateKey-" prefix.
-func (m *SoftKey) PrivKeyCB58() string {
-	return m.privKeyEncoded
-}
-
 // Returns the private key encoded hex
 func (m *SoftKey) PrivKeyHex() string {
 	return hex.EncodeToString(m.privKeyRaw)
@@ -281,85 +288,6 @@ func (m *SoftKey) Save(p string) error {
 	return os.WriteFile(p, []byte(m.PrivKeyHex()), constants.WriteReadUserOnlyPerms)
 }
 
-func (m *SoftKey) Spends(outputs []*avax.UTXO, opts ...OpOption) (
-	totalBalanceToSpend uint64,
-	inputs []*avax.TransferableInput,
-	signers [][]ids.ShortID,
-) {
-	ret := &Op{}
-	ret.applyOpts(opts)
-
-	for _, out := range outputs {
-		input, psigners, err := m.spend(out, ret.time)
-		if err != nil {
-			zap.L().Warn("cannot spend with current key", zap.Error(err))
-			continue
-		}
-		totalBalanceToSpend += input.Amount()
-		inputs = append(inputs, &avax.TransferableInput{
-			UTXOID: out.UTXOID,
-			Asset:  out.Asset,
-			In:     input,
-		})
-		// Convert to ids.ShortID to adhere with interface
-		pksigners := make([]ids.ShortID, len(psigners))
-		for i, psigner := range psigners {
-			pksigners[i] = psigner.PublicKey().Address()
-		}
-		signers = append(signers, pksigners)
-		if ret.targetAmount > 0 &&
-			totalBalanceToSpend > ret.targetAmount+ret.feeDeduct {
-			break
-		}
-	}
-	SortTransferableInputsWithSigners(inputs, signers)
-	return totalBalanceToSpend, inputs, signers
-}
-
-func (m *SoftKey) spend(output *avax.UTXO, time uint64) (
-	input avax.TransferableIn,
-	signers []*secp256k1.PrivateKey,
-	err error,
-) {
-	// "time" is used to check whether the key owner
-	// is still within the lock time (thus can't spend).
-	inputf, psigners, err := m.keyChain.Spend(output.Out, time)
-	if err != nil {
-		return nil, nil, err
-	}
-	var ok bool
-	input, ok = inputf.(avax.TransferableIn)
-	if !ok {
-		return nil, nil, ErrInvalidType
-	}
-	return input, psigners, nil
-}
-
 func (m *SoftKey) Addresses() []ids.ShortID {
 	return []ids.ShortID{m.privKey.PublicKey().Address()}
-}
-
-func (m *SoftKey) Sign(pTx *txs.Tx, signers [][]ids.ShortID) error {
-	privsigners := make([][]*secp256k1.PrivateKey, len(signers))
-	for i, inputSigners := range signers {
-		privsigners[i] = make([]*secp256k1.PrivateKey, len(inputSigners))
-		for j, signer := range inputSigners {
-			if signer != m.privKey.PublicKey().Address() {
-				// Should never happen
-				return ErrCantSpend
-			}
-			privsigners[i][j] = m.privKey
-		}
-	}
-
-	return pTx.Sign(txs.Codec, privsigners)
-}
-
-func (m *SoftKey) Match(owners *secp256k1fx.OutputOwners, time uint64) ([]uint32, []ids.ShortID, bool) {
-	indices, privs, ok := m.keyChain.Match(owners, time)
-	pks := make([]ids.ShortID, len(privs))
-	for i, priv := range privs {
-		pks[i] = priv.PublicKey().Address()
-	}
-	return indices, pks, ok
 }

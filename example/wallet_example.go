@@ -28,7 +28,7 @@ func CreateSubnet() error {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	existingAccount, err := localWallet.ImportAccount(ctx, "/Users/raymondsukanto/.avalanche-cli/key/newTestKey.pk")
+	existingAccount, err := localWallet.ImportAccount(ctx, "EXISTING_KEY_PATH")
 	if err != nil {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}

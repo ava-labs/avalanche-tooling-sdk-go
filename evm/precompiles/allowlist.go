@@ -3,12 +3,12 @@
 package precompiles
 
 import (
-	_ "embed"
 	"math/big"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/libevm/common"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 )
 
 func SetAdmin(
