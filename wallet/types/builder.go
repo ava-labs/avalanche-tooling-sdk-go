@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
 // BuildTxOutput represents a generic interface for transaction results
@@ -67,33 +69,33 @@ type PChainBuildTxResult struct {
 
 func (p *PChainBuildTxResult) GetTxType() string {
 	if p.Tx == nil || p.Tx.Unsigned == nil {
-		return TxTypeUnknown
+		return constants.TxTypeUnknown
 	}
 	// Extract tx type from unsigned transaction
 	switch p.Tx.Unsigned.(type) {
 	case *txs.CreateSubnetTx:
-		return PChainCreateSubnetTx
+		return constants.PChainCreateSubnetTx
 	case *txs.ConvertSubnetToL1Tx:
-		return PChainConvertSubnetToL1Tx
+		return constants.PChainConvertSubnetToL1Tx
 	case *txs.AddSubnetValidatorTx:
-		return PChainAddSubnetValidatorTx
+		return constants.PChainAddSubnetValidatorTx
 	case *txs.RemoveSubnetValidatorTx:
-		return PChainRemoveSubnetValidatorTx
+		return constants.PChainRemoveSubnetValidatorTx
 	case *txs.CreateChainTx:
-		return PChainCreateChainTx
+		return constants.PChainCreateChainTx
 	case *txs.TransformSubnetTx:
-		return PChainTransformSubnetTx
+		return constants.PChainTransformSubnetTx
 	case *txs.AddPermissionlessValidatorTx:
-		return PChainAddPermissionlessValidatorTx
+		return constants.PChainAddPermissionlessValidatorTx
 	case *txs.TransferSubnetOwnershipTx:
-		return PChainTransferSubnetOwnershipTx
+		return constants.PChainTransferSubnetOwnershipTx
 	default:
-		return TxTypeUnknown
+		return constants.TxTypeUnknown
 	}
 }
 
 func (p *PChainBuildTxResult) GetChainType() string {
-	return ChainTypePChain
+	return constants.ChainTypePChain
 }
 
 func (p *PChainBuildTxResult) GetTx() interface{} {
@@ -114,11 +116,11 @@ type CChainBuildTxResult struct {
 
 func (c *CChainBuildTxResult) GetTxType() string {
 	// TODO: Extract tx type from C-Chain transaction when implemented
-	return TxTypeEVMTransaction
+	return constants.TxTypeEVMTransaction
 }
 
 func (c *CChainBuildTxResult) GetChainType() string {
-	return ChainTypeCChain
+	return constants.ChainTypeCChain
 }
 
 func (c *CChainBuildTxResult) GetTx() interface{} {
@@ -139,11 +141,11 @@ type XChainBuildTxResult struct {
 
 func (x *XChainBuildTxResult) GetTxType() string {
 	// TODO: Extract tx type from X-Chain transaction when implemented
-	return TxTypeAVMTransaction
+	return constants.TxTypeAVMTransaction
 }
 
 func (x *XChainBuildTxResult) GetChainType() string {
-	return ChainTypeXChain
+	return constants.ChainTypeXChain
 }
 
 func (x *XChainBuildTxResult) GetTx() interface{} {

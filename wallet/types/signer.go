@@ -13,6 +13,7 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
@@ -272,7 +273,7 @@ type CChainSignTxResult struct {
 
 func (c *CChainSignTxResult) GetTxType() string {
 	// TODO: Extract tx type from C-Chain transaction when implemented
-	return TxTypeEVMTransaction
+	return constants.TxTypeEVMTransaction
 }
 
 func (c *CChainSignTxResult) GetChainType() string {
@@ -302,7 +303,7 @@ type XChainSignTxResult struct {
 
 func (x *XChainSignTxResult) GetTxType() string {
 	// TODO: Extract tx type from X-Chain transaction when implemented
-	return TxTypeAVMTransaction
+	return constants.TxTypeAVMTransaction
 }
 
 func (x *XChainSignTxResult) GetChainType() string {
