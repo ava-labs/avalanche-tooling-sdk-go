@@ -65,10 +65,10 @@ func buildWalletConfig(txInput interface{}) (primary.WalletConfig, error) {
 				config.SubnetIDs = []ids.ID{subnetID}
 			}
 		}
-	case types.BuildTxInput:
-		// For BuildTxInput, extract subnet ID from parameters
-		if input != nil {
-			if subnetID, err := extractSubnetIDFromBuildTxInput(input); err == nil && subnetID != ids.Empty {
+	case *types.BuildTxParams:
+		// Extract subnet ID from BuildTxParams by looking at the BuildTxInput
+		if input != nil && input.BuildTxInput != nil {
+			if subnetID, err := extractSubnetIDFromBuildTxInput(input.BuildTxInput); err == nil && subnetID != ids.Empty {
 				config.SubnetIDs = []ids.ID{subnetID}
 			}
 		}
@@ -210,7 +210,7 @@ func (w *LocalWallet) ImportAccount(keyPath string) (*account.Account, error) {
 
 // BuildTx constructs a transaction for the specified operation
 func (w *LocalWallet) BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error) {
-	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, params.BuildTxInput); err != nil {
+	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, &params); err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 	return wallet.BuildTx(w.Wallet, params)
