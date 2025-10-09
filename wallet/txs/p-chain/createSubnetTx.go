@@ -2,7 +2,11 @@
 // See the file LICENSE for licensing terms.
 package txs
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
+)
 
 // CreateSubnetTxParams contains all parameters needed to create a ConvertSubnetToL1Tx
 type CreateSubnetTxParams struct {
@@ -12,7 +16,7 @@ type CreateSubnetTxParams struct {
 
 // GetTxType returns the transaction type identifier
 func (p CreateSubnetTxParams) GetTxType() string {
-	return "CreateSubnetTx"
+	return types.PChainCreateSubnetTx
 }
 
 // Validate validates the parameters
@@ -28,5 +32,5 @@ func (p CreateSubnetTxParams) Validate() error {
 
 // GetChainType returns which chain this transaction is for
 func (p CreateSubnetTxParams) GetChainType() string {
-	return "P-Chain"
+	return types.ChainTypePChain
 }

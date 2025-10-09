@@ -5,6 +5,8 @@ package txs
 import (
 	"fmt"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
+
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
@@ -24,7 +26,7 @@ type ConvertSubnetToL1TxParams struct {
 
 // GetTxType returns the transaction type identifier
 func (p ConvertSubnetToL1TxParams) GetTxType() string {
-	return "ConvertSubnetToL1Tx"
+	return types.PChainConvertSubnetToL1Tx
 }
 
 // Validate validates the parameters
@@ -49,5 +51,5 @@ func (p ConvertSubnetToL1TxParams) Validate() error {
 
 // GetChainType returns which chain this transaction is for
 func (p ConvertSubnetToL1TxParams) GetChainType() string {
-	return "P-Chain"
+	return types.ChainTypePChain
 }
