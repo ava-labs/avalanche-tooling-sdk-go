@@ -30,19 +30,19 @@ func (p ConvertSubnetToL1TxParams) GetTxType() string {
 // Validate validates the parameters
 func (p ConvertSubnetToL1TxParams) Validate() error {
 	if len(p.SubnetAuthKeys) == 0 {
-		return fmt.Errorf("SubnetAuthKeys cannot be empty")
+		return fmt.Errorf("subnet auth keys cannot be empty")
 	}
 	if p.SubnetID == "" {
-		return fmt.Errorf("SubnetID cannot be empty")
+		return fmt.Errorf("subnet ID cannot be empty")
 	}
 	if p.ChainID == "" {
-		return fmt.Errorf("ChainID cannot be empty")
+		return fmt.Errorf("chain ID cannot be empty")
 	}
 	if len(p.Address) == 0 {
-		return fmt.Errorf("Address cannot be empty")
+		return fmt.Errorf("address cannot be empty")
 	}
 	if len(p.Validators) == 0 {
-		return fmt.Errorf("Validators cannot be empty")
+		return fmt.Errorf("validators cannot be empty")
 	}
 	return nil
 }

@@ -45,7 +45,7 @@ func NewLocalWallet() (*LocalWallet, error) {
 }
 
 // buildWalletConfig creates a WalletConfig with appropriate SubnetIDs based on transaction type
-func buildWalletConfig(txInput interface{}) (primary.WalletConfig, error) {
+func buildWalletConfig(txInput interface{}) primary.WalletConfig {
 	config := primary.WalletConfig{}
 
 	// Handle different input types
@@ -73,7 +73,7 @@ func buildWalletConfig(txInput interface{}) (primary.WalletConfig, error) {
 		}
 	}
 
-	return config, nil
+	return config
 }
 
 // extractSubnetIDFromBuildTxInput extracts subnet ID from BuildTxInput parameters
@@ -128,20 +128,21 @@ func extractSubnetIDFromTx(tx interface{}) (ids.ID, error) {
 		case *avagoTxs.CreateChainTx:
 			// For CreateChainTx, the subnet ID field is SubnetID
 			return unsignedTx.SubnetID, nil
+		case *avagoTxs.ConvertSubnetToL1Tx:
+			// For CreateChainTx, the subnet ID field is SubnetID
+			return unsignedTx.Subnet, nil
 		}
 	}
 	return ids.Empty, fmt.Errorf("no subnet ID found in transaction")
 }
+
 func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account.Account, network network.Network, txInput interface{}) error {
 	keychain, err := account.GetKeychain()
 	if err != nil {
 		return err
 	}
 
-	walletConfig, err := buildWalletConfig(txInput)
-	if err != nil {
-		return err
-	}
+	walletConfig := buildWalletConfig(txInput)
 	wallet, err := primary.MakeWallet(
 		ctx,
 		network.Endpoint,
