@@ -1,23 +1,24 @@
+//go:build create_subnet
+// +build create_subnet
+
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package main
 
 import (
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
-	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"os"
 	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 
 	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 func CreateSubnet() (ids.ID, error) {
@@ -88,4 +89,8 @@ func mainCreateSubnet() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func main() {
+	mainCreateSubnet()
 }

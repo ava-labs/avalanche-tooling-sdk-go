@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
@@ -27,6 +28,7 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
+	"github.com/ava-labs/subnet-evm/utils"
 )
 
 var (
@@ -289,6 +291,22 @@ func CreateEvmGenesis(
 	}
 
 	return prettyJSON.Bytes(), nil
+}
+
+func GetDefaultSubnetEVMGenesis(initialAllocationAddress string) SubnetEVMParams {
+	genesisBlock0Timestamp := utils.TimeToNewUint64(time.Now())
+	allocation := core.GenesisAlloc{}
+	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
+	allocation[common.HexToAddress(initialAllocationAddress)] = core.GenesisAccount{
+		Balance: defaultAmount,
+	}
+	return SubnetEVMParams{
+		ChainID:     big.NewInt(123456),
+		FeeConfig:   vm.StarterFeeConfig,
+		Allocation:  allocation,
+		Precompiles: extras.Precompiles{},
+		Timestamp:   genesisBlock0Timestamp,
+	}
 }
 
 func VmID(vmName string) (ids.ID, error) {

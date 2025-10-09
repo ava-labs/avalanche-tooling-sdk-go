@@ -147,15 +147,19 @@ func getMultisigTxOptions(account account.Account, subnetAuthKeys []ids.ShortID)
 
 // convertSubnetAuthKeys converts a slice of string addresses to a slice of ShortIDs
 func convertSubnetAuthKeys(subnetAuthKeys []string) ([]ids.ShortID, error) {
-	shortIDs := make([]ids.ShortID, len(subnetAuthKeys))
-	for i, key := range subnetAuthKeys {
-		shortID, err := ids.ShortFromString(key)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert subnet auth key %q to ShortID: %w", key, err)
-		}
-		shortIDs[i] = shortID
+	//shortIDs := make([]ids.ShortID, len(subnetAuthKeys))
+	//for i, key := range subnetAuthKeys {
+	//	shortID, err := ids.ShortFromString(key)
+	//	if err != nil {
+	//		return nil, fmt.Errorf("failed to convert subnet auth key %q to ShortID: %w", key, err)
+	//	}
+	//	shortIDs[i] = shortID
+	//}
+	subnetAuthKeyIDs, err := address.ParseToIDs(subnetAuthKeys)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert subnet auth key %s to ShortID: %w", subnetAuthKeys, err)
 	}
-	return shortIDs, nil
+	return subnetAuthKeyIDs, nil
 }
 
 // convertAddressToBytes converts an address string to []byte

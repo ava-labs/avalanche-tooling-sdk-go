@@ -7,18 +7,12 @@ package main
 
 import (
 	"fmt"
-	"math/big"
 	"os"
 	"time"
-
-	"github.com/ava-labs/libevm/common"
-	"github.com/ava-labs/subnet-evm/core"
-	"github.com/ava-labs/subnet-evm/params/extras"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/blockchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 
@@ -40,7 +34,7 @@ func CreateChain(subnetID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}
-	evmGenesisParams := getDefaultSubnetEVMGenesis("initial_allocation_addr")
+	evmGenesisParams := blockchain.GetDefaultSubnetEVMGenesis("0x43719cDF4B3CCDE97328Db4C3c2A955EFfCbb8Cf")
 	evmGenesisBytes, _ := blockchain.CreateEvmGenesis(&evmGenesisParams)
 	blockchainName := "TestBlockchain"
 	vmID, err := blockchain.VmID(blockchainName)
@@ -99,24 +93,10 @@ func CreateChain(subnetID string) error {
 	return nil
 }
 
-func getDefaultSubnetEVMGenesis(initialAllocationAddress string) blockchain.SubnetEVMParams {
-	allocation := core.GenesisAlloc{}
-	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
-	allocation[common.HexToAddress(initialAllocationAddress)] = core.GenesisAccount{
-		Balance: defaultAmount,
-	}
-	return blockchain.SubnetEVMParams{
-		ChainID:     big.NewInt(123456),
-		FeeConfig:   vm.StarterFeeConfig,
-		Allocation:  allocation,
-		Precompiles: extras.Precompiles{},
-	}
-}
-
 func main() {
 	// Use a hardcoded subnet ID for this example
 	// In a real scenario, you would get this from creating a subnet first
-	subnetID := "2b175hLJhG1m7HZ7aCLL4BTXFp2FEZsy5jfZ6wvFavr2Sx8g5n"
+	subnetID := "2ZmvHHXEmdAJT9YX6KK58B6nGtxx4JA1T53S6Go1aAHjYjJmmp"
 	if err := CreateChain(subnetID); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
