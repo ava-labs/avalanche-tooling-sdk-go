@@ -37,7 +37,7 @@ func CreateChain(subnetID string) error {
 	evmGenesisParams := blockchain.GetDefaultSubnetEVMGenesis("0x43719cDF4B3CCDE97328Db4C3c2A955EFfCbb8Cf")
 	evmGenesisBytes, _ := blockchain.CreateEvmGenesis(&evmGenesisParams)
 	blockchainName := "TestBlockchain"
-	vmID, err := blockchain.VmID(blockchainName)
+	vmID, err := blockchain.VMID(blockchainName)
 	if err != nil {
 		return fmt.Errorf("failed to get vmid: %w", err)
 	}

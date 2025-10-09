@@ -223,7 +223,7 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 		return nil, err
 	}
 
-	vmID, err := VmID(subnetParams.Name)
+	vmID, err := VMID(subnetParams.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create VM ID from %s: %w", subnetParams.Name, err)
 	}
@@ -309,7 +309,7 @@ func GetDefaultSubnetEVMGenesis(initialAllocationAddress string) SubnetEVMParams
 	}
 }
 
-func VmID(vmName string) (ids.ID, error) {
+func VMID(vmName string) (ids.ID, error) {
 	if len(vmName) > 32 {
 		return ids.Empty, fmt.Errorf("VM name must be <= 32 bytes, found %d", len(vmName))
 	}
