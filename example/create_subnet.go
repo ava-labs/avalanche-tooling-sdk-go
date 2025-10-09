@@ -1,37 +1,38 @@
-//go:build create_subnet
-// +build create_subnet
-
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package main
 
 import (
 	"fmt"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
+	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"os"
 	"time"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	"github.com/ava-labs/avalanchego/ids"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 
 	pchainTxs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
-	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
-func CreateSubnet() error {
+func CreateSubnet() (ids.ID, error) {
 	ctx, cancel := utils.GetTimedContext(120 * time.Second)
 	defer cancel()
 	network := network.FujiNetwork()
 
 	localWallet, err := local.NewLocalWallet()
 	if err != nil {
-		return fmt.Errorf("failed to create wallet: %w", err)
+		return ids.Empty, fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	existingAccount, err := localWallet.ImportAccount("EXISTING_KEY_PATH")
+	existingAccount, err := localWallet.ImportAccount("/Users/raymondsukanto/.avalanche-cli/key/newTestKey.pk")
 	if err != nil {
-		return fmt.Errorf("failed to ImportAccount: %w", err)
+		return ids.Empty, fmt.Errorf("failed to ImportAccount: %w", err)
 	}
 
 	createSubnetParams := &pchainTxs.CreateSubnetTxParams{
@@ -47,7 +48,7 @@ func CreateSubnet() error {
 	}
 	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
 	if err != nil {
-		return fmt.Errorf("failed to BuildTx: %w", err)
+		return ids.Empty, fmt.Errorf("failed to BuildTx: %w", err)
 	}
 
 	signTxParams := types.SignTxParams{
@@ -59,7 +60,7 @@ func CreateSubnet() error {
 	}
 	signTxResult, err := localWallet.SignTx(ctx, signTxParams)
 	if err != nil {
-		return fmt.Errorf("failed to signTx: %w", err)
+		return ids.Empty, fmt.Errorf("failed to signTx: %w", err)
 	}
 
 	sendTxParams := types.SendTxParams{
@@ -71,20 +72,19 @@ func CreateSubnet() error {
 	}
 	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)
 	if err != nil {
-		return fmt.Errorf("failed to sendTx: %w", err)
+		return ids.Empty, fmt.Errorf("failed to sendTx: %w", err)
 	}
 	if tx := sendTxResult.GetTx(); tx != nil {
 		if pChainTx, ok := tx.(*avagoTxs.Tx); ok {
 			fmt.Printf("sendTxResult %s \n", pChainTx.ID())
-		} else {
-			fmt.Printf("sendTxResult %s transaction \n", sendTxResult.GetChainType())
+			return pChainTx.ID(), nil
 		}
 	}
-	return nil
+	return ids.Empty, fmt.Errorf("unable to get tx id")
 }
 
-func main() {
-	if err := CreateSubnet(); err != nil {
+func mainCreateSubnet() {
+	if _, err := CreateSubnet(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

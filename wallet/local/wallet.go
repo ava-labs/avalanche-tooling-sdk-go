@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	txs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
 	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -43,8 +44,33 @@ func NewLocalWallet() (*LocalWallet, error) {
 	}, nil
 }
 
-func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account.Account, network network.Network) error {
+// buildWalletConfig creates a WalletConfig with appropriate SubnetIDs based on transaction type
+func buildWalletConfig(buildTxInput types.BuildTxInput) (primary.WalletConfig, error) {
+	config := primary.WalletConfig{}
+
+	// Extract subnet ID if this is a CreateChainTx
+	if buildTxInput != nil && buildTxInput.GetTxType() == "CreateChainTx" {
+		if createChainParams, ok := buildTxInput.(*txs.CreateChainTxParams); ok {
+			subnetID := createChainParams.SubnetID
+			if subnetID != "" {
+				parsedSubnetID, err := ids.FromString(subnetID)
+				if err != nil {
+					return config, fmt.Errorf("failed to parse subnet ID: %w", err)
+				}
+				config.SubnetIDs = []ids.ID{parsedSubnetID}
+			}
+		}
+	}
+
+	return config, nil
+}
+func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account.Account, network network.Network, txInput types.BuildTxInput) error {
 	keychain, err := account.GetKeychain()
+	if err != nil {
+		return err
+	}
+
+	walletConfig, err := buildWalletConfig(txInput)
 	if err != nil {
 		return err
 	}
@@ -53,7 +79,7 @@ func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account
 		network.Endpoint,
 		keychain,
 		keychain,
-		primary.WalletConfig{},
+		walletConfig,
 	)
 	if err != nil {
 		return err
@@ -115,7 +141,7 @@ func (w *LocalWallet) ImportAccount(keyPath string) (*account.Account, error) {
 
 // BuildTx constructs a transaction for the specified operation
 func (w *LocalWallet) BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error) {
-	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
+	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, params.BuildTxInput); err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 	return wallet.BuildTx(w.Wallet, params)
@@ -123,7 +149,7 @@ func (w *LocalWallet) BuildTx(ctx context.Context, params types.BuildTxParams) (
 
 // SignTx signs a transaction
 func (w *LocalWallet) SignTx(ctx context.Context, params types.SignTxParams) (types.SignTxResult, error) {
-	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
+	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, nil); err != nil {
 		return types.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
 
@@ -132,7 +158,7 @@ func (w *LocalWallet) SignTx(ctx context.Context, params types.SignTxParams) (ty
 
 // SendTx submits a signed transaction to the Network
 func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error) {
-	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
+	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, nil); err != nil {
 		return types.SendTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 
