@@ -1,3 +1,6 @@
+//go:build create_subnet
+// +build create_subnet
+
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package main

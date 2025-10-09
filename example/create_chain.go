@@ -1,3 +1,6 @@
+//go:build create_chain
+// +build create_chain
+
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package main
@@ -33,7 +36,7 @@ func CreateChain(subnetID string) error {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	existingAccount, err := localWallet.ImportAccount(ctx, "/Users/raymondsukanto/.avalanche-cli/key/newTestKey.pk")
+	existingAccount, err := localWallet.ImportAccount("/Users/raymondsukanto/.avalanche-cli/key/newTestKey.pk")
 	if err != nil {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}
@@ -56,7 +59,7 @@ func CreateChain(subnetID string) error {
 			Account: *existingAccount,
 			Network: network,
 		},
-		BuildTxInput: createSubnetParams,
+		BuildTxInput: createChainParams,
 	}
 	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
 	if err != nil {
@@ -110,7 +113,7 @@ func getDefaultSubnetEVMGenesis(initialAllocationAddress string) blockchain.Subn
 	}
 }
 
-func mainCreateChain() {
+func main() {
 	// Use a hardcoded subnet ID for this example
 	// In a real scenario, you would get this from creating a subnet first
 	subnetID := "2b175hLJhG1m7HZ7aCLL4BTXFp2FEZsy5jfZ6wvFavr2Sx8g5n"
@@ -118,9 +121,4 @@ func mainCreateChain() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func main() {
-	// Run the create chain example
-	mainCreateChain()
 }
