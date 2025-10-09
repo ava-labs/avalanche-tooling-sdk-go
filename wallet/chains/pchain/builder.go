@@ -3,11 +3,14 @@
 package pchain
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/utils/set"
+	"github.com/ava-labs/avalanchego/vms/platformvm/signer"
+	"github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
@@ -105,12 +108,16 @@ func buildConvertSubnetToL1Tx(wallet *primary.Wallet, account account.Account, p
 	if err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("failed to convert address to bytes: %w", err)
 	}
+	avagoValidators, err := convertSubnetValidatorsToAvagoValidators(params.Validators)
+	if err != nil {
+		return types.BuildTxResult{}, fmt.Errorf("failed to convert address to bytes: %w", err)
+	}
 	options := getMultisigTxOptions(account, subnetAuthKeys)
 	unsignedTx, err := wallet.P().Builder().NewConvertSubnetToL1Tx(
 		subnetID,
 		chainID,
 		addressBytes,
-		params.Validators,
+		avagoValidators,
 		options...,
 	)
 	if err != nil {
@@ -159,4 +166,58 @@ func convertAddressToBytes(addressStr string) ([]byte, error) {
 	// Convert the address string to bytes
 	addressBytes := []byte(addressStr)
 	return addressBytes, nil
+}
+
+func convertSubnetValidatorsToAvagoValidators(validators []*pchainTxs.ConvertSubnetToL1Validator) ([]*avagoTxs.ConvertSubnetToL1Validator, error) {
+	bootstrapValidators := []*avagoTxs.ConvertSubnetToL1Validator{}
+	for _, validator := range validators {
+		nodeID, err := ids.NodeIDFromString(validator.NodeID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse node ID: %w", err)
+		}
+
+		blsInfo, err := convertToBLSProofOfPossession(validator.BLSPublicKey, validator.BLSProofOfPossession)
+		if err != nil {
+			return nil, fmt.Errorf("failure parsing BLS info: %w", err)
+		}
+
+		addrs, err := address.ParseToIDs([]string{validator.RemainingBalanceOwner})
+		if err != nil {
+			return nil, fmt.Errorf("failure parsing change owner address: %w", err)
+		}
+		bootstrapValidator := &avagoTxs.ConvertSubnetToL1Validator{
+			NodeID:  nodeID[:],
+			Weight:  validator.Weight,
+			Balance: validator.Balance,
+			Signer:  blsInfo,
+			RemainingBalanceOwner: message.PChainOwner{
+				Threshold: 1,
+				Addresses: addrs,
+			},
+		}
+		bootstrapValidators = append(bootstrapValidators, bootstrapValidator)
+	}
+
+	return bootstrapValidators, nil
+}
+
+func convertToBLSProofOfPossession(publicKey, proofOfPossesion string) (signer.ProofOfPossession, error) {
+	type jsonProofOfPossession struct {
+		PublicKey         string
+		ProofOfPossession string
+	}
+	jsonPop := jsonProofOfPossession{
+		PublicKey:         publicKey,
+		ProofOfPossession: proofOfPossesion,
+	}
+	popBytes, err := json.Marshal(jsonPop)
+	if err != nil {
+		return signer.ProofOfPossession{}, err
+	}
+	pop := &signer.ProofOfPossession{}
+	err = pop.UnmarshalJSON(popBytes)
+	if err != nil {
+		return signer.ProofOfPossession{}, err
+	}
+	return *pop, nil
 }

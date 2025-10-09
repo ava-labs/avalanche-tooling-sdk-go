@@ -6,9 +6,28 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-
-	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
+
+// ConvertSubnetToL1TxParams contains all parameters needed to create a ConvertSubnetToL1Tx
+type ConvertSubnetToL1Validator struct {
+	// NodeID of this validator
+	NodeID string `serialize:"true" json:"nodeID"`
+	// Weight of this validator used when sampling
+	Weight uint64 `serialize:"true" json:"weight"`
+	// Initial balance for this validator
+	Balance uint64 `serialize:"true" json:"balance"`
+	// [Signer] is the BLS key for this validator.
+	// Note: We do not enforce that the BLS key is unique across all validators.
+	//       This means that validators can share a key if they so choose.
+	//       However, a NodeID + Subnet does uniquely map to a BLS key
+	BLSPublicKey         string `serialize:"true" json:"signer"`
+	BLSProofOfPossession string
+	// Leftover $AVAX from the [Balance] will be issued to this owner once it is
+	// removed from the validator set.
+	RemainingBalanceOwner string `serialize:"true" json:"remainingBalanceOwner"`
+	// This owner has the authority to manually deactivate this validator.
+	DeactivationOwner string `serialize:"true" json:"deactivationOwner"`
+}
 
 // ConvertSubnetToL1TxParams contains all parameters needed to create a ConvertSubnetToL1Tx
 type ConvertSubnetToL1TxParams struct {
@@ -21,7 +40,7 @@ type ConvertSubnetToL1TxParams struct {
 	// Address is address of the validator manager contract.
 	Address string
 	// Validators are the initial set of L1 validators after the conversion.
-	Validators []*avagoTxs.ConvertSubnetToL1Validator
+	Validators []*ConvertSubnetToL1Validator
 }
 
 // GetTxType returns the transaction type identifier
