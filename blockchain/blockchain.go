@@ -148,8 +148,8 @@ type Subnet struct {
 	// Address of the owner of the Validator Manager Contract
 	ValidatorManagerOwnerAddress *common.Address
 
-	// Private key of the owner of the Validator Manager Contract
-	ValidatorManagerOwnerPrivateKey string
+	// Signer of the owner of the Validator Manager Contract
+	ValidatorManagerOwnerSigner evm.Signer
 
 	// BootstrapValidators are bootstrap validators that are included in the ConvertSubnetToL1Tx call
 	// that made Subnet a sovereign L1
@@ -364,7 +364,7 @@ func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcc
 // to set as the owner of the PoA manager
 func (c *Subnet) InitializeProofOfAuthority(
 	log logging.Logger,
-	privateKey string,
+	signer evm.Signer,
 	aggregatorLogger logging.Logger,
 	useACP99 bool,
 	signatureAggregatorEndpoint string,
@@ -395,7 +395,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
 		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
 	} else {
-		if err := client.SetupProposerVM(privateKey); err != nil {
+		if err := client.SetupProposerVM(signer); err != nil {
 			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
 		}
 		client.Close()
@@ -405,7 +405,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 		log,
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
-		privateKey,
+		signer,
 		c.SubnetID,
 		*c.ValidatorManagerOwnerAddress,
 		useACP99,
@@ -446,7 +446,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 		log,
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
-		privateKey,
+		signer,
 		c.SubnetID,
 		c.ValidatorManagerBlockchainID,
 		c.BootstrapValidators,
@@ -461,12 +461,12 @@ func (c *Subnet) InitializeProofOfAuthority(
 
 func (c *Subnet) InitializeProofOfStake(
 	log logging.Logger,
-	privateKey string,
+	signer evm.Signer,
 	aggregatorLogger logging.Logger,
 	posParams validatormanager.PoSParams,
 	useACP99 bool,
 	signatureAggregatorEndpoint string,
-	nativeMinterPrecompileAdminPrivateKey string,
+	nativeMinterPrecompileAdminSigner evm.Signer,
 ) error {
 	if c.Network == network.UndefinedNetwork {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingNetwork)
@@ -491,13 +491,15 @@ func (c *Subnet) InitializeProofOfStake(
 	if c.ValidatorManagerOwnerAddress == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerAddress)
 	}
-	if useACP99 && c.ValidatorManagerOwnerPrivateKey == "" {
-		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
+	if useACP99 {
+		if _, ok := c.ValidatorManagerOwnerSigner.(*evm.NullSigner); ok {
+			return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
+		}
 	}
 	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
 		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
 	} else {
-		if err := client.SetupProposerVM(privateKey); err != nil {
+		if err := client.SetupProposerVM(signer); err != nil {
 			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
 		}
 		client.Close()
@@ -507,7 +509,7 @@ func (c *Subnet) InitializeProofOfStake(
 			log,
 			c.ValidatorManagerRPC,
 			*c.ValidatorManagerAddress,
-			privateKey,
+			signer,
 			c.SubnetID,
 			*c.ValidatorManagerOwnerAddress,
 			useACP99,
@@ -524,12 +526,12 @@ func (c *Subnet) InitializeProofOfStake(
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
 		*c.SpecializedValidatorManagerAddress,
-		c.ValidatorManagerOwnerPrivateKey,
-		privateKey,
+		c.ValidatorManagerOwnerSigner,
+		signer,
 		c.SubnetID,
 		posParams,
 		useACP99,
-		nativeMinterPrecompileAdminPrivateKey,
+		nativeMinterPrecompileAdminSigner,
 	)
 	if err != nil {
 		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
@@ -567,7 +569,7 @@ func (c *Subnet) InitializeProofOfStake(
 		log,
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
-		privateKey,
+		signer,
 		c.SubnetID,
 		c.ValidatorManagerBlockchainID,
 		c.BootstrapValidators,

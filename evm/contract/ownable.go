@@ -5,6 +5,8 @@ package contract
 import (
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/libevm/common"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 )
 
 // GetContractOwner gets owner for https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-owner contracts
@@ -28,15 +30,13 @@ func TransferOwnership(
 	logger logging.Logger,
 	rpcURL string,
 	contractAddress common.Address,
-	ownerPrivateKey string,
+	signer evm.Signer,
 	newOwner common.Address,
 ) error {
 	_, _, err := TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		ownerPrivateKey,
+		signer,
 		contractAddress,
 		nil,
 		"transfer ownership",

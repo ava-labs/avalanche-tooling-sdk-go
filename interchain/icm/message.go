@@ -10,6 +10,7 @@ import (
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 )
 
@@ -60,7 +61,7 @@ func SendCrossChainMessage(
 	logger logging.Logger,
 	rpcURL string,
 	messengerAddress common.Address,
-	privateKey string,
+	signer evm.Signer,
 	destinationBlockchainID ids.ID,
 	destinationAddress common.Address,
 	message []byte,
@@ -91,9 +92,7 @@ func SendCrossChainMessage(
 	return contract.TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		messengerAddress,
 		nil,
 		"send cross chain message",

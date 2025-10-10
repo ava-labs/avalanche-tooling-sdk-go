@@ -24,12 +24,12 @@ func PoSValidatorManagerInitialize(
 	rpcURL string,
 	managerAddress common.Address,
 	specializedManagerAddress common.Address,
-	managerOwnerPrivateKey string,
-	privateKey string,
+	managerOwnerSigner evm.Signer,
+	signer evm.Signer,
 	subnetID [32]byte,
 	posParams PoSParams,
 	useACP99 bool,
-	nativeMinterPrecompileAdminPrivateKey string,
+	nativeMinterPrecompileAdminSigner evm.Signer,
 ) (*types.Transaction, *types.Receipt, error) {
 	if err := posParams.Verify(); err != nil {
 		return nil, nil, err
@@ -55,14 +55,14 @@ func PoSValidatorManagerInitialize(
 			return nil, nil, err
 		}
 		if allowedStatus.Cmp(big.NewInt(0)) == 0 {
-			if nativeMinterPrecompileAdminPrivateKey == "" {
+			if _, ok := nativeMinterPrecompileAdminSigner.(*evm.NullSigner); ok {
 				return nil, nil, fmt.Errorf("no managed native minter precompile admin was found, and need to be used to enable Native PoS")
 			}
 			if err := precompiles.SetEnabled(
 				logger,
 				rpcURL,
 				precompiles.NativeMinterPrecompile,
-				nativeMinterPrecompileAdminPrivateKey,
+				nativeMinterPrecompileAdminSigner,
 				specializedManagerAddress,
 			); err != nil {
 				return nil, nil, err
@@ -77,9 +77,7 @@ func PoSValidatorManagerInitialize(
 		if tx, receipt, err := contract.TxToMethod(
 			logger,
 			rpcURL,
-			false,
-			common.Address{},
-			privateKey,
+			signer,
 			specializedManagerAddress,
 			nil,
 			"initialize Native Token PoS manager",
@@ -99,12 +97,9 @@ func PoSValidatorManagerInitialize(
 		); err != nil {
 			return tx, receipt, err
 		}
-		managerOwnerAddress, err := evm.PrivateKeyToAddress(managerOwnerPrivateKey)
-		if err != nil {
-			return nil, nil, err
-		}
+		managerOwnerAddress := managerOwnerSigner.Address()
 		_, err = client.FundAddress(
-			privateKey,
+			signer,
 			managerOwnerAddress.Hex(),
 			big.NewInt(100_000_000_000_000_000), // 0.1 TOKEN
 		)
@@ -115,7 +110,7 @@ func PoSValidatorManagerInitialize(
 			logger,
 			rpcURL,
 			managerAddress,
-			managerOwnerPrivateKey,
+			managerOwnerSigner,
 			specializedManagerAddress,
 		)
 		return nil, nil, err
@@ -123,9 +118,7 @@ func PoSValidatorManagerInitialize(
 	return contract.TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		managerAddress,
 		nil,
 		"initialize Native Token PoS manager",

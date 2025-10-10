@@ -14,6 +14,7 @@ import (
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager/validatormanagertypes"
@@ -253,7 +254,7 @@ func InitializeValidatorsSet(
 	logger logging.Logger,
 	rpcURL string,
 	managerAddress common.Address,
-	privateKey string,
+	signer evm.Signer,
 	subnetID ids.ID,
 	managerBlockchainID ids.ID,
 	convertSubnetValidators []*txs.ConvertSubnetToL1Validator,
@@ -287,9 +288,7 @@ func InitializeValidatorsSet(
 	return contract.TxToMethodWithWarpMessage(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		managerAddress,
 		subnetConversionSignedMessage,
 		big.NewInt(0),

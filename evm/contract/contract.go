@@ -15,7 +15,6 @@ import (
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/common/hexutil"
 	"github.com/ava-labs/libevm/core/types"
-	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
@@ -291,22 +290,13 @@ func ParseSpec(
 	return name, string(abiBytes), nil
 }
 
-func idempotentSigner(
-	_ common.Address,
-	tx *types.Transaction,
-) (*types.Transaction, error) {
-	return tx, nil
-}
-
 // get method name and types from [methodsSpec], then call it
 // at the smart contract [contractAddress] with the given [params].
 // also send [payment] tokens to it
 func TxToMethod(
 	logger logging.Logger,
 	rpcURL string,
-	generateRawTxOnly bool,
-	from common.Address,
-	privateKey string,
+	signer evm.Signer,
 	contractAddress common.Address,
 	payment *big.Int,
 	description string,
@@ -314,12 +304,6 @@ func TxToMethod(
 	methodSpec string,
 	params ...interface{},
 ) (*types.Transaction, *types.Receipt, error) {
-	if privateKey == "" && from == (common.Address{}) {
-		return nil, nil, fmt.Errorf("from address and private key can't be both empty at TxToMethod")
-	}
-	if !generateRawTxOnly && privateKey == "" {
-		return nil, nil, fmt.Errorf("from private key must be defined to be able to sign the tx at TxToMethod")
-	}
 	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, payment != nil, false, nil, params...)
 	if err != nil {
 		return nil, nil, err
@@ -337,26 +321,16 @@ func TxToMethod(
 	}
 	defer client.Close()
 	contract := bind.NewBoundContract(contractAddress, *abi, client.EthClient, client.EthClient, client.EthClient)
-	var txOpts *bind.TransactOpts
-	if generateRawTxOnly {
-		txOpts = &bind.TransactOpts{
-			From:   from,
-			Signer: idempotentSigner,
-			NoSend: true,
-		}
-	} else {
-		txOpts, err = client.GetTxOptsWithSigner(privateKey)
-		if err != nil {
-			return nil, nil, err
-		}
+	txOpts, err := client.GetTxOptsWithSigner(signer)
+	if err != nil {
+		return nil, nil, err
 	}
 	txOpts.Value = payment
 	tx, err := contract.Transact(txOpts, methodName, params...)
 	if err != nil {
 		trace, traceCallErr := DebugTraceCall(
 			rpcURL,
-			from,
-			privateKey,
+			signer,
 			contractAddress,
 			payment,
 			methodSpec,
@@ -376,7 +350,7 @@ func TxToMethod(
 		}
 		return tx, nil, err
 	}
-	if generateRawTxOnly {
+	if txOpts.NoSend {
 		return tx, nil, nil
 	}
 	receipt, success, err := client.WaitForTransaction(tx)
@@ -403,9 +377,7 @@ func TxToMethod(
 func TxToMethodWithWarpMessage(
 	logger logging.Logger,
 	rpcURL string,
-	generateRawTxOnly bool,
-	from common.Address,
-	privateKey string,
+	signer evm.Signer,
 	contractAddress common.Address,
 	warpMessage *warp.Message,
 	payment *big.Int,
@@ -414,12 +386,6 @@ func TxToMethodWithWarpMessage(
 	methodSpec string,
 	params ...interface{},
 ) (*types.Transaction, *types.Receipt, error) {
-	if privateKey == "" && from == (common.Address{}) {
-		return nil, nil, fmt.Errorf("from address and private key can't be both empty at TxToMethodWithWarpMessage")
-	}
-	if !generateRawTxOnly && privateKey == "" {
-		return nil, nil, fmt.Errorf("from private key must be defined to be able to sign the tx at TxToMethodWithWarpMessage")
-	}
 	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, false, nil, params...)
 	if err != nil {
 		return nil, nil, err
@@ -441,18 +407,16 @@ func TxToMethodWithWarpMessage(
 	}
 	defer client.Close()
 	tx, err := client.TransactWithWarpMessage(
-		from,
-		privateKey,
+		signer,
 		warpMessage,
 		contractAddress,
 		callData,
 		payment,
-		generateRawTxOnly,
 	)
 	if err != nil {
 		return nil, nil, err
 	}
-	if generateRawTxOnly {
+	if _, ok := signer.(*evm.NoOpSigner); ok {
 		return tx, nil, nil
 	}
 	if err := client.SendTransaction(tx); err != nil {
@@ -518,8 +482,7 @@ func handleFailedReceiptStatus(
 
 func DebugTraceCall(
 	rpcURL string,
-	from common.Address,
-	privateKey string,
+	signer evm.Signer,
 	contractAddress common.Address,
 	payment *big.Int,
 	methodSpec string,
@@ -545,15 +508,8 @@ func DebugTraceCall(
 		return nil, err
 	}
 	defer client.Close()
-	if from == (common.Address{}) {
-		pk, err := crypto.HexToECDSA(privateKey)
-		if err != nil {
-			return nil, err
-		}
-		from = crypto.PubkeyToAddress(pk.PublicKey)
-	}
 	data := map[string]string{
-		"from":  from.Hex(),
+		"from":  signer.Address().Hex(),
 		"to":    contractAddress.Hex(),
 		"input": "0x" + hex.EncodeToString(callData),
 	}
@@ -613,7 +569,7 @@ func GetSmartContractCallResult[T any](methodName string, out []interface{}) (T,
 
 func DeployContract(
 	rpcURL string,
-	privateKey string,
+	signer evm.Signer,
 	binBytes []byte,
 	methodSpec string,
 	params ...interface{},
@@ -639,7 +595,7 @@ func DeployContract(
 		return common.Address{}, nil, nil, err
 	}
 	defer client.Close()
-	txOpts, err := client.GetTxOptsWithSigner(privateKey)
+	txOpts, err := client.GetTxOptsWithSigner(signer)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
