@@ -10,17 +10,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ava-labs/libevm/common"
-	"github.com/cubist-labs/cubesigner-go-sdk/client"
-	"github.com/cubist-labs/cubesigner-go-sdk/models"
-	"golang.org/x/exp/maps"
-
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/wallet/chain/c"
+	"github.com/ava-labs/libevm/common"
+	"github.com/cubist-labs/cubesigner-go-sdk/client"
+	"github.com/cubist-labs/cubesigner-go-sdk/models"
+	"golang.org/x/exp/maps"
 
 	avasecp256k1 "github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
