@@ -96,7 +96,7 @@ func CreateChain(subnetID string) error {
 func main() {
 	// Use a hardcoded subnet ID for this example
 	// In a real scenario, you would get this from creating a subnet first
-	subnetID := "2ZmvHHXEmdAJT9YX6KK58B6nGtxx4JA1T53S6Go1aAHjYjJmmp"
+	subnetID := "2FmiyhpCzWpdiytmRJoazkxAfNowquCfSisHGB8rys13wZDRQz"
 	if err := CreateChain(subnetID); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -35,13 +35,13 @@ func ConvertSubnet(subnetID, chainID string) error {
 	}
 
 	// Validator information
-	nodeIDStr := ""
-	BLSPublicKey := "0x..."                                              // Replace with actual BLS public key
-	BLSProofOfPossession := "0x..."                                      // Replace with actual BLS proof
-	ChangeOwnerAddr := "P-fujixxx"                                       // Address to receive remaining balance
-	Weight := 100                                                        // Validator weight
-	Balance := 1000000000                                                // Validator balance in nAVAX
-	validatorManagerAddr := "0x0FEEDC0DE0000000000000000000000000000000" // Replace with actual contract address
+	nodeIDStr := "NodeID-7iXf6xZpXF8tFmYr1gGrEnPgK1sKqitAn"
+	BLSPublicKey := "0xa569075008a3ce67ab6a1d7f9d3e9312c734cb99d144a169d98ac11d0177c9b3298a33d91e6b970745b802126edc5c5b"                                                                                                         // Replace with actual BLS public key
+	BLSProofOfPossession := "0xaf1045946fd8668e492b7748e87bc20d5de232959b9fd7ea15f4f92c96f341ebeb1202c39b18148a5460d044655d25670a77e4079b255582153c3a372ab0b806e5f526bb1ff561f8f92eabe6e2b52adc491d1d36869818bb51be2c5b5329bcbb" // Replace with actual BLS proof
+	ChangeOwnerAddr := "P-fuji1377nx80rx3pzneup5qywgdgdsmzntql7trcqlg"
+	ValidatorManagerAddress := "0x0FEEDC0DE0000000000000000000000000000000"
+	Weight := 100         // Validator weight
+	Balance := 1000000000 // Validator balance in nAVAX
 
 	bootstrapValidators := []*pchainTxs.ConvertSubnetToL1Validator{}
 	bootstrapValidator := &pchainTxs.ConvertSubnetToL1Validator{
@@ -58,10 +58,9 @@ func ConvertSubnet(subnetID, chainID string) error {
 		SubnetID:       subnetID,
 		// ChainID is Blockchain ID of the L1 where the validator manager contract is deployed.
 		ChainID: chainID,
-		// Address is address of the validator manager contract.
-		Address: validatorManagerAddr,
 		// Validators are the initial set of L1 validators after the conversion.
 		Validators: bootstrapValidators,
+		Address:    ValidatorManagerAddress,
 	}
 	buildTxParams := types.BuildTxParams{
 		BaseParams: types.BaseParams{
@@ -111,8 +110,8 @@ func ConvertSubnet(subnetID, chainID string) error {
 func main() {
 	// Use a hardcoded subnet ID for this example
 	// In a real scenario, you would get this from creating a subnet first
-	subnetID := "2ZmvHHXEmdAJT9YX6KK58B6nGtxx4JA1T53S6Go1aAHjYjJmmp"
-	chainID := "2ZmvHHXEmdAJT9YX6KK58B6nGtxx4JA1T53S6Go1aAHjYjJmmp"
+	subnetID := "2FmiyhpCzWpdiytmRJoazkxAfNowquCfSisHGB8rys13wZDRQz"
+	chainID := "vzozrkRR95pvepywbV22oQWh7SqPb8FpegAKD71HfJSBwr3bM"
 	if err := ConvertSubnet(subnetID, chainID); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -104,10 +104,7 @@ func buildConvertSubnetToL1Tx(wallet *primary.Wallet, account account.Account, p
 	if err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("failed to parse chain ID: %w", err)
 	}
-	addressBytes, err := convertAddressToBytes(params.Address)
-	if err != nil {
-		return types.BuildTxResult{}, fmt.Errorf("failed to convert address to bytes: %w", err)
-	}
+	addressBytes := []byte(params.Address)
 	avagoValidators, err := convertSubnetValidatorsToAvagoValidators(params.Validators)
 	if err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("failed to convert address to bytes: %w", err)
@@ -159,13 +156,6 @@ func convertSubnetAuthKeys(subnetAuthKeys []string) ([]ids.ShortID, error) {
 		return nil, fmt.Errorf("failed to convert subnet auth key %s to ShortID: %w", subnetAuthKeys, err)
 	}
 	return subnetAuthKeyIDs, nil
-}
-
-// convertAddressToBytes converts an address string to []byte
-func convertAddressToBytes(addressStr string) ([]byte, error) {
-	// Convert the address string to bytes
-	addressBytes := []byte(addressStr)
-	return addressBytes, nil
 }
 
 func convertSubnetValidatorsToAvagoValidators(validators []*pchainTxs.ConvertSubnetToL1Validator) ([]*avagoTxs.ConvertSubnetToL1Validator, error) {
