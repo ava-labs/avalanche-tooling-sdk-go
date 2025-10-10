@@ -221,6 +221,27 @@ This example includes:
 - C-Chain atomic transactions (Import/Export)
 - L1 validator operations (Register, SetWeight, IncreaseBalance, Disable)
 
+## Package Structure
+
+```
+keychain/ledger/
+├── ledger.go                    # Ledger interface definition
+├── ledger_device.go             # Device implementation
+├── ledger_device_test.go        # Tests for device implementation
+├── ledger_keychain.go           # KeyChain and signer implementations
+├── ledger_keychain_test.go      # Tests for keychain implementation
+├── mocks_generate_test.go       # Mock generation directives
+├── ledgermock/
+│   └── ledger.go                # Generated mock for Ledger interface
+├── examples/
+│   └── validate-ledger-txs.go  # Comprehensive example of all transaction types
+└── README.md                    # This file
+```
+
+**Core Files:**
+- **ledger_device.go**: Implements the `Ledger` interface using `github.com/ava-labs/ledger-avalanche-go`
+- **ledger_keychain.go**: Implements `keychain.Keychain` and `c.EthKeychain` interfaces, manages address derivation and transaction signing
+
 ## Integration with Avalanche Wallet
 
 The Ledger keychain implements both `keychain.Keychain` and `c.EthKeychain` interfaces, making it compatible with the Avalanche primary wallet:
