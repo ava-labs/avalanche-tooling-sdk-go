@@ -253,6 +253,22 @@ signer, _ := kc.Get(address)
 signature, err := signer.SignHash(hashBytes)
 ```
 
+## Package Structure
+
+```
+keychain/cubesigner/
+├── cubesigner.go                  # CubeSigner client interface definition
+├── cubesigner_keychain.go         # Keychain and signer implementations
+├── cubesigner_keychain_test.go    # Tests for keychain implementation
+├── mocks_generate_test.go         # Mock generation directives
+├── cubesignermock/
+│   └── cubesigner_client.go       # Generated mock for CubeSignerClient interface
+└── README.md                      # This file
+```
+
+**Core Files:**
+- **cubesigner_keychain.go**: Implements `keychain.Keychain` and `c.EthKeychain` interfaces, handles key validation, format conversion, and transaction signing via CubeSigner API
+
 ## Integration with Avalanche Wallet
 
 The CubeSigner keychain implements both `keychain.Keychain` and `c.EthKeychain` interfaces, making it compatible with the Avalanche primary wallet:
