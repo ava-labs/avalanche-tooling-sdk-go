@@ -12,6 +12,8 @@ import (
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
 )
 
 // Signer provides signing capabilities for EVM transactions
@@ -22,9 +24,9 @@ type Signer struct {
 	addr   common.Address
 }
 
-// NewCryptoSigner creates a new EVM signer from an avalanchego EthKeychain
+// NewSigner creates a new EVM signer from an avalanchego EthKeychain
 // This signer will perform actual cryptographic signing using the keychain
-func NewCryptoSigner(kc c.EthKeychain) (*Signer, error) {
+func NewSigner(kc c.EthKeychain) (*Signer, error) {
 	if kc == nil {
 		return nil, fmt.Errorf("keychain cannot be nil")
 	}
@@ -44,6 +46,17 @@ func NewCryptoSigner(kc c.EthKeychain) (*Signer, error) {
 		signer: signer,
 		addr:   addr,
 	}, nil
+}
+
+// NewSignerFromPrivateKey creates a new EVM signer from a hex-encoded private key string
+// This is a convenience function that handles the key loading and keychain creation
+func NewSignerFromPrivateKey(privateKey string) (*Signer, error) {
+	softKey, err := key.LoadSoftFromBytes([]byte(privateKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load private key: %w", err)
+	}
+
+	return NewSigner(softKey.KeyChain())
 }
 
 // NewNoOpSigner creates a signer that doesn't actually sign transactions

@@ -18,7 +18,7 @@ import (
 
 var errTest = errors.New("test error")
 
-func TestNewCryptoSigner(t *testing.T) {
+func TestNewSigner(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -34,7 +34,7 @@ func TestNewCryptoSigner(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(mockSigner, true)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
 		require.NotNil(t, signer)
 		require.Equal(t, testAddr, signer.Address())
@@ -42,7 +42,7 @@ func TestNewCryptoSigner(t *testing.T) {
 	})
 
 	t.Run("nil keychain", func(t *testing.T) {
-		signer, err := NewCryptoSigner(nil)
+		signer, err := NewSigner(nil)
 		require.Error(t, err)
 		require.Nil(t, signer)
 		require.Contains(t, err.Error(), "keychain cannot be nil")
@@ -54,7 +54,7 @@ func TestNewCryptoSigner(t *testing.T) {
 
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.Error(t, err)
 		require.Nil(t, signer)
 		require.Contains(t, err.Error(), "expected keychain to have 1 address, found 0")
@@ -68,7 +68,7 @@ func TestNewCryptoSigner(t *testing.T) {
 
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.Error(t, err)
 		require.Nil(t, signer)
 		require.Contains(t, err.Error(), "expected keychain to have 1 address, found 2")
@@ -82,7 +82,7 @@ func TestNewCryptoSigner(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(nil, false)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.Error(t, err)
 		require.Nil(t, signer)
 		require.Contains(t, err.Error(), "unexpected failure obtaining unique signer from keychain")
@@ -123,7 +123,7 @@ func TestSigner_IsNoOp(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(mockSigner, true)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
 		require.False(t, signer.IsNoOp())
 	})
@@ -156,7 +156,7 @@ func TestSigner_Address(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(mockSigner, true)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
 		require.Equal(t, testAddr, signer.Address())
 	})
@@ -211,7 +211,7 @@ func TestSigner_SignTx(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(mockSigner, true)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
 
 		// Create expected signature (65 bytes with valid v, r, s values)
@@ -243,7 +243,7 @@ func TestSigner_SignTx(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(mockSigner, true)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
 
 		txSigner := types.LatestSignerForChainID(chainID)
@@ -303,7 +303,7 @@ func TestSigner_TransactOpts(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(mockSigner, true)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
 
 		opts, err := signer.TransactOpts(chainID)
@@ -330,7 +330,7 @@ func TestSigner_TransactOpts(t *testing.T) {
 		mockKeychain.EXPECT().EthAddresses().Return(addrSet)
 		mockKeychain.EXPECT().GetEth(testAddr).Return(mockSigner, true)
 
-		signer, err := NewCryptoSigner(mockKeychain)
+		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
 
 		opts, err := signer.TransactOpts(chainID)
@@ -341,5 +341,35 @@ func TestSigner_TransactOpts(t *testing.T) {
 		_, err = opts.Signer(wrongAddr, testTx)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "address mismatch")
+	})
+}
+
+func TestNewSignerFromPrivateKey(t *testing.T) {
+	// Using the well-known EWOQ private key for testing
+	const ewoqPrivateKey = "PrivateKey-ewoqjP7PxY4yr3iLTpLisriqt94hdyDFNgchSxGGztUrTXtNN"
+
+	t.Run("success", func(t *testing.T) {
+		signer, err := NewSignerFromPrivateKey(ewoqPrivateKey)
+		require.NoError(t, err)
+		require.NotNil(t, signer)
+		require.False(t, signer.IsNoOp())
+
+		// Verify the address is correct for the EWOQ key
+		expectedAddr := common.HexToAddress("0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC")
+		require.Equal(t, expectedAddr, signer.Address())
+	})
+
+	t.Run("invalid private key", func(t *testing.T) {
+		signer, err := NewSignerFromPrivateKey("invalid-key")
+		require.Error(t, err)
+		require.Nil(t, signer)
+		require.Contains(t, err.Error(), "failed to load private key")
+	})
+
+	t.Run("malformed private key format", func(t *testing.T) {
+		signer, err := NewSignerFromPrivateKey("PrivateKey-invalid")
+		require.Error(t, err)
+		require.Nil(t, signer)
+		require.Contains(t, err.Error(), "failed to load private key")
 	})
 }
