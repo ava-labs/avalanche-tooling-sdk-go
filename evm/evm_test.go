@@ -1252,7 +1252,7 @@ func TestGetSignerBalance(t *testing.T) {
 	signer := NewNoOpSigner(address)
 	tests := []struct {
 		name        string
-		signer      Signer
+		signer      *Signer
 		setupMock   func()
 		expected    *big.Int
 		expectError bool
@@ -1643,7 +1643,7 @@ func TestGetTxOptsWithSigner(t *testing.T) {
 	noOpSigner := NewNoOpSigner(signerAddress)
 	tests := []struct {
 		name          string
-		signer        Signer
+		signer        *Signer
 		setupMock     func()
 		expectError   bool
 		errorContains string
@@ -1658,13 +1658,13 @@ func TestGetTxOptsWithSigner(t *testing.T) {
 		},
 		{
 			name:   "invalid signer",
-			signer: NewNullSigner(),
+			signer: nil,
 			setupMock: func() {
 				mockClient.EXPECT().ChainID(gomock.Any()).
 					Return(big.NewInt(43114), nil)
 			},
 			expectError:   true,
-			errorContains: "null signer cannot create transaction options",
+			errorContains: "signer is nil",
 		},
 		{
 			name:   "error getting chain ID",
@@ -1804,7 +1804,7 @@ func TestTransactWithWarpMessage(t *testing.T) {
 	defaultGasLimit := uint64(2_000_000)
 	tests := []struct {
 		name          string
-		signer        Signer
+		signer        *Signer
 		warpMessage   *warp.Message
 		contract      common.Address
 		callData      []byte
@@ -1919,7 +1919,7 @@ func TestTransactWithWarpMessage(t *testing.T) {
 		},
 		{
 			name:        "signer failure",
-			signer:      NewNullSigner(),
+			signer:      nil,
 			warpMessage: warpMessage,
 			contract:    contractAddress,
 			callData:    callData,
@@ -1937,7 +1937,7 @@ func TestTransactWithWarpMessage(t *testing.T) {
 					Return(uint64(21000), nil)
 			},
 			expectError:   true,
-			errorContains: "null signer cannot sign transactions",
+			errorContains: "signer is nil",
 		},
 	}
 	for _, tt := range tests {
@@ -2058,7 +2058,7 @@ func TestSetupProposerVM(t *testing.T) {
 	signer := NewNoOpSigner(signerAddress)
 	tests := []struct {
 		name          string
-		signer        Signer
+		signer        *Signer
 		setupMock     func()
 		expectError   bool
 		errorContains string

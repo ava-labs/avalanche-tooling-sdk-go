@@ -296,7 +296,7 @@ func ParseSpec(
 func TxToMethod(
 	logger logging.Logger,
 	rpcURL string,
-	signer evm.Signer,
+	signer *evm.Signer,
 	contractAddress common.Address,
 	payment *big.Int,
 	description string,
@@ -377,7 +377,7 @@ func TxToMethod(
 func TxToMethodWithWarpMessage(
 	logger logging.Logger,
 	rpcURL string,
-	signer evm.Signer,
+	signer *evm.Signer,
 	contractAddress common.Address,
 	warpMessage *warp.Message,
 	payment *big.Int,
@@ -416,7 +416,7 @@ func TxToMethodWithWarpMessage(
 	if err != nil {
 		return nil, nil, err
 	}
-	if _, ok := signer.(*evm.NoOpSigner); ok {
+	if signer.IsNoOp() {
 		return tx, nil, nil
 	}
 	if err := client.SendTransaction(tx); err != nil {
@@ -482,7 +482,7 @@ func handleFailedReceiptStatus(
 
 func DebugTraceCall(
 	rpcURL string,
-	signer evm.Signer,
+	signer *evm.Signer,
 	contractAddress common.Address,
 	payment *big.Int,
 	methodSpec string,
@@ -569,7 +569,7 @@ func GetSmartContractCallResult[T any](methodName string, out []interface{}) (T,
 
 func DeployContract(
 	rpcURL string,
-	signer evm.Signer,
+	signer *evm.Signer,
 	binBytes []byte,
 	methodSpec string,
 	params ...interface{},

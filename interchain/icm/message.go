@@ -61,7 +61,7 @@ func SendCrossChainMessage(
 	logger logging.Logger,
 	rpcURL string,
 	messengerAddress common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	destinationBlockchainID ids.ID,
 	destinationAddress common.Address,
 	message []byte,

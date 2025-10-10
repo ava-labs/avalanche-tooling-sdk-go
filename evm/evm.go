@@ -185,7 +185,7 @@ func (client Client) GetContractBytecode(
 // returns the balance for [signer]
 // supports [repeatsOnFailure] failures
 func (client Client) GetSignerBalance(
-	signer Signer,
+	signer *Signer,
 ) (*big.Int, error) {
 	return client.GetAddressBalance(signer.Address().Hex())
 }
@@ -383,7 +383,7 @@ func (client Client) WaitForTransaction(
 // transfers [amount] to [targetAddressStr] using [signer]
 // supports [repeatsOnFailure] failures on each step
 func (client Client) FundAddress(
-	signer Signer,
+	signer *Signer,
 	targetAddressStr string,
 	amount *big.Int,
 ) (*types.Receipt, error) {
@@ -445,7 +445,7 @@ func (client Client) IssueTx(
 // returns tx options that include signer for [signer]
 // supports [repeatsOnFailure] failures when gathering chain info
 func (client Client) GetTxOptsWithSigner(
-	signer Signer,
+	signer *Signer,
 ) (*bind.TransactOpts, error) {
 	chainID, err := client.GetChainID()
 	if err != nil {
@@ -477,7 +477,7 @@ func (client Client) WaitForEVMBootstrapped(timeout time.Duration) error {
 // generates a transaction signed with [signer], calling a [contract] method using [callData]
 // including [warpMessage] in the tx accesslist
 func (client Client) TransactWithWarpMessage(
-	signer Signer,
+	signer *Signer,
 	warpMessage *avalancheWarp.Message,
 	contract common.Address,
 	callData []byte,
@@ -624,7 +624,7 @@ func (client Client) WaitForNewBlock(
 // issue dummy txs to create the given number of blocks
 func (client Client) CreateDummyBlocks(
 	numBlocks int,
-	signer Signer,
+	signer *Signer,
 ) error {
 	addr := signer.Address()
 	chainID, err := client.GetChainID()
@@ -681,7 +681,7 @@ func (client Client) CreateDummyBlocks(
 // the current timestamp should be after the ProposerVM activation time (aka ApricotPhase4).
 // supports [repeatsOnFailure] failures on each step
 func (client Client) SetupProposerVM(
-	signer Signer,
+	signer *Signer,
 ) error {
 	const numBlocks = 2 // Number of blocks needed to activate the proposer VM fork
 	_, err := utils.Retry(

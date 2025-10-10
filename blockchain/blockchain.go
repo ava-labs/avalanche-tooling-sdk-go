@@ -149,7 +149,7 @@ type Subnet struct {
 	ValidatorManagerOwnerAddress *common.Address
 
 	// Signer of the owner of the Validator Manager Contract
-	ValidatorManagerOwnerSigner evm.Signer
+	ValidatorManagerOwnerSigner *evm.Signer
 
 	// BootstrapValidators are bootstrap validators that are included in the ConvertSubnetToL1Tx call
 	// that made Subnet a sovereign L1
@@ -364,7 +364,7 @@ func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcc
 // to set as the owner of the PoA manager
 func (c *Subnet) InitializeProofOfAuthority(
 	log logging.Logger,
-	signer evm.Signer,
+	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
 	useACP99 bool,
 	signatureAggregatorEndpoint string,
@@ -461,12 +461,12 @@ func (c *Subnet) InitializeProofOfAuthority(
 
 func (c *Subnet) InitializeProofOfStake(
 	log logging.Logger,
-	signer evm.Signer,
+	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
 	posParams validatormanager.PoSParams,
 	useACP99 bool,
 	signatureAggregatorEndpoint string,
-	nativeMinterPrecompileAdminSigner evm.Signer,
+	nativeMinterPrecompileAdminSigner *evm.Signer,
 ) error {
 	if c.Network == network.UndefinedNetwork {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingNetwork)
@@ -492,7 +492,7 @@ func (c *Subnet) InitializeProofOfStake(
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerAddress)
 	}
 	if useACP99 {
-		if _, ok := c.ValidatorManagerOwnerSigner.(*evm.NullSigner); ok {
+		if c.ValidatorManagerOwnerSigner == nil {
 			return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
 		}
 	}

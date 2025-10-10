@@ -254,7 +254,7 @@ func InitializeValidatorsSet(
 	logger logging.Logger,
 	rpcURL string,
 	managerAddress common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	subnetID ids.ID,
 	managerBlockchainID ids.ID,
 	convertSubnetValidators []*txs.ConvertSubnetToL1Validator,

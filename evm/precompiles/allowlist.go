@@ -16,7 +16,7 @@ func SetAdmin(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(
@@ -37,7 +37,7 @@ func SetManager(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(
@@ -58,7 +58,7 @@ func SetEnabled(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(
@@ -79,7 +79,7 @@ func SetNone(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(

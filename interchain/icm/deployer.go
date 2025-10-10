@@ -200,7 +200,7 @@ func (t *Deployer) LoadFromRelease(
 // If the messenger is already deployed, returns ErrMessengerAlreadyDeployed.
 func (t *Deployer) Deploy(
 	rpcURL string,
-	signer evm.Signer,
+	signer *evm.Signer,
 ) (string, string, error) {
 	messengerAddress, err := t.DeployMessenger(rpcURL, signer)
 	if err != nil {
@@ -218,7 +218,7 @@ func (t *Deployer) Deploy(
 // Returns the messenger contract address and ErrMessengerAlreadyDeployed if already deployed.
 func (t *Deployer) DeployMessenger(
 	rpcURL string,
-	signer evm.Signer,
+	signer *evm.Signer,
 ) (string, error) {
 	if err := t.Validate(); err != nil {
 		return "", err
@@ -262,7 +262,7 @@ func (t *Deployer) DeployMessenger(
 // The registry is initialized with the messenger contract address at version 1.
 func (t *Deployer) DeployRegistry(
 	rpcURL string,
-	signer evm.Signer,
+	signer *evm.Signer,
 ) (string, error) {
 	if err := t.Validate(); err != nil {
 		return "", err

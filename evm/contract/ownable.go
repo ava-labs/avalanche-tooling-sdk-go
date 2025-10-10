@@ -30,7 +30,7 @@ func TransferOwnership(
 	logger logging.Logger,
 	rpcURL string,
 	contractAddress common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	newOwner common.Address,
 ) error {
 	_, _, err := TxToMethod(

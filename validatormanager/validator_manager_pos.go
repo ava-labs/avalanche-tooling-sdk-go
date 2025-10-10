@@ -24,12 +24,12 @@ func PoSValidatorManagerInitialize(
 	rpcURL string,
 	managerAddress common.Address,
 	specializedManagerAddress common.Address,
-	managerOwnerSigner evm.Signer,
-	signer evm.Signer,
+	managerOwnerSigner *evm.Signer,
+	signer *evm.Signer,
 	subnetID [32]byte,
 	posParams PoSParams,
 	useACP99 bool,
-	nativeMinterPrecompileAdminSigner evm.Signer,
+	nativeMinterPrecompileAdminSigner *evm.Signer,
 ) (*types.Transaction, *types.Receipt, error) {
 	if err := posParams.Verify(); err != nil {
 		return nil, nil, err
@@ -55,7 +55,7 @@ func PoSValidatorManagerInitialize(
 			return nil, nil, err
 		}
 		if allowedStatus.Cmp(big.NewInt(0)) == 0 {
-			if _, ok := nativeMinterPrecompileAdminSigner.(*evm.NullSigner); ok {
+			if nativeMinterPrecompileAdminSigner == nil {
 				return nil, nil, fmt.Errorf("no managed native minter precompile admin was found, and need to be used to enable Native PoS")
 			}
 			if err := precompiles.SetEnabled(

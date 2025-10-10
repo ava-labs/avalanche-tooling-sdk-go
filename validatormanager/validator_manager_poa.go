@@ -20,7 +20,7 @@ func PoAValidatorManagerInitialize(
 	logger logging.Logger,
 	rpcURL string,
 	managerAddress common.Address,
-	signer evm.Signer,
+	signer *evm.Signer,
 	subnetID ids.ID,
 	ownerAddress common.Address,
 	useACP99 bool,
