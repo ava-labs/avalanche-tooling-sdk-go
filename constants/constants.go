@@ -23,6 +23,7 @@ const (
 const (
 	PChainCreateSubnetTx               = "CreateSubnetTx"
 	PChainConvertSubnetToL1Tx          = "ConvertSubnetToL1Tx"
+	PChainRegisterL1ValidatorTx        = "RegisterL1ValidatorTx"
 	PChainAddSubnetValidatorTx         = "AddSubnetValidatorTx"
 	PChainRemoveSubnetValidatorTx      = "RemoveSubnetValidatorTx"
 	PChainCreateChainTx                = "CreateChainTx"
