@@ -36,10 +36,8 @@ func CreateSubnet() error {
 		Threshold:   1,
 	}
 	buildTxParams := types.BuildTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:      *existingAccount,
+		Network:      network,
 		BuildTxInput: createSubnetParams,
 	}
 	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
@@ -48,10 +46,8 @@ func CreateSubnet() error {
 	}
 
 	signTxParams := types.SignTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:       *existingAccount,
+		Network:       network,
 		BuildTxResult: &buildTxResult,
 	}
 	signTxResult, err := localWallet.SignTx(ctx, signTxParams)
@@ -60,10 +56,8 @@ func CreateSubnet() error {
 	}
 
 	sendTxParams := types.SendTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:      *existingAccount,
+		Network:      network,
 		SignTxResult: &signTxResult,
 	}
 	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)

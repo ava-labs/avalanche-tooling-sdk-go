@@ -13,6 +13,7 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
@@ -33,14 +34,18 @@ type SignTxOutput interface {
 
 // SignTxParams contains parameters for signing transactions
 type SignTxParams struct {
-	BaseParams
+	Account account.Account
+	Network network.Network
 	*BuildTxResult
 }
 
 // Validate validates the sign transaction parameters
 func (p *SignTxParams) Validate() error {
-	if err := p.BaseParams.Validate(); err != nil {
-		return err
+	if p.Account == nil {
+		return fmt.Errorf("account is required")
+	}
+	if p.Network.Kind == network.Undefined {
+		return fmt.Errorf("network is required")
 	}
 	if p.BuildTxResult == nil {
 		return fmt.Errorf("build tx result is required")
