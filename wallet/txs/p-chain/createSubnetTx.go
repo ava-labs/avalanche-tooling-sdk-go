@@ -10,11 +10,6 @@ type CreateSubnetTxParams struct {
 	Threshold   uint32
 }
 
-// GetTxType returns the transaction type identifier
-func (p CreateSubnetTxParams) GetTxType() string {
-	return "CreateSubnetTx"
-}
-
 // Validate validates the parameters
 func (p CreateSubnetTxParams) Validate() error {
 	if p.ControlKeys == nil {

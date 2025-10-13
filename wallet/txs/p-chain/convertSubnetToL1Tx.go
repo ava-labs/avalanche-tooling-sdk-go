@@ -24,11 +24,6 @@ type ConvertSubnetToL1TxParams struct {
 	Validators []*avagoTxs.ConvertSubnetToL1Validator
 }
 
-// GetTxType returns the transaction type identifier
-func (p ConvertSubnetToL1TxParams) GetTxType() string {
-	return "ConvertSubnetToL1Tx"
-}
-
 // Validate validates the parameters
 func (p ConvertSubnetToL1TxParams) Validate() error {
 	if p.SubnetID == ids.Empty {
