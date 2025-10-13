@@ -16,15 +16,9 @@ import (
 type Wallet interface {
 	// Accounts returns the accounts in the Wallet
 	Accounts() []account.Account
-
-	// Signer returns the clients in the Wallet
-	Clients() types.ChainClients
 	// Account Management
 	// CreateAccount creates a new Account
 	CreateAccount() (*account.Account, error)
-
-	// GetAccount retrieves an existing Account by address or identifier
-	GetAccount() (*account.Account, error)
 
 	// ListAccounts returns all accounts managed by this wallet
 	ListAccounts() ([]*account.Account, error)
@@ -41,10 +35,4 @@ type Wallet interface {
 
 	// SendTx submits a signed transaction to the Network
 	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
-
-	// GetChainClients returns the blockchain clients associated with this wallet
-	GetChainClients() types.ChainClients
-
-	// SetChainClients updates the blockchain clients for this wallet
-	SetChainClients(clients types.ChainClients)
 }

@@ -5,7 +5,6 @@ package account
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
@@ -36,14 +35,6 @@ func Import(keyPath string) (Account, error) {
 	return &LocalAccount{
 		SoftKey: k,
 	}, nil
-}
-
-// Addresses returns all addresses associated with this local account
-func (a *LocalAccount) Addresses() []ids.ShortID {
-	if a.SoftKey == nil {
-		return []ids.ShortID{}
-	}
-	return a.SoftKey.KeyChain().Addresses().List()
 }
 
 func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error) {

@@ -5,17 +5,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/ava-labs/subnet-evm/ethclient"
-
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 )
-
-type ChainClients struct {
-	C *ethclient.Client // …/ext/bc/C/rpc
-	X string            // …/ext/bc/X
-	P string            // …/ext/bc/P
-}
 
 // BaseParams contains common parameters shared across all operations
 type BaseParams struct {
