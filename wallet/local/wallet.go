@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
@@ -152,20 +151,6 @@ func (w *LocalWallet) SetChainClients(clients types.ChainClients) {
 // AddAccount adds an Account to the wallet
 func (w *LocalWallet) AddAccount(acc account.Account) {
 	w.accounts = append(w.accounts, acc)
-}
-
-// GetAccountByAddress finds an Account by its address
-func (w *LocalWallet) GetAccountByAddress(address ids.ShortID) *account.Account {
-	for i := range w.accounts {
-		// Check if the Account's SoftKey has this address
-		addresses := w.accounts[i].Addresses()
-		for _, addr := range addresses {
-			if addr == address {
-				return &w.accounts[i]
-			}
-		}
-	}
-	return nil
 }
 
 // GetAllAccounts returns all accounts in the wallet
