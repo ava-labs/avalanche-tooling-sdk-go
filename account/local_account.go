@@ -5,7 +5,6 @@ package account
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/key"
@@ -38,14 +37,6 @@ func Import(keyPath string) (Account, error) {
 	}, nil
 }
 
-// Addresses returns all addresses associated with this local account
-func (a *LocalAccount) Addresses() []ids.ShortID {
-	if a.SoftKey == nil {
-		return []ids.ShortID{}
-	}
-	return a.SoftKey.KeyChain().Addresses().List()
-}
-
 func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error) {
 	if a.SoftKey == nil {
 		return "", fmt.Errorf("SoftKey not initialized")
@@ -59,9 +50,4 @@ func (a *LocalAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 		return nil, fmt.Errorf("SoftKey not initialized")
 	}
 	return a.SoftKey.KeyChain(), nil
-}
-
-// NewAccount creates a new LocalAccount
-func (a *LocalAccount) NewAccount() (Account, error) {
-	return NewLocalAccount()
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
@@ -29,7 +28,6 @@ import (
 type LocalWallet struct {
 	*primary.Wallet
 	accounts []account.Account
-	clients  types.ChainClients
 }
 
 // Ensure LocalWallet implements Wallet interface
@@ -40,7 +38,6 @@ func NewLocalWallet() (*LocalWallet, error) {
 	return &LocalWallet{
 		Wallet:   nil,
 		accounts: []account.Account{},
-		clients:  types.ChainClients{},
 	}, nil
 }
 
@@ -161,10 +158,6 @@ func (w *LocalWallet) Accounts() []account.Account {
 	return w.accounts
 }
 
-func (w *LocalWallet) Clients() types.ChainClients {
-	return w.clients
-}
-
 // CreateAccount creates a new Account using local key generation
 func (w *LocalWallet) CreateAccount() (*account.Account, error) {
 	newAccount, err := account.NewLocalAccount()
@@ -176,13 +169,6 @@ func (w *LocalWallet) CreateAccount() (*account.Account, error) {
 	w.AddAccount(newAccount)
 
 	return &newAccount, nil
-}
-
-// GetAccount retrieves an existing Account by address or identifier
-func (w *LocalWallet) GetAccount() (*account.Account, error) {
-	// TODO: Implement Account retrieval logic based on address
-	// This could search through w.accounts or use the embedded primary.Wallet
-	return nil, fmt.Errorf("not implemented")
 }
 
 // ListAccounts returns all accounts managed by this wallet
@@ -234,33 +220,9 @@ func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (ty
 	return wallet.SendTx(w.Wallet, params)
 }
 
-// GetChainClients returns the blockchain clients associated with this wallet
-func (w *LocalWallet) GetChainClients() types.ChainClients {
-	return w.clients
-}
-
-// SetChainClients updates the blockchain clients for this wallet
-func (w *LocalWallet) SetChainClients(clients types.ChainClients) {
-	w.clients = clients
-}
-
 // AddAccount adds an Account to the wallet
 func (w *LocalWallet) AddAccount(acc account.Account) {
 	w.accounts = append(w.accounts, acc)
-}
-
-// GetAccountByAddress finds an Account by its address
-func (w *LocalWallet) GetAccountByAddress(address ids.ShortID) *account.Account {
-	for i := range w.accounts {
-		// Check if the Account's SoftKey has this address
-		addresses := w.accounts[i].Addresses()
-		for _, addr := range addresses {
-			if addr == address {
-				return &w.accounts[i]
-			}
-		}
-	}
-	return nil
 }
 
 // GetAllAccounts returns all accounts in the wallet
