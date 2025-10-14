@@ -5,13 +5,8 @@ package constants
 import "time"
 
 const (
-	// http
-	APIRequestTimeout      = 10 * time.Second
-	APIRequestLargeTimeout = 30 * time.Second
-
-	// node
-	UserOnlyWriteReadPerms     = 0o600
+	APIRequestTimeout          = 10 * time.Second
+	APIRequestLargeTimeout     = 30 * time.Second
 	UserOnlyWriteReadExecPerms = 0o700
-
-	SignatureTimeout = 5 * time.Minute
+	WriteReadUserOnlyPerms     = 0o600
 )
