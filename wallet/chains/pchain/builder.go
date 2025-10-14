@@ -3,7 +3,6 @@
 package pchain
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/platformvm/signer"
-	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -125,21 +123,6 @@ func buildConvertSubnetToL1Tx(wallet *primary.Wallet, account account.Account, p
 	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
 	pChainResult := types.NewPChainBuildTxResult(&builtTx)
 	return types.BuildTxResult{BuildTxOutput: pChainResult}, nil
-}
-
-func convertSignedMessageToBytes(signedMessageStr string) (*warp.Message, error) {
-	// Decode the hex string
-	signedMessageBytes, err := hex.DecodeString(signedMessageStr)
-	if err != nil {
-		return nil, fmt.Errorf("unable to convert signed message from string to bytes")
-	}
-
-	// Parse the signed message
-	signedMessage, err := warp.ParseMessage(signedMessageBytes)
-	if err != nil {
-		return nil, fmt.Errorf("unable to convert signed message from bytes to warp message")
-	}
-	return signedMessage, nil
 }
 
 // getMultisigTxOptions is a helper function that can be shared
