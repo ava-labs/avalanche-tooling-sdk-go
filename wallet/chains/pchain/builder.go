@@ -33,8 +33,6 @@ func BuildTx(wallet *primary.Wallet, account account.Account, params types.Build
 		return buildCreateChainTx(wallet, account, txType)
 	case *pchainTxs.ConvertSubnetToL1TxParams:
 		return buildConvertSubnetToL1Tx(wallet, account, txType)
-	case *pchainTxs.RegisterL1ValidatorParams:
-		return buildRegisterL1ValidatorTx(wallet, txType)
 	default:
 		return types.BuildTxResult{}, fmt.Errorf("unsupported P-Chain transaction type: %T", params.BuildTxInput)
 	}
@@ -120,29 +118,6 @@ func buildConvertSubnetToL1Tx(wallet *primary.Wallet, account account.Account, p
 		addressBytes,
 		avagoValidators,
 		options...,
-	)
-	if err != nil {
-		return types.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
-	}
-	builtTx := avagoTxs.Tx{Unsigned: unsignedTx}
-	pChainResult := types.NewPChainBuildTxResult(&builtTx)
-	return types.BuildTxResult{BuildTxOutput: pChainResult}, nil
-}
-
-// buildConvertSubnetToL1Tx provides a default implementation that can be used by any wallet
-func buildRegisterL1ValidatorTx(wallet *primary.Wallet, params *pchainTxs.RegisterL1ValidatorParams) (types.BuildTxResult, error) {
-	blsInfo, err := convertToBLSProofOfPossession(params.BLSPublicKey, params.BLSProofOfPossession)
-	if err != nil {
-		return types.BuildTxResult{}, fmt.Errorf("failure parsing BLS info: %w", err)
-	}
-	warpMessage, err := convertSignedMessageToBytes(params.Message)
-	if err != nil {
-		return types.BuildTxResult{}, fmt.Errorf("failure parsing BLS info: %w", err)
-	}
-	unsignedTx, err := wallet.P().Builder().NewRegisterL1ValidatorTx(
-		params.Balance,
-		blsInfo.ProofOfPossession,
-		warpMessage.Bytes(),
 	)
 	if err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("error building tx: %w", err)
