@@ -8,7 +8,7 @@ require (
 	github.com/ava-labs/avalanchego v1.13.6-rc.1
 	github.com/ava-labs/icm-services v1.4.1-0.20250925155532-87ce9429e193
 	github.com/ava-labs/libevm v1.13.15-0.20251002164226-35926db4d661
-	github.com/ava-labs/subnet-evm v0.7.8
+	github.com/ava-labs/subnet-evm v0.7.9
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
