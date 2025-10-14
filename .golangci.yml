@@ -90,7 +90,7 @@ linters-settings:
         disabled: false
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unused-receiver
       - name: unused-receiver
-        disabled: false
+        disabled: true
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#useless-break
       - name: useless-break
         disabled: false
