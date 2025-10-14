@@ -40,8 +40,8 @@ github.com/ava-labs/ledger-avalanche-go v1.1.0 h1:OkscKtb/gX20HBt8RyAtwXLrQnCEls
 github.com/ava-labs/ledger-avalanche-go v1.1.0/go.mod h1:mAlG9ptnPjvNoLGLHXnM3slGY8ewvBJtJNVTEjG8KvI=
 github.com/ava-labs/libevm v1.13.15-0.20251002164226-35926db4d661 h1:lt4yQE1HMvxWrdD5RFj+h9kWUsZK2rmNohvkeQsbG9M=
 github.com/ava-labs/libevm v1.13.15-0.20251002164226-35926db4d661/go.mod h1:ivRC/KojP8sai7j8WnpXIReQpcRklL2bIzoysnjpARQ=
-github.com/ava-labs/subnet-evm v0.7.8 h1:MREWNuL7bghg3RlFF12tF3AWnTK/Z8Vi4t2uH8gVM2U=
-github.com/ava-labs/subnet-evm v0.7.8/go.mod h1:wgtwtlK6T5feuk+pgDe4inSw+AKDPATQTA13LOFhOR8=
+github.com/ava-labs/subnet-evm v0.7.9 h1:1/2bRZdEtC3sJDYpw0q4xFO9R/6qBOhO3MSLJ/Za/TY=
+github.com/ava-labs/subnet-evm v0.7.9/go.mod h1:u1kK+kGd7iBXiKVwdl9iSUvlyQaaAHFNtrDWJBfHGXE=
 github.com/aymerick/raymond v2.0.3-0.20180322193309-b565731e1464+incompatible/go.mod h1:osfaiScAUVup+UC9Nfq76eWqDhXlp+4UYaA8uhTBO6g=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
