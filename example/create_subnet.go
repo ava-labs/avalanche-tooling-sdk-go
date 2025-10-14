@@ -31,13 +31,13 @@ func CreateSubnet() (ids.ID, error) {
 		return ids.Empty, fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	existingAccount, err := localWallet.ImportAccount("/Users/raymondsukanto/.avalanche-cli/key/newTestKey.pk")
+	existingAccount, err := localWallet.ImportAccount("EXISTING_KEY_PATH")
 	if err != nil {
 		return ids.Empty, fmt.Errorf("failed to ImportAccount: %w", err)
 	}
 
 	createSubnetParams := &pchainTxs.CreateSubnetTxParams{
-		ControlKeys: []string{"P-fuji1377nx80rx3pzneup5qywgdgdsmzntql7trcqlg"},
+		ControlKeys: []string{"P-fujixxxxx"},
 		Threshold:   1,
 	}
 	buildTxParams := types.BuildTxParams{
@@ -78,13 +78,9 @@ func CreateSubnet() (ids.ID, error) {
 	return ids.Empty, fmt.Errorf("unable to get tx id")
 }
 
-func mainCreateSubnet() {
+func main() {
 	if _, err := CreateSubnet(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func main() {
-	mainCreateSubnet()
 }

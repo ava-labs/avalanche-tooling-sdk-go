@@ -75,6 +75,8 @@ func (p *PChainSendTxResult) Validate() error {
 	}
 	return nil
 }
+
+// Constructor functions for SendTxResult
 func NewPChainSendTxResult(tx *txs.Tx) *PChainSendTxResult {
 	return &PChainSendTxResult{Tx: tx}
 }

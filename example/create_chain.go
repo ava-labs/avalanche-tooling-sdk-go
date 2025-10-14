@@ -30,22 +30,24 @@ func CreateChain(subnetID string) error {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	existingAccount, err := localWallet.ImportAccount("/Users/raymondsukanto/.avalanche-cli/key/newTestKey.pk")
+	existingAccount, err := localWallet.ImportAccount("EXISTING_KEY_PATH")
 	if err != nil {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}
-	evmGenesisParams := blockchain.GetDefaultSubnetEVMGenesis("0x43719cDF4B3CCDE97328Db4C3c2A955EFfCbb8Cf")
+
+	evmGenesisParams := blockchain.GetDefaultSubnetEVMGenesis("EVM_ADDRESS")
 	evmGenesisBytes, _ := blockchain.CreateEvmGenesis(&evmGenesisParams)
 	blockchainName := "TestBlockchain"
 	vmID, err := blockchain.VMID(blockchainName)
 	if err != nil {
 		return fmt.Errorf("failed to get vmid: %w", err)
 	}
+
 	createChainParams := &pchainTxs.CreateChainTxParams{
-		SubnetAuthKeys: []string{"P-fuji1377nx80rx3pzneup5qywgdgdsmzntql7trcqlg"},
+		SubnetAuthKeys: []string{"P-fujixxxxx"},
 		SubnetID:       subnetID,
 		VMID:           vmID.String(),
-		ChainName:      "TestBlockchain",
+		ChainName:      blockchainName,
 		Genesis:        evmGenesisBytes,
 	}
 	buildTxParams := types.BuildTxParams{
@@ -67,6 +69,7 @@ func CreateChain(subnetID string) error {
 		},
 		BuildTxResult: &buildTxResult,
 	}
+
 	signTxResult, err := localWallet.SignTx(ctx, signTxParams)
 	if err != nil {
 		return fmt.Errorf("failed to signTx: %w", err)
@@ -83,6 +86,7 @@ func CreateChain(subnetID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to sendTx: %w", err)
 	}
+
 	if tx := sendTxResult.GetTx(); tx != nil {
 		if pChainTx, ok := tx.(*avagoTxs.Tx); ok {
 			fmt.Printf("sendTxResult %s \n", pChainTx.ID())
@@ -96,7 +100,7 @@ func CreateChain(subnetID string) error {
 func main() {
 	// Use a hardcoded subnet ID for this example
 	// In a real scenario, you would get this from creating a subnet first
-	subnetID := "2ZmvHHXEmdAJT9YX6KK58B6nGtxx4JA1T53S6Go1aAHjYjJmmp"
+	subnetID := "SUBNET_ID"
 	if err := CreateChain(subnetID); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
