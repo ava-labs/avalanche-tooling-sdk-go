@@ -13,7 +13,7 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 
@@ -22,8 +22,6 @@ import (
 
 // SignTxOutput represents a generic interface for signed transaction results
 type SignTxOutput interface {
-	// GetTxType returns the transaction type identifier
-	GetTxType() string
 	// GetChainType returns which chain this transaction is for
 	GetChainType() string
 	// GetTx returns the actual signed transaction (interface{} to support different chain types)
@@ -36,14 +34,18 @@ type SignTxOutput interface {
 
 // SignTxParams contains parameters for signing transactions
 type SignTxParams struct {
-	BaseParams
+	Account account.Account
+	Network network.Network
 	*BuildTxResult
 }
 
 // Validate validates the sign transaction parameters
 func (p *SignTxParams) Validate() error {
-	if err := p.BaseParams.Validate(); err != nil {
-		return err
+	if p.Account == nil {
+		return fmt.Errorf("account is required")
+	}
+	if p.Network.Kind == network.Undefined {
+		return fmt.Errorf("network is required")
 	}
 	if p.BuildTxResult == nil {
 		return fmt.Errorf("build tx result is required")
@@ -207,33 +209,6 @@ type PChainSignTxResult struct {
 	threshold   uint32
 }
 
-func (p *PChainSignTxResult) GetTxType() string {
-	if p.Tx == nil || p.Tx.Unsigned == nil {
-		return "Unknown"
-	}
-	// Extract tx type from unsigned transaction
-	switch p.Tx.Unsigned.(type) {
-	case *txs.CreateSubnetTx:
-		return "CreateSubnetTx"
-	case *txs.ConvertSubnetToL1Tx:
-		return "ConvertSubnetToL1Tx"
-	case *txs.AddSubnetValidatorTx:
-		return "AddSubnetValidatorTx"
-	case *txs.RemoveSubnetValidatorTx:
-		return "RemoveSubnetValidatorTx"
-	case *txs.CreateChainTx:
-		return "CreateChainTx"
-	case *txs.TransformSubnetTx:
-		return "TransformSubnetTx"
-	case *txs.AddPermissionlessValidatorTx:
-		return "AddPermissionlessValidatorTx"
-	case *txs.TransferSubnetOwnershipTx:
-		return "TransferSubnetOwnershipTx"
-	default:
-		return "Unknown"
-	}
-}
-
 func (p *PChainSignTxResult) GetChainType() string {
 	return "P-Chain"
 }
@@ -266,77 +241,9 @@ func (p *PChainSignTxResult) IsReadyToCommit() (bool, error) {
 	return len(remainingSigners) == 0, nil
 }
 
-// CChainSignTxResult represents a C-Chain signed transaction result
-type CChainSignTxResult struct {
-	Tx interface{} // Will be *types.Transaction when C-Chain is implemented
-}
-
-func (c *CChainSignTxResult) GetTxType() string {
-	// TODO: Extract tx type from C-Chain transaction when implemented
-	return constants.TxTypeEVMTransaction
-}
-
-func (c *CChainSignTxResult) GetChainType() string {
-	return "C-Chain"
-}
-
-func (c *CChainSignTxResult) GetTx() interface{} {
-	return c.Tx
-}
-
-func (c *CChainSignTxResult) Validate() error {
-	if c.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-func (c *CChainSignTxResult) IsReadyToCommit() (bool, error) {
-	// TODO: Implement C-Chain ready to commit check when implemented
-	return true, nil
-}
-
-// XChainSignTxResult represents an X-Chain signed transaction result
-type XChainSignTxResult struct {
-	Tx interface{} // Will be *avm.Tx when X-Chain is implemented
-}
-
-func (x *XChainSignTxResult) GetTxType() string {
-	// TODO: Extract tx type from X-Chain transaction when implemented
-	return constants.TxTypeAVMTransaction
-}
-
-func (x *XChainSignTxResult) GetChainType() string {
-	return "X-Chain"
-}
-
-func (x *XChainSignTxResult) GetTx() interface{} {
-	return x.Tx
-}
-
-func (x *XChainSignTxResult) Validate() error {
-	if x.Tx == nil {
-		return fmt.Errorf("transaction cannot be nil")
-	}
-	return nil
-}
-
-func (x *XChainSignTxResult) IsReadyToCommit() (bool, error) {
-	// TODO: Implement X-Chain ready to commit check when implemented
-	return true, nil
-}
-
 // Constructor functions for each chain type
 func NewPChainSignTxResult(tx *txs.Tx) *PChainSignTxResult {
 	return &PChainSignTxResult{Tx: tx}
-}
-
-func NewCChainSignTxResult(tx interface{}) *CChainSignTxResult {
-	return &CChainSignTxResult{Tx: tx}
-}
-
-func NewXChainSignTxResult(tx interface{}) *XChainSignTxResult {
-	return &XChainSignTxResult{Tx: tx}
 }
 
 // GetRemainingAuthSigners gets subnet auth addresses that have not signed a given tx

@@ -22,11 +22,6 @@ type CreateChainTxParams struct {
 	Genesis []byte
 }
 
-// GetTxType returns the transaction type identifier
-func (p CreateChainTxParams) GetTxType() string {
-	return constants.PChainCreateChainTx
-}
-
 // Validate validates the parameters
 func (p CreateChainTxParams) Validate() error {
 	if p.SubnetAuthKeys == nil {

@@ -43,11 +43,6 @@ type ConvertSubnetToL1TxParams struct {
 	Validators []*ConvertSubnetToL1Validator
 }
 
-// GetTxType returns the transaction type identifier
-func (p ConvertSubnetToL1TxParams) GetTxType() string {
-	return constants.PChainConvertSubnetToL1Tx
-}
-
 // Validate validates the parameters
 func (p ConvertSubnetToL1TxParams) Validate() error {
 	if len(p.SubnetAuthKeys) == 0 {
