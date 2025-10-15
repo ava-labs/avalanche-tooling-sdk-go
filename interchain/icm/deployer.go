@@ -200,13 +200,13 @@ func (t *Deployer) LoadFromRelease(
 // If the messenger is already deployed, returns ErrMessengerAlreadyDeployed.
 func (t *Deployer) Deploy(
 	rpcURL string,
-	privateKey string,
+	signer *evm.Signer,
 ) (string, string, error) {
-	messengerAddress, err := t.DeployMessenger(rpcURL, privateKey)
+	messengerAddress, err := t.DeployMessenger(rpcURL, signer)
 	if err != nil {
 		return messengerAddress, "", err
 	}
-	registryAddress, err := t.DeployRegistry(rpcURL, privateKey)
+	registryAddress, err := t.DeployRegistry(rpcURL, signer)
 	if err != nil {
 		return messengerAddress, "", err
 	}
@@ -218,7 +218,7 @@ func (t *Deployer) Deploy(
 // Returns the messenger contract address and ErrMessengerAlreadyDeployed if already deployed.
 func (t *Deployer) DeployMessenger(
 	rpcURL string,
-	privateKey string,
+	signer *evm.Signer,
 ) (string, error) {
 	if err := t.Validate(); err != nil {
 		return "", err
@@ -245,7 +245,7 @@ func (t *Deployer) DeployMessenger(
 		toFund := big.NewInt(0).
 			Sub(messengerDeployerRequiredBalance, messengerDeployerBalance)
 		if _, err := client.FundAddress(
-			privateKey,
+			signer,
 			t.messengerDeployerAddress,
 			toFund,
 		); err != nil {
@@ -262,7 +262,7 @@ func (t *Deployer) DeployMessenger(
 // The registry is initialized with the messenger contract address at version 1.
 func (t *Deployer) DeployRegistry(
 	rpcURL string,
-	privateKey string,
+	signer *evm.Signer,
 ) (string, error) {
 	if err := t.Validate(); err != nil {
 		return "", err
@@ -280,7 +280,7 @@ func (t *Deployer) DeployRegistry(
 	}
 	registryAddress, _, _, err := contract.DeployContract(
 		rpcURL,
-		privateKey,
+		signer,
 		t.registryBydecode,
 		"([(uint256, address)])",
 		constructorInput,
