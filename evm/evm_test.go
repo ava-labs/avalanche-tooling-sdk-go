@@ -1249,7 +1249,8 @@ func TestGetSignerBalance(t *testing.T) {
 		URL:       "http://localhost:8545",
 	}
 	address := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	signer := NewNoOpSigner(address)
+	signer, err := NewNoOpSigner(address)
+	require.NoError(t, err)
 	tests := []struct {
 		name        string
 		signer      *Signer
@@ -1427,7 +1428,8 @@ func TestFundAddress(t *testing.T) {
 		URL:       "http://localhost:8545",
 	}
 	sourceAddress := common.HexToAddress("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd")
-	signer := NewNoOpSigner(sourceAddress)
+	signer, err := NewNoOpSigner(sourceAddress)
+	require.NoError(t, err)
 	targetAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
 	amount := big.NewInt(1000000000000000000) // 1 ETH
 	tests := []struct {
@@ -1640,7 +1642,8 @@ func TestGetTxOptsWithSigner(t *testing.T) {
 		URL:       "http://localhost:8545",
 	}
 	signerAddress := common.HexToAddress("0x0102030405060708090a0102030405060708090a")
-	noOpSigner := NewNoOpSigner(signerAddress)
+	noOpSigner, err := NewNoOpSigner(signerAddress)
+	require.NoError(t, err)
 	tests := []struct {
 		name          string
 		signer        *Signer
@@ -1799,8 +1802,10 @@ func TestTransactWithWarpMessage(t *testing.T) {
 	}
 	primarySignerAddress := common.HexToAddress("0x0102030405060708090a0102030405060708090a")
 	secondarySignerAddress := common.HexToAddress("0x1112131415161718191a1112131415161718191a")
-	primarySigner := NewNoOpSigner(primarySignerAddress)
-	secondarySigner := NewNoOpSigner(secondarySignerAddress)
+	primarySigner, err := NewNoOpSigner(primarySignerAddress)
+	require.NoError(t, err)
+	secondarySigner, err := NewNoOpSigner(secondarySignerAddress)
+	require.NoError(t, err)
 	defaultGasLimit := uint64(2_000_000)
 	tests := []struct {
 		name          string
@@ -2055,7 +2060,8 @@ func TestSetupProposerVM(t *testing.T) {
 	}
 	chainID := big.NewInt(43114)
 	signerAddress := common.HexToAddress("0x22232425262728292a2b22232425262728292a2b")
-	signer := NewNoOpSigner(signerAddress)
+	signer, err := NewNoOpSigner(signerAddress)
+	require.NoError(t, err)
 	tests := []struct {
 		name          string
 		signer        *Signer

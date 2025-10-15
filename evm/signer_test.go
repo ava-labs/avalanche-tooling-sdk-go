@@ -38,7 +38,9 @@ func TestNewSigner(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, signer)
 		require.Equal(t, testAddr, signer.Address())
-		require.False(t, signer.IsNoOp())
+		isNoOp, err := signer.IsNoOp()
+		require.NoError(t, err)
+		require.False(t, isNoOp)
 	})
 
 	t.Run("nil keychain", func(t *testing.T) {
@@ -92,21 +94,39 @@ func TestNewSigner(t *testing.T) {
 func TestNewNoOpSigner(t *testing.T) {
 	testAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 
-	signer := NewNoOpSigner(testAddr)
-	require.NotNil(t, signer)
-	require.Equal(t, testAddr, signer.Address())
-	require.True(t, signer.IsNoOp())
+	t.Run("success", func(t *testing.T) {
+		signer, err := NewNoOpSigner(testAddr)
+		require.NoError(t, err)
+		require.NotNil(t, signer)
+		require.Equal(t, testAddr, signer.Address())
+		isNoOp, err := signer.IsNoOp()
+		require.NoError(t, err)
+		require.True(t, isNoOp)
+	})
+
+	t.Run("zero address", func(t *testing.T) {
+		signer, err := NewNoOpSigner(common.Address{})
+		require.Error(t, err)
+		require.Nil(t, signer)
+		require.Contains(t, err.Error(), "address cannot be zero address")
+	})
 }
 
 func TestSigner_IsNoOp(t *testing.T) {
 	t.Run("nil signer", func(t *testing.T) {
 		var signer *Signer
-		require.True(t, signer.IsNoOp())
+		isNoOp, err := signer.IsNoOp()
+		require.Error(t, err)
+		require.False(t, isNoOp)
+		require.Contains(t, err.Error(), "signer is nil")
 	})
 
 	t.Run("NoOp signer", func(t *testing.T) {
-		signer := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
-		require.True(t, signer.IsNoOp())
+		signer, err := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		require.NoError(t, err)
+		isNoOp, err := signer.IsNoOp()
+		require.NoError(t, err)
+		require.True(t, isNoOp)
 	})
 
 	t.Run("crypto signer", func(t *testing.T) {
@@ -125,7 +145,9 @@ func TestSigner_IsNoOp(t *testing.T) {
 
 		signer, err := NewSigner(mockKeychain)
 		require.NoError(t, err)
-		require.False(t, signer.IsNoOp())
+		isNoOp, err := signer.IsNoOp()
+		require.NoError(t, err)
+		require.False(t, isNoOp)
 	})
 }
 
@@ -138,7 +160,8 @@ func TestSigner_Address(t *testing.T) {
 
 	t.Run("NoOp signer", func(t *testing.T) {
 		testAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-		signer := NewNoOpSigner(testAddr)
+		signer, err := NewNoOpSigner(testAddr)
+		require.NoError(t, err)
 		require.Equal(t, testAddr, signer.Address())
 	})
 
@@ -175,7 +198,8 @@ func TestSigner_SignTx(t *testing.T) {
 	})
 
 	t.Run("nil chainID", func(t *testing.T) {
-		signer := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		signer, err := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		require.NoError(t, err)
 		signedTx, err := signer.SignTx(nil, testTx)
 		require.Error(t, err)
 		require.Nil(t, signedTx)
@@ -183,7 +207,8 @@ func TestSigner_SignTx(t *testing.T) {
 	})
 
 	t.Run("nil transaction", func(t *testing.T) {
-		signer := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		signer, err := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		require.NoError(t, err)
 		signedTx, err := signer.SignTx(chainID, nil)
 		require.Error(t, err)
 		require.Nil(t, signedTx)
@@ -191,7 +216,8 @@ func TestSigner_SignTx(t *testing.T) {
 	})
 
 	t.Run("NoOp signer returns unsigned tx", func(t *testing.T) {
-		signer := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		signer, err := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		require.NoError(t, err)
 		signedTx, err := signer.SignTx(chainID, testTx)
 		require.NoError(t, err)
 		require.Equal(t, testTx, signedTx)
@@ -270,7 +296,8 @@ func TestSigner_TransactOpts(t *testing.T) {
 	})
 
 	t.Run("nil chainID", func(t *testing.T) {
-		signer := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		signer, err := NewNoOpSigner(common.HexToAddress("0x1234567890123456789012345678901234567890"))
+		require.NoError(t, err)
 		opts, err := signer.TransactOpts(nil)
 		require.Error(t, err)
 		require.Nil(t, opts)
@@ -279,7 +306,8 @@ func TestSigner_TransactOpts(t *testing.T) {
 
 	t.Run("NoOp signer sets NoSend", func(t *testing.T) {
 		testAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-		signer := NewNoOpSigner(testAddr)
+		signer, err := NewNoOpSigner(testAddr)
+		require.NoError(t, err)
 		opts, err := signer.TransactOpts(chainID)
 		require.NoError(t, err)
 		require.NotNil(t, opts)
@@ -352,7 +380,9 @@ func TestNewSignerFromPrivateKey(t *testing.T) {
 		signer, err := NewSignerFromPrivateKey(ewoqPrivateKey)
 		require.NoError(t, err)
 		require.NotNil(t, signer)
-		require.False(t, signer.IsNoOp())
+		isNoOp, err := signer.IsNoOp()
+		require.NoError(t, err)
+		require.False(t, isNoOp)
 
 		// Verify the address is correct for the EWOQ key
 		expectedAddr := common.HexToAddress("0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC")

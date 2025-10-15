@@ -416,7 +416,9 @@ func TxToMethodWithWarpMessage(
 	if err != nil {
 		return nil, nil, err
 	}
-	if signer.IsNoOp() {
+	if isNoOp, err := signer.IsNoOp(); err != nil {
+		return nil, nil, err
+	} else if isNoOp {
 		return tx, nil, nil
 	}
 	if err := client.SendTransaction(tx); err != nil {

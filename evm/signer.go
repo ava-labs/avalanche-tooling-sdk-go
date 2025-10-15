@@ -61,15 +61,21 @@ func NewSignerFromPrivateKey(privateKey string) (*Signer, error) {
 
 // NewNoOpSigner creates a signer that doesn't actually sign transactions
 // Useful for generating raw unsigned transactions where only the "from" address is needed
-func NewNoOpSigner(addr common.Address) *Signer {
+func NewNoOpSigner(addr common.Address) (*Signer, error) {
+	if addr == (common.Address{}) {
+		return nil, fmt.Errorf("address cannot be zero address")
+	}
 	return &Signer{
 		addr: addr,
-	}
+	}, nil
 }
 
 // IsNoOp returns true if this signer is in NoOp mode (doesn't actually sign)
-func (s *Signer) IsNoOp() bool {
-	return s == nil || s.signer == nil
+func (s *Signer) IsNoOp() (bool, error) {
+	if s == nil {
+		return false, fmt.Errorf("signer is nil")
+	}
+	return s.signer == nil, nil
 }
 
 // SignTx signs the provided transaction with the given chainID and returns the signed transaction
@@ -85,7 +91,9 @@ func (s *Signer) SignTx(chainID *big.Int, tx *types.Transaction) (*types.Transac
 		return nil, fmt.Errorf("transaction cannot be nil")
 	}
 
-	if s.IsNoOp() {
+	if isNoOp, err := s.IsNoOp(); err != nil {
+		return nil, err
+	} else if isNoOp {
 		return tx, nil
 	}
 
@@ -123,7 +131,9 @@ func (s *Signer) TransactOpts(chainID *big.Int) (*bind.TransactOpts, error) {
 		Context: context.Background(),
 	}
 
-	if s.IsNoOp() {
+	if isNoOp, err := s.IsNoOp(); err != nil {
+		return nil, err
+	} else if isNoOp {
 		opts.NoSend = true
 	}
 

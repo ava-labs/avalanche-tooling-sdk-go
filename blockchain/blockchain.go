@@ -491,10 +491,8 @@ func (c *Subnet) InitializeProofOfStake(
 	if c.ValidatorManagerOwnerAddress == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerAddress)
 	}
-	if useACP99 {
-		if c.ValidatorManagerOwnerSigner == nil {
-			return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
-		}
+	if useACP99 && c.ValidatorManagerOwnerSigner == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
 	}
 	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
 		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
