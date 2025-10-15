@@ -5,71 +5,34 @@ package wallet
 import (
 	"context"
 
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/set"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
-	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
-	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain"
-
-	avagokeychain "github.com/ava-labs/avalanchego/utils/crypto/keychain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
-type Wallet struct {
-	*primary.Wallet
-	Keychain keychain.Keychain
-	options  []common.Option
-	config   primary.WalletConfig
-}
+// ChainClients is now defined in wallet/types/common.go
 
-func New(ctx context.Context, uri string, avaxKeychain avagokeychain.Keychain, config primary.WalletConfig) (Wallet, error) {
-	wallet, err := primary.MakeWallet(
-		ctx,
-		uri,
-		avaxKeychain,
-		nil,
-		config,
-	)
-	return Wallet{
-		Wallet: wallet,
-		Keychain: keychain.Keychain{
-			Keychain: avaxKeychain,
-		},
-		config: config,
-	}, err
-}
+// Wallet represents the core wallet interface that can be implemented
+// by different wallet types (local, API-based, etc.)
+type Wallet interface {
+	// Accounts returns the accounts in the Wallet
+	Accounts() []account.Account
+	// Account Management
+	// CreateAccount creates a new Account
+	CreateAccount() (*account.Account, error)
 
-// SecureWalletIsChangeOwner ensures that a fee paying address (wallet's keychain) will receive
-// the change UTXO and not a randomly selected auth key that may not be paying fees
-func (w *Wallet) SecureWalletIsChangeOwner() {
-	addrs := w.Addresses()
-	changeAddr := addrs[0]
-	// sets change to go to wallet addr (instead of any other subnet auth key)
-	changeOwner := &secp256k1fx.OutputOwners{
-		Threshold: 1,
-		Addrs:     []ids.ShortID{changeAddr},
-	}
-	w.options = append(w.options, common.WithChangeOwner(changeOwner))
-	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.options...)
-}
+	// ListAccounts returns all accounts managed by this wallet
+	ListAccounts() ([]*account.Account, error)
 
-// SetAuthKeys sets auth keys that will be used when signing txs, besides the wallet's Keychain fee
-// paying ones
-func (w *Wallet) SetAuthKeys(authKeys []ids.ShortID) {
-	addrs := w.Addresses()
-	addrsSet := set.Set[ids.ShortID]{}
-	addrsSet.Add(addrs...)
-	addrsSet.Add(authKeys...)
-	w.options = append(w.options, common.WithCustomAddresses(addrsSet))
-	w.Wallet = primary.NewWalletWithOptions(w.Wallet, w.options...)
-}
+	// ImportAccount imports an existing Account into the wallet
+	ImportAccount(keyPath string) (*account.Account, error)
 
-func (w *Wallet) SetSubnetAuthMultisig(authKeys []ids.ShortID) {
-	w.SecureWalletIsChangeOwner()
-	w.SetAuthKeys(authKeys)
-}
+	// Transaction Operations
+	// BuildTx constructs a transaction for the specified operation
+	BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error)
 
-func (w *Wallet) Addresses() []ids.ShortID {
-	return w.Keychain.Addresses().List()
+	// SignTx signs a transaction
+	SignTx(ctx context.Context, params types.SignTxParams) (types.SignTxResult, error)
+
+	// SendTx submits a signed transaction to the Network
+	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
 }

@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
@@ -25,14 +24,9 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
-
-	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 )
 
 var (
@@ -304,57 +298,6 @@ func vmID(vmName string) (ids.ID, error) {
 	b := make([]byte, 32)
 	copy(b, []byte(vmName))
 	return ids.ToID(b)
-}
-
-func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
-	if ms.Undefined() {
-		return ids.Empty, multisig.ErrUndefinedTx
-	}
-	isReady, err := ms.IsReadyToCommit()
-	if err != nil {
-		return ids.Empty, err
-	}
-	if !isReady {
-		return ids.Empty, errors.New("tx is not fully signed so can't be committed")
-	}
-	tx, err := ms.GetWrappedPChainTx()
-	if err != nil {
-		return ids.Empty, err
-	}
-	const (
-		repeats             = 3
-		sleepBetweenRepeats = 2 * time.Second
-	)
-	var issueTxErr error
-	if err != nil {
-		return ids.Empty, err
-	}
-	for i := 0; i < repeats; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		options := []commonAvago.Option{commonAvago.WithContext(ctx)}
-		if !waitForTxAcceptance {
-			options = append(options, commonAvago.WithAssumeDecided())
-		}
-		// TODO: split error checking and recovery between issuing and waiting for status
-		issueTxErr = wallet.P().IssueTx(tx, options...)
-		if issueTxErr == nil {
-			break
-		}
-		if ctx.Err() != nil {
-			issueTxErr = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", tx.ID(), issueTxErr)
-		} else {
-			issueTxErr = fmt.Errorf("error issuing tx with ID %s: %w", tx.ID(), issueTxErr)
-		}
-		time.Sleep(sleepBetweenRepeats)
-	}
-	if issueTxErr != nil {
-		return ids.Empty, fmt.Errorf("issue tx error %w", issueTxErr)
-	}
-	if _, ok := ms.PChainTx.Unsigned.(*txs.CreateSubnetTx); ok {
-		c.SubnetID = tx.ID()
-	}
-	return tx.ID(), issueTxErr
 }
 
 // InitializeProofOfAuthority setups PoA manager after a successful execution of
