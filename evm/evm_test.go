@@ -14,7 +14,6 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
-	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/ethclient"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -1236,7 +1235,7 @@ func TestBlockNumber(t *testing.T) {
 	}
 }
 
-func TestGetPrivateKeyBalance(t *testing.T) {
+func TestGetSignerBalance(t *testing.T) {
 	originalSleepBetweenRepeats := sleepBetweenRepeats
 	sleepBetweenRepeats = 1 * time.Millisecond
 	defer func() {
@@ -1249,20 +1248,19 @@ func TestGetPrivateKeyBalance(t *testing.T) {
 		EthClient: mockClient,
 		URL:       "http://localhost:8545",
 	}
-	privateKey, err := crypto.GenerateKey()
+	address := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	signer, err := NewNoOpSigner(address)
 	require.NoError(t, err)
-	privateKeyHex := hex.EncodeToString(crypto.FromECDSA(privateKey))
-	address := crypto.PubkeyToAddress(privateKey.PublicKey)
 	tests := []struct {
 		name        string
-		privateKey  string
+		signer      *Signer
 		setupMock   func()
 		expected    *big.Int
 		expectError bool
 	}{
 		{
-			name:       "successful balance check",
-			privateKey: privateKeyHex,
+			name:   "successful balance check",
+			signer: signer,
 			setupMock: func() {
 				mockClient.EXPECT().BalanceAt(gomock.Any(), address, gomock.Any()).
 					Return(big.NewInt(1000), nil)
@@ -1271,8 +1269,8 @@ func TestGetPrivateKeyBalance(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:       "error getting balance",
-			privateKey: privateKeyHex,
+			name:   "error getting balance",
+			signer: signer,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure; i++ {
 					mockClient.EXPECT().BalanceAt(gomock.Any(), address, gomock.Any()).
@@ -1283,8 +1281,8 @@ func TestGetPrivateKeyBalance(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:       "successful after max failures",
-			privateKey: privateKeyHex,
+			name:   "successful after max failures",
+			signer: signer,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure-1; i++ {
 					mockClient.EXPECT().BalanceAt(gomock.Any(), address, gomock.Any()).
@@ -1296,23 +1294,14 @@ func TestGetPrivateKeyBalance(t *testing.T) {
 			expected:    big.NewInt(100),
 			expectError: false,
 		},
-		{
-			name:        "invalid private key",
-			privateKey:  "invalid",
-			setupMock:   func() {},
-			expected:    nil,
-			expectError: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
-			balance, err := client.GetPrivateKeyBalance(tt.privateKey)
+			balance, err := client.GetSignerBalance(tt.signer)
 			if tt.expectError {
 				require.Error(t, err)
-				if tt.privateKey != "invalid" {
-					require.Contains(t, err.Error(), "obtaining balance")
-				}
+				require.Contains(t, err.Error(), "obtaining balance")
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.expected, balance)
@@ -1438,10 +1427,9 @@ func TestFundAddress(t *testing.T) {
 		EthClient: mockClient,
 		URL:       "http://localhost:8545",
 	}
-	privateKey, err := crypto.GenerateKey()
+	sourceAddress := common.HexToAddress("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd")
+	signer, err := NewNoOpSigner(sourceAddress)
 	require.NoError(t, err)
-	privateKeyHex := hex.EncodeToString(crypto.FromECDSA(privateKey))
-	sourceAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 	targetAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
 	amount := big.NewInt(1000000000000000000) // 1 ETH
 	tests := []struct {
@@ -1546,7 +1534,7 @@ func TestFundAddress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
-			_, err := client.FundAddress(privateKeyHex, targetAddress.Hex(), amount)
+			_, err := client.FundAddress(signer, targetAddress.Hex(), amount)
 			if tt.expectError {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), "failure")
@@ -1653,44 +1641,49 @@ func TestGetTxOptsWithSigner(t *testing.T) {
 		EthClient: mockClient,
 		URL:       "http://localhost:8545",
 	}
-	privateKey, err := crypto.GenerateKey()
+	signerAddress := common.HexToAddress("0x0102030405060708090a0102030405060708090a")
+	noOpSigner, err := NewNoOpSigner(signerAddress)
 	require.NoError(t, err)
-	privateKeyHex := hex.EncodeToString(crypto.FromECDSA(privateKey))
 	tests := []struct {
-		name        string
-		privateKey  string
-		setupMock   func()
-		expectError bool
+		name          string
+		signer        *Signer
+		setupMock     func()
+		expectError   bool
+		errorContains string
 	}{
 		{
-			name:       "successful signer creation",
-			privateKey: privateKeyHex,
+			name:   "successful signer creation",
+			signer: noOpSigner,
 			setupMock: func() {
 				mockClient.EXPECT().ChainID(gomock.Any()).
 					Return(big.NewInt(43114), nil)
 			},
-			expectError: false,
 		},
 		{
-			name:        "invalid private key",
-			privateKey:  "invalid",
-			setupMock:   func() {},
-			expectError: true,
+			name:   "invalid signer",
+			signer: nil,
+			setupMock: func() {
+				mockClient.EXPECT().ChainID(gomock.Any()).
+					Return(big.NewInt(43114), nil)
+			},
+			expectError:   true,
+			errorContains: "signer is nil",
 		},
 		{
-			name:       "error getting chain ID",
-			privateKey: privateKeyHex,
+			name:   "error getting chain ID",
+			signer: noOpSigner,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure; i++ {
 					mockClient.EXPECT().ChainID(gomock.Any()).
 						Return(nil, errors.New("failed to get chain ID"))
 				}
 			},
-			expectError: true,
+			expectError:   true,
+			errorContains: "failure generating signer",
 		},
 		{
-			name:       "successful after max failures",
-			privateKey: privateKeyHex,
+			name:   "successful after max failures",
+			signer: noOpSigner,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure-1; i++ {
 					mockClient.EXPECT().ChainID(gomock.Any()).
@@ -1699,21 +1692,21 @@ func TestGetTxOptsWithSigner(t *testing.T) {
 				mockClient.EXPECT().ChainID(gomock.Any()).
 					Return(big.NewInt(43114), nil)
 			},
-			expectError: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
-			opts, err := client.GetTxOptsWithSigner(tt.privateKey)
+			opts, err := client.GetTxOptsWithSigner(tt.signer)
 			if tt.expectError {
 				require.Error(t, err)
-				if tt.privateKey != "invalid" {
-					require.Contains(t, err.Error(), "failure generating signer")
+				if tt.errorContains != "" {
+					require.Contains(t, err.Error(), tt.errorContains)
 				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, opts)
+				require.Equal(t, tt.signer.Address(), opts.From)
 				require.NotNil(t, opts.Signer)
 			}
 		})
@@ -1797,10 +1790,6 @@ func TestTransactWithWarpMessage(t *testing.T) {
 		EthClient: mockClient,
 		URL:       "http://localhost:8545",
 	}
-	privateKey, err := crypto.GenerateKey()
-	require.NoError(t, err)
-	privateKeyHex := hex.EncodeToString(crypto.FromECDSA(privateKey))
-	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 	contractAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
 	callData := []byte{1, 2, 3, 4, 5}
 	value := big.NewInt(1000000000000000000) // 1 ETH
@@ -1811,161 +1800,171 @@ func TestTransactWithWarpMessage(t *testing.T) {
 	warpMessage := &warp.Message{
 		UnsignedMessage: unsignedMessage,
 	}
+	primarySignerAddress := common.HexToAddress("0x0102030405060708090a0102030405060708090a")
+	secondarySignerAddress := common.HexToAddress("0x1112131415161718191a1112131415161718191a")
+	primarySigner, err := NewNoOpSigner(primarySignerAddress)
+	require.NoError(t, err)
+	secondarySigner, err := NewNoOpSigner(secondarySignerAddress)
+	require.NoError(t, err)
+	defaultGasLimit := uint64(2_000_000)
 	tests := []struct {
-		name              string
-		from              common.Address
-		privateKey        string
-		warpMessage       *warp.Message
-		contract          common.Address
-		callData          []byte
-		value             *big.Int
-		generateRawTxOnly bool
-		setupMock         func()
-		expectError       bool
+		name          string
+		signer        *Signer
+		warpMessage   *warp.Message
+		contract      common.Address
+		callData      []byte
+		value         *big.Int
+		setupMock     func()
+		expectError   bool
+		errorContains string
+		expectedGas   uint64
 	}{
 		{
-			name:              "successful transaction with private key",
-			from:              common.Address{},
-			privateKey:        privateKeyHex,
-			warpMessage:       warpMessage,
-			contract:          contractAddress,
-			callData:          callData,
-			value:             value,
-			generateRawTxOnly: false,
+			name:        "successful transaction with signer",
+			signer:      primarySigner,
+			warpMessage: warpMessage,
+			contract:    contractAddress,
+			callData:    callData,
+			value:       value,
 			setupMock: func() {
-				// CalculateTxParams
 				mockClient.EXPECT().EstimateBaseFee(gomock.Any()).
 					Return(big.NewInt(10000000000), nil)
 				mockClient.EXPECT().SuggestGasTipCap(gomock.Any()).
 					Return(big.NewInt(1000000000), nil)
-				mockClient.EXPECT().NonceAt(gomock.Any(), fromAddress, gomock.Any()).
+				mockClient.EXPECT().NonceAt(gomock.Any(), primarySignerAddress, gomock.Any()).
 					Return(uint64(42), nil)
-				// GetChainID
 				mockClient.EXPECT().ChainID(gomock.Any()).
 					Return(big.NewInt(43114), nil)
-				// EstimateGasLimit
 				mockClient.EXPECT().EstimateGas(gomock.Any(), gomock.Any()).
 					Return(uint64(21000), nil)
 			},
-			expectError: false,
+			expectedGas: 21000,
 		},
 		{
-			name:              "successful raw transaction with from address",
-			from:              fromAddress,
-			privateKey:        "",
-			warpMessage:       warpMessage,
-			contract:          contractAddress,
-			callData:          callData,
-			value:             value,
-			generateRawTxOnly: true,
+			name:        "successful transaction with alternate signer",
+			signer:      secondarySigner,
+			warpMessage: warpMessage,
+			contract:    contractAddress,
+			callData:    callData,
+			value:       value,
 			setupMock: func() {
-				// CalculateTxParams
 				mockClient.EXPECT().EstimateBaseFee(gomock.Any()).
 					Return(big.NewInt(10000000000), nil)
 				mockClient.EXPECT().SuggestGasTipCap(gomock.Any()).
 					Return(big.NewInt(1000000000), nil)
-				mockClient.EXPECT().NonceAt(gomock.Any(), fromAddress, gomock.Any()).
-					Return(uint64(42), nil)
-				// GetChainID
+				mockClient.EXPECT().NonceAt(gomock.Any(), secondarySignerAddress, gomock.Any()).
+					Return(uint64(7), nil)
 				mockClient.EXPECT().ChainID(gomock.Any()).
 					Return(big.NewInt(43114), nil)
-				// EstimateGasLimit
 				mockClient.EXPECT().EstimateGas(gomock.Any(), gomock.Any()).
-					Return(uint64(21000), nil)
+					Return(uint64(45000), nil)
 			},
-			expectError: false,
+			expectedGas: 45000,
 		},
 		{
-			name:              "error calculating tx params",
-			from:              common.Address{},
-			privateKey:        privateKeyHex,
-			warpMessage:       warpMessage,
-			contract:          contractAddress,
-			callData:          callData,
-			value:             value,
-			generateRawTxOnly: false,
+			name:        "error calculating tx params",
+			signer:      primarySigner,
+			warpMessage: warpMessage,
+			contract:    contractAddress,
+			callData:    callData,
+			value:       value,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure; i++ {
 					mockClient.EXPECT().EstimateBaseFee(gomock.Any()).
 						Return(nil, errors.New("failed to estimate base fee"))
 				}
 			},
-			expectError: true,
+			expectError:   true,
+			errorContains: "failure",
 		},
 		{
-			name:              "error getting chain ID",
-			from:              common.Address{},
-			privateKey:        privateKeyHex,
-			warpMessage:       warpMessage,
-			contract:          contractAddress,
-			callData:          callData,
-			value:             value,
-			generateRawTxOnly: false,
+			name:        "error getting chain ID",
+			signer:      primarySigner,
+			warpMessage: warpMessage,
+			contract:    contractAddress,
+			callData:    callData,
+			value:       value,
 			setupMock: func() {
-				// CalculateTxParams succeeds
 				mockClient.EXPECT().EstimateBaseFee(gomock.Any()).
 					Return(big.NewInt(10000000000), nil)
 				mockClient.EXPECT().SuggestGasTipCap(gomock.Any()).
 					Return(big.NewInt(1000000000), nil)
-				mockClient.EXPECT().NonceAt(gomock.Any(), fromAddress, gomock.Any()).
+				mockClient.EXPECT().NonceAt(gomock.Any(), primarySignerAddress, gomock.Any()).
 					Return(uint64(42), nil)
-				// GetChainID fails
 				for i := 0; i < repeatsOnFailure; i++ {
 					mockClient.EXPECT().ChainID(gomock.Any()).
 						Return(nil, errors.New("failed to get chain ID"))
 				}
 			},
-			expectError: true,
+			expectError:   true,
+			errorContains: "failure",
 		},
 		{
-			name:              "error estimating gas limit",
-			from:              common.Address{},
-			privateKey:        privateKeyHex,
-			warpMessage:       warpMessage,
-			contract:          contractAddress,
-			callData:          callData,
-			value:             value,
-			generateRawTxOnly: false,
+			name:        "error estimating gas limit",
+			signer:      primarySigner,
+			warpMessage: warpMessage,
+			contract:    contractAddress,
+			callData:    callData,
+			value:       value,
 			setupMock: func() {
-				// CalculateTxParams succeeds
 				mockClient.EXPECT().EstimateBaseFee(gomock.Any()).
 					Return(big.NewInt(10000000000), nil)
 				mockClient.EXPECT().SuggestGasTipCap(gomock.Any()).
 					Return(big.NewInt(1000000000), nil)
-				mockClient.EXPECT().NonceAt(gomock.Any(), fromAddress, gomock.Any()).
+				mockClient.EXPECT().NonceAt(gomock.Any(), primarySignerAddress, gomock.Any()).
 					Return(uint64(42), nil)
-				// GetChainID succeeds
 				mockClient.EXPECT().ChainID(gomock.Any()).
 					Return(big.NewInt(43114), nil)
-				// EstimateGasLimit fails
 				for i := 0; i < repeatsOnFailure; i++ {
 					mockClient.EXPECT().EstimateGas(gomock.Any(), gomock.Any()).
 						Return(uint64(0), errors.New("failed to estimate gas"))
 				}
 			},
-			expectError: false, // Should use default gas limit
+			expectedGas: defaultGasLimit,
+		},
+		{
+			name:        "signer failure",
+			signer:      nil,
+			warpMessage: warpMessage,
+			contract:    contractAddress,
+			callData:    callData,
+			value:       value,
+			setupMock: func() {
+				mockClient.EXPECT().EstimateBaseFee(gomock.Any()).
+					Return(big.NewInt(10000000000), nil)
+				mockClient.EXPECT().SuggestGasTipCap(gomock.Any()).
+					Return(big.NewInt(1000000000), nil)
+				mockClient.EXPECT().NonceAt(gomock.Any(), common.Address{}, gomock.Any()).
+					Return(uint64(13), nil)
+				mockClient.EXPECT().ChainID(gomock.Any()).
+					Return(big.NewInt(43114), nil)
+				mockClient.EXPECT().EstimateGas(gomock.Any(), gomock.Any()).
+					Return(uint64(21000), nil)
+			},
+			expectError:   true,
+			errorContains: "signer is nil",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 			tx, err := client.TransactWithWarpMessage(
-				tt.from,
-				tt.privateKey,
+				tt.signer,
 				tt.warpMessage,
 				tt.contract,
 				tt.callData,
 				tt.value,
-				tt.generateRawTxOnly,
 			)
 			if tt.expectError {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), "failure")
+				if tt.errorContains != "" {
+					require.Contains(t, err.Error(), tt.errorContains)
+				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, tx)
-				if !tt.generateRawTxOnly {
-					require.NotNil(t, tx.Hash())
+				if tt.expectedGas != 0 {
+					require.Equal(t, tt.expectedGas, tx.Gas())
 				}
 			}
 		})
@@ -2059,20 +2058,20 @@ func TestSetupProposerVM(t *testing.T) {
 		EthClient: mockClient,
 		URL:       "http://localhost:8545",
 	}
-	privateKey, err := crypto.GenerateKey()
-	require.NoError(t, err)
-	privateKeyHex := hex.EncodeToString(crypto.FromECDSA(privateKey))
-	address := crypto.PubkeyToAddress(privateKey.PublicKey)
 	chainID := big.NewInt(43114)
+	signerAddress := common.HexToAddress("0x22232425262728292a2b22232425262728292a2b")
+	signer, err := NewNoOpSigner(signerAddress)
+	require.NoError(t, err)
 	tests := []struct {
-		name        string
-		privateKey  string
-		setupMock   func()
-		expectError bool
+		name          string
+		signer        *Signer
+		setupMock     func()
+		expectError   bool
+		errorContains string
 	}{
 		{
-			name:       "successful setup",
-			privateKey: privateKeyHex,
+			name:   "successful setup",
+			signer: signer,
 			setupMock: func() {
 				// GetChainID
 				mockClient.EXPECT().ChainID(gomock.Any()).
@@ -2080,12 +2079,12 @@ func TestSetupProposerVM(t *testing.T) {
 				// Setup - initial BlockNumber and NonceAt calls
 				mockClient.EXPECT().BlockNumber(gomock.Any()).
 					Return(uint64(1000), nil)
-				mockClient.EXPECT().NonceAt(gomock.Any(), address, gomock.Any()).
+				mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).
 					Return(uint64(0), nil)
 				// First block
 				mockClient.EXPECT().BlockNumber(gomock.Any()).
 					Return(uint64(1000), nil)
-				mockClient.EXPECT().NonceAt(gomock.Any(), address, gomock.Any()).
+				mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).
 					Return(uint64(0), nil)
 				mockClient.EXPECT().SendTransaction(gomock.Any(), gomock.Any()).
 					Return(nil)
@@ -2094,7 +2093,7 @@ func TestSetupProposerVM(t *testing.T) {
 				// Second block
 				mockClient.EXPECT().BlockNumber(gomock.Any()).
 					Return(uint64(1001), nil)
-				mockClient.EXPECT().NonceAt(gomock.Any(), address, gomock.Any()).
+				mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).
 					Return(uint64(1), nil)
 				mockClient.EXPECT().SendTransaction(gomock.Any(), gomock.Any()).
 					Return(nil)
@@ -2104,19 +2103,20 @@ func TestSetupProposerVM(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:       "error getting chain ID",
-			privateKey: privateKeyHex,
+			name:   "error getting chain ID",
+			signer: signer,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure*repeatsOnFailure; i++ {
 					mockClient.EXPECT().ChainID(gomock.Any()).
 						Return(nil, errors.New("failed to get chain ID"))
 				}
 			},
-			expectError: true,
+			expectError:   true,
+			errorContains: "failure",
 		},
 		{
-			name:       "error getting block number",
-			privateKey: privateKeyHex,
+			name:   "error getting block number",
+			signer: signer,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure; i++ {
 					// GetChainID succeeds
@@ -2129,11 +2129,12 @@ func TestSetupProposerVM(t *testing.T) {
 					}
 				}
 			},
-			expectError: true,
+			expectError:   true,
+			errorContains: "failure",
 		},
 		{
-			name:       "error getting nonce",
-			privateKey: privateKeyHex,
+			name:   "error getting nonce",
+			signer: signer,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure; i++ {
 					// GetChainID succeeds
@@ -2143,16 +2144,17 @@ func TestSetupProposerVM(t *testing.T) {
 					mockClient.EXPECT().BlockNumber(gomock.Any()).
 						Return(uint64(1000), nil)
 					for i := 0; i < repeatsOnFailure; i++ {
-						mockClient.EXPECT().NonceAt(gomock.Any(), address, gomock.Any()).
+						mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).
 							Return(uint64(0), errors.New("failed to get nonce"))
 					}
 				}
 			},
-			expectError: true,
+			expectError:   true,
+			errorContains: "failure",
 		},
 		{
-			name:       "error sending transaction",
-			privateKey: privateKeyHex,
+			name:   "error sending transaction",
+			signer: signer,
 			setupMock: func() {
 				for i := 0; i < repeatsOnFailure; i++ {
 					// GetChainID succeeds
@@ -2161,12 +2163,12 @@ func TestSetupProposerVM(t *testing.T) {
 					// Setup - initial BlockNumber and NonceAt calls
 					mockClient.EXPECT().BlockNumber(gomock.Any()).
 						Return(uint64(1000), nil)
-					mockClient.EXPECT().NonceAt(gomock.Any(), address, gomock.Any()).
+					mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).
 						Return(uint64(0), nil)
 					// First block - error sending transaction
 					mockClient.EXPECT().BlockNumber(gomock.Any()).
 						Return(uint64(1000), nil)
-					mockClient.EXPECT().NonceAt(gomock.Any(), address, gomock.Any()).
+					mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).
 						Return(uint64(0), nil)
 					for i := 0; i < repeatsOnFailure; i++ {
 						mockClient.EXPECT().SendTransaction(gomock.Any(), gomock.Any()).
@@ -2174,23 +2176,18 @@ func TestSetupProposerVM(t *testing.T) {
 					}
 				}
 			},
-			expectError: true,
-		},
-		{
-			name:        "invalid private key",
-			privateKey:  "invalid",
-			setupMock:   func() {},
-			expectError: true,
+			expectError:   true,
+			errorContains: "failure",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
-			err := client.SetupProposerVM(tt.privateKey)
+			err := client.SetupProposerVM(tt.signer)
 			if tt.expectError {
 				require.Error(t, err)
-				if tt.name != "invalid private key" {
-					require.Contains(t, err.Error(), "failure")
+				if tt.errorContains != "" {
+					require.Contains(t, err.Error(), tt.errorContains)
 				}
 			} else {
 				require.NoError(t, err)
