@@ -13,6 +13,7 @@ import (
 
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
+	"github.com/ava-labs/icm-services/signature-aggregator/api"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +39,7 @@ func SignMessage(
 	} else if quorumPercentage > 100 {
 		return nil, fmt.Errorf("quorum percentage cannot be greater than 100")
 	}
-	request := AggregateSignatureRequest{
+	request := api.AggregateSignatureRequest{
 		Message:          message,
 		SigningSubnetID:  signingSubnetID,
 		QuorumPercentage: quorumPercentage,
@@ -117,7 +118,7 @@ func SignMessage(
 			continue
 		}
 
-		var response AggregateSignatureResponse
+		var response api.AggregateSignatureResponse
 		if err := json.Unmarshal(body, &response); err != nil {
 			lastErr = fmt.Errorf("failed to parse response: %w", err)
 			logger.Error("Error parsing response",

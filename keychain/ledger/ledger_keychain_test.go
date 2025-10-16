@@ -9,7 +9,6 @@ import (
 
 	"github.com/ava-labs/avalanchego/codec"
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/utils/hashing"
 	"github.com/ava-labs/avalanchego/vms/components/avax"
@@ -742,7 +741,7 @@ func TestLedgerSigner_Sign_WithPChainTransferSubnetOwnership(t *testing.T) {
 	s, b := kc.Get(addr)
 	require.True(b)
 
-	signature, err := s.Sign(unsignedBytes, keychain.WithChainAlias("P"))
+	signature, err := s.Sign(unsignedBytes)
 	require.NoError(err)
 	require.Equal(expectedSignature, signature)
 }
@@ -781,7 +780,7 @@ func TestLedgerSigner_Sign_WithPChainNonTransferSubnetOwnership(t *testing.T) {
 	s, b := kc.Get(addr)
 	require.True(b)
 
-	signature, err := s.Sign(unsignedBytes, keychain.WithChainAlias("P"))
+	signature, err := s.Sign(unsignedBytes)
 	require.NoError(err)
 	require.Equal(expectedSignature, signature)
 }
@@ -835,7 +834,7 @@ func TestLedgerSigner_Sign_WithNonPChain(t *testing.T) {
 	s, b := kc.Get(addr)
 	require.True(b)
 
-	signature, err := s.Sign(toSign, keychain.WithChainAlias("X"))
+	signature, err := s.Sign(toSign)
 	require.NoError(err)
 	require.Equal(expectedSignature, signature)
 }

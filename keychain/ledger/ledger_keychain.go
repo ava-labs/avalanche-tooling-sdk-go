@@ -17,6 +17,9 @@ import (
 	"github.com/ava-labs/avalanchego/wallet/chain/c"
 	"github.com/ava-labs/libevm/common"
 	"golang.org/x/exp/maps"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 var (
@@ -162,14 +165,9 @@ func (l *ledgerSigner) SignHash(b []byte) ([]byte, error) {
 }
 
 // expects to receive the unsigned tx bytes
-func (l *ledgerSigner) Sign(b []byte, opts ...keychain.SigningOption) ([]byte, error) {
-	options := &keychain.SigningOptions{}
-	for _, opt := range opts {
-		opt(options)
-	}
-
-	// For P-Chain transactions that require hash signing on the Ledger device
-	if options.ChainAlias == "P" {
+func (l *ledgerSigner) Sign(b []byte) ([]byte, error) {
+	// Auto-detect chain and check if P-Chain transaction requires hash signing
+	if utils.AutoDetectChain(b) == constants.PChainAlias {
 		useSignHash, err := shouldUseSignHash(b)
 		if err != nil {
 			return nil, err
