@@ -10,15 +10,14 @@ import (
 	"github.com/ava-labs/libevm/core/types"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 )
 
-// PoAValidatorManagerInitialize initializes contract [managerAddress] at [rpcURL], to
+// PoAValidatorManagerInitialize initializes contract [managerAddress] at [client], to
 // manage validators on [subnetID], with
 // owner given by [ownerAddress]
 func PoAValidatorManagerInitialize(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 	signer *evm.Signer,
 	subnetID ids.ID,
@@ -26,9 +25,8 @@ func PoAValidatorManagerInitialize(
 	useACP99 bool,
 ) (*types.Transaction, *types.Receipt, error) {
 	if useACP99 {
-		return contract.TxToMethod(
+		return client.TxToMethod(
 			logger,
-			rpcURL,
 			signer,
 			managerAddress,
 			nil,
@@ -43,9 +41,8 @@ func PoAValidatorManagerInitialize(
 			},
 		)
 	}
-	return contract.TxToMethod(
+	return client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		managerAddress,
 		nil,

@@ -10,11 +10,12 @@ import (
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/subnet-evm/accounts/abi"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validator"
 )
 
+// GetValidatorReturn represents the data returned when querying validator information.
 type GetValidatorReturn struct {
 	Status         uint8
 	NodeID         []byte
@@ -26,13 +27,14 @@ type GetValidatorReturn struct {
 	EndTime        uint64
 }
 
+// GetValidator retrieves validator information for the given validation ID from the validator manager contract at [managerAddress] using [client].
 func GetValidator(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 	validationID ids.ID,
 ) (*GetValidatorReturn, error) {
 	stakingManagerSettings, err := GetStakingManagerSettings(
-		rpcURL,
+		client,
 		managerAddress,
 	)
 	if err == nil {
@@ -40,8 +42,7 @@ func GetValidator(
 		managerAddress = stakingManagerSettings.ValidatorManager
 	}
 	getValidatorReturn := &GetValidatorReturn{}
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		managerAddress,
 		"getValidator(bytes32)->((uint8,bytes,uint64,uint64,uint64,uint64,uint64,uint64))",
 		[]interface{}{*getValidatorReturn},
@@ -61,17 +62,19 @@ func GetValidator(
 	return getValidatorReturn, nil
 }
 
+// ChurnSettings contains the churn configuration for a validator manager.
 type ChurnSettings struct {
 	ChurnPeriodSeconds     uint64
 	MaximumChurnPercentage uint8
 }
 
+// GetChurnSettings retrieves the churn tracker settings from the validator manager contract at [managerAddress] using [client].
 func GetChurnSettings(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 ) (ChurnSettings, error) {
 	stakingManagerSettings, err := GetStakingManagerSettings(
-		rpcURL,
+		client,
 		managerAddress,
 	)
 	if err == nil {
@@ -79,8 +82,7 @@ func GetChurnSettings(
 		managerAddress = stakingManagerSettings.ValidatorManager
 	}
 	churnSettings := ChurnSettings{}
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		managerAddress,
 		"getChurnTracker()->(uint64,uint8,uint256,uint64,uint64,uint64)",
 		nil,
@@ -106,20 +108,19 @@ func GetChurnSettings(
 // Returns the validation ID for the Node ID, as registered at the validator manager
 // Will return ids.Empty in case it is not registered
 func GetValidationID(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 	nodeID ids.NodeID,
 ) (ids.ID, error) {
 	stakingManagerSettings, err := GetStakingManagerSettings(
-		rpcURL,
+		client,
 		managerAddress,
 	)
 	if err == nil {
 		// fix address if specialized
 		managerAddress = stakingManagerSettings.ValidatorManager
 	}
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		managerAddress,
 		"registeredValidators(bytes)->(bytes32)",
 		nil,
@@ -128,23 +129,23 @@ func GetValidationID(
 	if err != nil {
 		return ids.Empty, err
 	}
-	return contract.GetSmartContractCallResult[[32]byte]("registeredValidators", out)
+	return evm.GetSmartContractCallResult[[32]byte]("registeredValidators", out)
 }
 
+// GetSubnetID retrieves the subnet ID associated with the validator manager contract at [managerAddress] using [client].
 func GetSubnetID(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 ) (ids.ID, error) {
 	stakingManagerSettings, err := GetStakingManagerSettings(
-		rpcURL,
+		client,
 		managerAddress,
 	)
 	if err == nil {
 		// fix address if specialized
 		managerAddress = stakingManagerSettings.ValidatorManager
 	}
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		managerAddress,
 		"subnetID()->(bytes32)",
 		nil,
@@ -152,22 +153,25 @@ func GetSubnetID(
 	if err != nil {
 		return ids.Empty, err
 	}
-	return contract.GetSmartContractCallResult[[32]byte]("subnetID", out)
+	return evm.GetSmartContractCallResult[[32]byte]("subnetID", out)
 }
 
+// CurrentWeightInfo contains information about the current weight limits and churn settings for a validator manager.
 type CurrentWeightInfo struct {
 	TotalWeight       uint64
 	MaximumPercentage uint8
 	AllowedWeight     float64
 }
 
+// GetCurrentWeightInfo retrieves the current weight information including total weight and churn limits
+// from the validator manager contract at [managerAddress] using [client] and [network].
 func GetCurrentWeightInfo(
 	network network.Network,
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 ) (CurrentWeightInfo, error) {
 	subnetID, err := GetSubnetID(
-		rpcURL,
+		client,
 		managerAddress,
 	)
 	if err != nil {
@@ -178,7 +182,7 @@ func GetCurrentWeightInfo(
 		return CurrentWeightInfo{}, err
 	}
 	churnSettings, err := GetChurnSettings(
-		rpcURL,
+		client,
 		managerAddress,
 	)
 	if err != nil {

@@ -13,15 +13,15 @@ import (
 	"github.com/ava-labs/libevm/core/types"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/ownable"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/precompiles"
 )
 
-// initializes contract [managerAddress] at [rpcURL], to
-// manage validators on [subnetID] using PoS specific settings
+// PoSValidatorManagerInitialize initializes contract [managerAddress] at [client], to
+// manage validators on [subnetID] using PoS specific settings.
 func PoSValidatorManagerInitialize(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 	specializedManagerAddress common.Address,
 	managerOwnerSigner *evm.Signer,
@@ -35,10 +35,6 @@ func PoSValidatorManagerInitialize(
 		return nil, nil, err
 	}
 	if useACP99 {
-		client, err := evm.GetClient(rpcURL)
-		if err != nil {
-			return nil, nil, err
-		}
 		nativeMinterPrecompileOn, err := client.ContractAlreadyDeployed(precompiles.NativeMinterPrecompile.Hex())
 		if err != nil {
 			return nil, nil, err
@@ -47,7 +43,7 @@ func PoSValidatorManagerInitialize(
 			return nil, nil, fmt.Errorf("native minter precompile should be enabled for Native PoS")
 		}
 		allowedStatus, err := precompiles.ReadAllowList(
-			rpcURL,
+			client,
 			precompiles.NativeMinterPrecompile,
 			specializedManagerAddress,
 		)
@@ -60,7 +56,7 @@ func PoSValidatorManagerInitialize(
 			}
 			if err := precompiles.SetEnabled(
 				logger,
-				rpcURL,
+				client,
 				precompiles.NativeMinterPrecompile,
 				nativeMinterPrecompileAdminSigner,
 				specializedManagerAddress,
@@ -74,9 +70,8 @@ func PoSValidatorManagerInitialize(
 		minimumStakeAmount.Mul(posParams.MinimumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
 		maximumStakeAmount := new(big.Int)
 		maximumStakeAmount.Mul(posParams.MaximumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
-		if tx, receipt, err := contract.TxToMethod(
+		if tx, receipt, err := client.TxToMethod(
 			logger,
-			rpcURL,
 			signer,
 			specializedManagerAddress,
 			nil,
@@ -106,18 +101,17 @@ func PoSValidatorManagerInitialize(
 		if err != nil {
 			return nil, nil, err
 		}
-		err = contract.TransferOwnership(
+		err = ownable.TransferOwnership(
 			logger,
-			rpcURL,
+			client,
 			managerAddress,
 			managerOwnerSigner,
 			specializedManagerAddress,
 		)
 		return nil, nil, err
 	}
-	return contract.TxToMethod(
+	return client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		managerAddress,
 		nil,
@@ -142,13 +136,14 @@ func PoSValidatorManagerInitialize(
 	)
 }
 
+// PoSWeightToValue converts a validator weight to its corresponding stake value
+// using the validator manager contract at [managerAddress] and [client].
 func PoSWeightToValue(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 	weight uint64,
 ) (*big.Int, error) {
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		managerAddress,
 		"weightToValue(uint64)->(uint256)",
 		nil,
@@ -164,6 +159,7 @@ func PoSWeightToValue(
 	return value, nil
 }
 
+// GetStakingManagerSetttingsReturn contains the settings for a staking manager contract.
 type GetStakingManagerSetttingsReturn struct {
 	ValidatorManager         common.Address
 	MinimumStakeAmount       *big.Int
@@ -176,13 +172,13 @@ type GetStakingManagerSetttingsReturn struct {
 	UptimeBlockchainID       [32]byte
 }
 
+// GetStakingManagerSettings retrieves the staking manager settings from the contract at [managerAddress] using [client].
 func GetStakingManagerSettings(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 ) (GetStakingManagerSetttingsReturn, error) {
 	getStakingManagerSetttingsReturn := GetStakingManagerSetttingsReturn{}
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		managerAddress,
 		"getStakingManagerSettings()->(address,uint256,uint256,uint64,uint16,uint8,uint256,address,bytes32)",
 		nil,
@@ -233,6 +229,7 @@ func GetStakingManagerSettings(
 	return getStakingManagerSetttingsReturn, nil
 }
 
+// GetStakingValidatorReturn contains validator-specific staking information.
 type GetStakingValidatorReturn struct {
 	Owner             common.Address
 	DelegationFeeBips uint16
@@ -240,14 +237,15 @@ type GetStakingValidatorReturn struct {
 	UptimeSeconds     uint64
 }
 
+// GetStakingValidator retrieves staking-specific validator information for the given [validationID]
+// from the staking manager contract at [managerAddress] using [client].
 func GetStakingValidator(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 	validationID ids.ID,
 ) (GetStakingValidatorReturn, error) {
 	getStakingValidatorReturn := GetStakingValidatorReturn{}
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		managerAddress,
 		"getStakingValidator(bytes32)->(address,uint16,uint64,uint64)",
 		nil,

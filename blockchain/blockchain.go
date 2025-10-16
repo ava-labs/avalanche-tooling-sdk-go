@@ -34,7 +34,7 @@ var (
 	errMissingSubnetID                           = fmt.Errorf("missing Subnet ID")
 	errMissingBootstrapValidators                = fmt.Errorf("missing bootstrap validators")
 	errMissingValidatorManagerBlockchainID       = fmt.Errorf("missing Validator Manager Blockchain ID")
-	errMissingValidatorManagerRPC                = fmt.Errorf("missing Validator Manager RPC URL")
+	errMissingValidatorManagerClient             = fmt.Errorf("missing Validator Manager Client")
 	errMissingValidatorManagerAddress            = fmt.Errorf("missing Validator Manager Address")
 	errMissingSpecializedValidatorManagerAddress = fmt.Errorf("missing Specialized Validator Manager Address")
 	errMissingValidatorManagerOwnerAddress       = fmt.Errorf("missing Validator Manager Owner Address")
@@ -130,8 +130,8 @@ type Subnet struct {
 	// BlockchainID where the Validator Manager is deployed
 	ValidatorManagerBlockchainID ids.ID
 
-	// RPC URL the Validator Manager can be reached at
-	ValidatorManagerRPC string
+	// Client to interact with the Validator Manager
+	ValidatorManagerClient *evm.Client
 
 	// Address of the Validator Manager
 	ValidatorManagerAddress *common.Address
@@ -321,8 +321,8 @@ func (c *Subnet) InitializeProofOfAuthority(
 	if c.ValidatorManagerBlockchainID == ids.Empty {
 		return fmt.Errorf("unable to initialize Proof of Authority: %w", errMissingValidatorManagerBlockchainID)
 	}
-	if c.ValidatorManagerRPC == "" {
-		return fmt.Errorf("unable to initialize Proof of Authority: %w", errMissingValidatorManagerRPC)
+	if c.ValidatorManagerClient == nil {
+		return fmt.Errorf("unable to initialize Proof of Authority: %w", errMissingValidatorManagerClient)
 	}
 	if c.ValidatorManagerAddress == nil {
 		return fmt.Errorf("unable to initialize Proof of Authority: %w", errMissingValidatorManagerAddress)
@@ -335,18 +335,13 @@ func (c *Subnet) InitializeProofOfAuthority(
 		return fmt.Errorf("unable to initialize Proof of Authority: %w", errMissingBootstrapValidators)
 	}
 
-	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
-		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
-	} else {
-		if err := client.SetupProposerVM(signer); err != nil {
-			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
-		}
-		client.Close()
+	if err := c.ValidatorManagerClient.SetupProposerVM(signer); err != nil {
+		log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
 	}
 
 	tx, _, err := validatormanager.PoAValidatorManagerInitialize(
 		log,
-		c.ValidatorManagerRPC,
+		*c.ValidatorManagerClient,
 		*c.ValidatorManagerAddress,
 		signer,
 		c.SubnetID,
@@ -387,7 +382,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 	}
 	tx, _, err = validatormanager.InitializeValidatorsSet(
 		log,
-		c.ValidatorManagerRPC,
+		*c.ValidatorManagerClient,
 		*c.ValidatorManagerAddress,
 		signer,
 		c.SubnetID,
@@ -420,8 +415,8 @@ func (c *Subnet) InitializeProofOfStake(
 	if c.ValidatorManagerBlockchainID == ids.Empty {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerBlockchainID)
 	}
-	if c.ValidatorManagerRPC == "" {
-		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerRPC)
+	if c.ValidatorManagerClient == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerClient)
 	}
 	if !useACP99 {
 		c.SpecializedValidatorManagerAddress = &common.Address{}
@@ -437,18 +432,13 @@ func (c *Subnet) InitializeProofOfStake(
 	if useACP99 && c.ValidatorManagerOwnerSigner == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
 	}
-	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
-		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
-	} else {
-		if err := client.SetupProposerVM(signer); err != nil {
-			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
-		}
-		client.Close()
+	if err := c.ValidatorManagerClient.SetupProposerVM(signer); err != nil {
+		log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
 	}
 	if useACP99 {
 		tx, _, err := validatormanager.PoAValidatorManagerInitialize(
 			log,
-			c.ValidatorManagerRPC,
+			*c.ValidatorManagerClient,
 			*c.ValidatorManagerAddress,
 			signer,
 			c.SubnetID,
@@ -464,7 +454,7 @@ func (c *Subnet) InitializeProofOfStake(
 	}
 	tx, _, err := validatormanager.PoSValidatorManagerInitialize(
 		log,
-		c.ValidatorManagerRPC,
+		*c.ValidatorManagerClient,
 		*c.ValidatorManagerAddress,
 		*c.SpecializedValidatorManagerAddress,
 		c.ValidatorManagerOwnerSigner,
@@ -508,7 +498,7 @@ func (c *Subnet) InitializeProofOfStake(
 
 	tx, _, err = validatormanager.InitializeValidatorsSet(
 		log,
-		c.ValidatorManagerRPC,
+		*c.ValidatorManagerClient,
 		*c.ValidatorManagerAddress,
 		signer,
 		c.SubnetID,

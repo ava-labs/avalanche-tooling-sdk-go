@@ -1,6 +1,8 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package contract
+
+// Package ownable provides utilities for interacting with OpenZeppelin Ownable contracts.
+package ownable
 
 import (
 	"github.com/ava-labs/avalanchego/utils/logging"
@@ -9,13 +11,13 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 )
 
-// GetContractOwner gets owner for https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-owner contracts
+// GetContractOwner retrieves the owner address of an OpenZeppelin Ownable contract at [contractAddress] using [client].
+// See https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-owner for contract details.
 func GetContractOwner(
-	rpcURL string,
+	client evm.Client,
 	contractAddress common.Address,
 ) (common.Address, error) {
-	out, err := CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		contractAddress,
 		"owner()->(address)",
 		nil,
@@ -23,19 +25,20 @@ func GetContractOwner(
 	if err != nil {
 		return common.Address{}, err
 	}
-	return GetSmartContractCallResult[common.Address]("owner", out)
+	return evm.GetSmartContractCallResult[common.Address]("owner", out)
 }
 
+// TransferOwnership transfers ownership of an OpenZeppelin Ownable contract at [contractAddress]
+// to [newOwner] using [client] and [signer]. The transaction is logged using [logger].
 func TransferOwnership(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	contractAddress common.Address,
 	signer *evm.Signer,
 	newOwner common.Address,
 ) error {
-	_, _, err := TxToMethod(
+	_, _, err := client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		contractAddress,
 		nil,

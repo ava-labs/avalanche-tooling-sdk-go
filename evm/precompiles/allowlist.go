@@ -9,19 +9,19 @@ import (
 	"github.com/ava-labs/libevm/common"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 )
 
+// SetAdmin sets an address as an admin in the precompile allowlist at [precompile]
+// using [client] and [signer]. The transaction is logged using [logger].
 func SetAdmin(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	precompile common.Address,
 	signer *evm.Signer,
 	toSet common.Address,
 ) error {
-	_, _, err := contract.TxToMethod(
+	_, _, err := client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		precompile,
 		nil,
@@ -33,16 +33,17 @@ func SetAdmin(
 	return err
 }
 
+// SetManager sets an address as a manager in the precompile allowlist at [precompile]
+// using [client] and [signer]. The transaction is logged using [logger].
 func SetManager(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	precompile common.Address,
 	signer *evm.Signer,
 	toSet common.Address,
 ) error {
-	_, _, err := contract.TxToMethod(
+	_, _, err := client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		precompile,
 		nil,
@@ -54,16 +55,17 @@ func SetManager(
 	return err
 }
 
+// SetEnabled sets an address as enabled in the precompile allowlist at [precompile]
+// using [client] and [signer]. The transaction is logged using [logger].
 func SetEnabled(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	precompile common.Address,
 	signer *evm.Signer,
 	toSet common.Address,
 ) error {
-	_, _, err := contract.TxToMethod(
+	_, _, err := client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		precompile,
 		nil,
@@ -75,16 +77,17 @@ func SetEnabled(
 	return err
 }
 
+// SetNone removes an address from all roles in the precompile allowlist at [precompile]
+// using [client] and [signer]. The transaction is logged using [logger].
 func SetNone(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	precompile common.Address,
 	signer *evm.Signer,
 	toSet common.Address,
 ) error {
-	_, _, err := contract.TxToMethod(
+	_, _, err := client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		precompile,
 		nil,
@@ -96,13 +99,14 @@ func SetNone(
 	return err
 }
 
+// ReadAllowList queries the role of an address in the precompile allowlist at [precompile]
+// using [client]. Returns the role as a big.Int (0=None, 1=Enabled, 2=Manager, 3=Admin).
 func ReadAllowList(
-	rpcURL string,
+	client evm.Client,
 	precompile common.Address,
 	toQuery common.Address,
 ) (*big.Int, error) {
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		precompile,
 		"readAllowList(address)->(uint256)",
 		nil,
@@ -111,5 +115,5 @@ func ReadAllowList(
 	if err != nil {
 		return nil, err
 	}
-	return contract.GetSmartContractCallResult[*big.Int]("readAllowList", out)
+	return evm.GetSmartContractCallResult[*big.Int]("readAllowList", out)
 }

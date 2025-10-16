@@ -20,7 +20,6 @@ import (
 	_ "embed"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
@@ -195,42 +194,40 @@ func (t *Deployer) LoadFromRelease(
 	return nil
 }
 
-// Deploy deploys both the TeleporterMessenger and TeleporterRegistry contracts.
+// Deploy deploys both the TeleporterMessenger and TeleporterRegistry contracts
+// using [client] and [signer].
 // Returns the messenger address, registry address, and any error encountered.
 // If the messenger is already deployed, returns ErrMessengerAlreadyDeployed.
 func (t *Deployer) Deploy(
-	rpcURL string,
+	client evm.Client,
 	signer *evm.Signer,
 ) (string, string, error) {
-	messengerAddress, err := t.DeployMessenger(rpcURL, signer)
+	messengerAddress, err := t.DeployMessenger(client, signer)
 	if err != nil {
 		return messengerAddress, "", err
 	}
-	registryAddress, err := t.DeployRegistry(rpcURL, signer)
+	registryAddress, err := t.DeployRegistry(client, signer)
 	if err != nil {
 		return messengerAddress, "", err
 	}
 	return messengerAddress, registryAddress, nil
 }
 
-// DeployMessenger deploys the TeleporterMessenger contract using Nick's method.
+// DeployMessenger deploys the TeleporterMessenger contract using Nick's method
+// with [client] and [signer].
 // It automatically funds the deployer address if needed (minimum 10 AVAX).
 // Returns the messenger contract address and ErrMessengerAlreadyDeployed if already deployed.
 func (t *Deployer) DeployMessenger(
-	rpcURL string,
+	client evm.Client,
 	signer *evm.Signer,
 ) (string, error) {
 	if err := t.Validate(); err != nil {
 		return "", err
 	}
 	// check if contract is already deployed
-	client, err := evm.GetClient(rpcURL)
-	if err != nil {
-		return "", err
-	}
 	messengerAlreadyDeployed, err := client.ContractAlreadyDeployed(t.messengerContractAddress)
 	if err != nil {
-		return "", fmt.Errorf("failure making a request to %s: %w", rpcURL, err)
+		return "", fmt.Errorf("failure making a request to client: %w", err)
 	}
 	if messengerAlreadyDeployed {
 		return t.messengerContractAddress, ErrMessengerAlreadyDeployed
@@ -258,10 +255,10 @@ func (t *Deployer) DeployMessenger(
 	return t.messengerContractAddress, nil
 }
 
-// DeployRegistry deploys the TeleporterRegistry contract.
+// DeployRegistry deploys the TeleporterRegistry contract using [client] and [signer].
 // The registry is initialized with the messenger contract address at version 1.
 func (t *Deployer) DeployRegistry(
-	rpcURL string,
+	client evm.Client,
 	signer *evm.Signer,
 ) (string, error) {
 	if err := t.Validate(); err != nil {
@@ -278,8 +275,7 @@ func (t *Deployer) DeployRegistry(
 			ProtocolAddress: messengerContractAddress,
 		},
 	}
-	registryAddress, _, _, err := contract.DeployContract(
-		rpcURL,
+	registryAddress, _, _, err := client.DeployContract(
 		signer,
 		t.registryBydecode,
 		"([(uint256, address)])",

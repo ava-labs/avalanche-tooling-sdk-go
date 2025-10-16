@@ -15,7 +15,6 @@ import (
 	"github.com/ava-labs/libevm/core/types"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager/validatormanagertypes"
 
@@ -252,7 +251,7 @@ func GetPChainSubnetToL1ConversionUnsignedMessage(
 // to verify p-chain already processed the associated ConvertSubnetToL1Tx
 func InitializeValidatorsSet(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 	signer *evm.Signer,
 	subnetID ids.ID,
@@ -285,9 +284,8 @@ func InitializeValidatorsSet(
 		ValidatorManagerAddress:      managerAddress,
 		InitialValidators:            validators,
 	}
-	return contract.TxToMethodWithWarpMessage(
+	return client.TxToMethodWithWarpMessage(
 		logger,
-		rpcURL,
 		signer,
 		managerAddress,
 		subnetConversionSignedMessage,
@@ -304,15 +302,15 @@ func InitializeValidatorsSet(
 // If validator manager is verified to be Proof of Stake, returns validatormanagertypes.ProofOfStake
 // In other cases, returns validatormanagertypes.UndefinedValidatorManagement
 func GetValidatorManagerType(
-	rpcURL string,
+	client evm.Client,
 	managerAddress common.Address,
 ) validatormanagertypes.ValidatorManagementType {
 	// verify it is PoS
-	if _, err := PoSWeightToValue(rpcURL, managerAddress, 0); err == nil {
+	if _, err := PoSWeightToValue(client, managerAddress, 0); err == nil {
 		return validatormanagertypes.ProofOfStake
 	}
 	// verify it is PoA
-	if _, err := GetValidationID(rpcURL, managerAddress, ids.EmptyNodeID); err == nil {
+	if _, err := GetValidationID(client, managerAddress, ids.EmptyNodeID); err == nil {
 		return validatormanagertypes.ProofOfAuthority
 	}
 	return validatormanagertypes.UndefinedValidatorManagement

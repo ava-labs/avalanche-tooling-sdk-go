@@ -1,5 +1,7 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
+
+// Package icm provides utilities for interacting with Interchain Messaging contracts.
 package icm
 
 import (
@@ -11,18 +13,17 @@ import (
 	"github.com/ava-labs/libevm/core/types"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 )
 
 // GetNextMessageID queries the next message ID that will be assigned to a message
-// sent from the messenger contract to the specified destination blockchain.
+// sent from the messenger contract at [messengerAddress] to the specified destination blockchain
+// using [client].
 func GetNextMessageID(
-	rpcURL string,
+	client evm.Client,
 	messengerAddress common.Address,
 	destinationBlockchainID ids.ID,
 ) (ids.ID, error) {
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		messengerAddress,
 		"getNextMessageID(bytes32)->(bytes32)",
 		nil,
@@ -31,18 +32,17 @@ func GetNextMessageID(
 	if err != nil {
 		return ids.Empty, err
 	}
-	return contract.GetSmartContractCallResult[[32]byte]("getNextMessageID", out)
+	return evm.GetSmartContractCallResult[[32]byte]("getNextMessageID", out)
 }
 
 // MessageReceived checks whether a message with the given ID has been received
-// and executed by the messenger contract.
+// and executed by the messenger contract at [messengerAddress] using [client].
 func MessageReceived(
-	rpcURL string,
+	client evm.Client,
 	messengerAddress common.Address,
 	messageID ids.ID,
 ) (bool, error) {
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		messengerAddress,
 		"messageReceived(bytes32)->(bool)",
 		nil,
@@ -51,15 +51,17 @@ func MessageReceived(
 	if err != nil {
 		return false, err
 	}
-	return contract.GetSmartContractCallResult[bool]("messageReceived", out)
+	return evm.GetSmartContractCallResult[bool]("messageReceived", out)
 }
 
-// SendCrossChainMessage sends a cross-chain message from the source chain to a destination chain.
+// SendCrossChainMessage sends a cross-chain message from the source chain to a destination chain
+// using the messenger contract at [messengerAddress] with [client] and [signer].
 // The message will be delivered to the destination address on the destination blockchain.
+// The transaction is logged using [logger].
 // Returns the transaction, receipt, and any error encountered.
 func SendCrossChainMessage(
 	logger logging.Logger,
-	rpcURL string,
+	client evm.Client,
 	messengerAddress common.Address,
 	signer *evm.Signer,
 	destinationBlockchainID ids.ID,
@@ -89,9 +91,8 @@ func SendCrossChainMessage(
 		AllowedRelayerAddresses: []common.Address{},
 		Message:                 message,
 	}
-	return contract.TxToMethod(
+	return client.TxToMethod(
 		logger,
-		rpcURL,
 		signer,
 		messengerAddress,
 		nil,
@@ -137,7 +138,7 @@ type ICMMessengerSendCrossChainMessage struct {
 // ParseSendCrossChainMessage parses a SendCrossChainMessage event from a transaction log.
 func ParseSendCrossChainMessage(log types.Log) (*ICMMessengerSendCrossChainMessage, error) {
 	event := new(ICMMessengerSendCrossChainMessage)
-	if err := contract.UnpackLog(
+	if err := evm.UnpackLog(
 		"SendCrossChainMessage(bytes32,bytes32,(uint256,address,bytes32,address,uint256,[address],[(uint256,address)],bytes),(address,uint256))",
 		[]int{0, 1},
 		log,

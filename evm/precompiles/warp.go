@@ -5,14 +5,13 @@ package precompiles
 import (
 	"github.com/ava-labs/avalanchego/ids"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 )
 
 func WarpPrecompileGetBlockchainID(
-	rpcURL string,
+	client evm.Client,
 ) (ids.ID, error) {
-	out, err := contract.CallToMethod(
-		rpcURL,
+	out, err := client.CallToMethod(
 		WarpPrecompile,
 		"getBlockchainID()->(bytes32)",
 		nil,
@@ -20,5 +19,5 @@ func WarpPrecompileGetBlockchainID(
 	if err != nil {
 		return ids.Empty, err
 	}
-	return contract.GetSmartContractCallResult[[32]byte]("getBlockchainID", out)
+	return evm.GetSmartContractCallResult[[32]byte]("getBlockchainID", out)
 }

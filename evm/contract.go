@@ -1,6 +1,6 @@
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
-package contract
+package evm
 
 import (
 	"encoding/hex"
@@ -17,7 +17,6 @@ import (
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
@@ -293,10 +292,9 @@ func ParseSpec(
 // get method name and types from [methodsSpec], then call it
 // at the smart contract [contractAddress] with the given [params].
 // also send [payment] tokens to it
-func TxToMethod(
+func (client Client) TxToMethod(
 	logger logging.Logger,
-	rpcURL string,
-	signer *evm.Signer,
+	signer *Signer,
 	contractAddress common.Address,
 	payment *big.Int,
 	description string,
@@ -315,11 +313,6 @@ func TxToMethod(
 	if err != nil {
 		return nil, nil, err
 	}
-	client, err := evm.GetClient(rpcURL)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer client.Close()
 	contract := bind.NewBoundContract(contractAddress, *abi, client.EthClient, client.EthClient, client.EthClient)
 	txOpts, err := client.GetTxOptsWithSigner(signer)
 	if err != nil {
@@ -328,8 +321,7 @@ func TxToMethod(
 	txOpts.Value = payment
 	tx, err := contract.Transact(txOpts, methodName, params...)
 	if err != nil {
-		trace, traceCallErr := DebugTraceCall(
-			rpcURL,
+		trace, traceCallErr := client.DebugTraceCall(
 			signer,
 			contractAddress,
 			payment,
@@ -337,11 +329,11 @@ func TxToMethod(
 			params...,
 		)
 		if traceCallErr != nil {
-			logger.Error(fmt.Sprintf("Could not get debug trace for %s error on %s: %s", description, rpcURL, traceCallErr))
+			logger.Error(fmt.Sprintf("Could not get debug trace for %s error on %s: %s", description, client.URL, traceCallErr))
 			logger.Error("Verify --debug flag value when calling 'blockchain create'")
 			return tx, nil, err
 		}
-		if errorFromSignature, err := evm.GetErrorFromTrace(trace, errorSignatureToError); errorFromSignature != nil {
+		if errorFromSignature, err := GetErrorFromTrace(trace, errorSignatureToError); errorFromSignature != nil {
 			return tx, nil, errorFromSignature
 		} else {
 			logger.Error(fmt.Sprintf("failed to match error selector on trace: %s", err))
@@ -357,9 +349,8 @@ func TxToMethod(
 	if err != nil {
 		return tx, nil, err
 	} else if !success {
-		return handleFailedReceiptStatus(
+		return client.handleFailedReceiptStatus(
 			logger,
-			rpcURL,
 			description,
 			errorSignatureToError,
 			tx,
@@ -374,10 +365,9 @@ func TxToMethod(
 // send [warpMessage] on the same call, whose signature is
 // going to be verified previously to pass it to the method
 // also send [payment] tokens to it
-func TxToMethodWithWarpMessage(
+func (client Client) TxToMethodWithWarpMessage(
 	logger logging.Logger,
-	rpcURL string,
-	signer *evm.Signer,
+	signer *Signer,
 	contractAddress common.Address,
 	warpMessage *warp.Message,
 	payment *big.Int,
@@ -401,11 +391,6 @@ func TxToMethodWithWarpMessage(
 	if err != nil {
 		return nil, nil, err
 	}
-	client, err := evm.GetClient(rpcURL)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer client.Close()
 	tx, err := client.TransactWithWarpMessage(
 		signer,
 		warpMessage,
@@ -428,9 +413,8 @@ func TxToMethodWithWarpMessage(
 	if err != nil {
 		return tx, receipt, err
 	} else if !success {
-		return handleFailedReceiptStatus(
+		return client.handleFailedReceiptStatus(
 			logger,
-			rpcURL,
 			description,
 			errorSignatureToError,
 			tx,
@@ -440,41 +424,39 @@ func TxToMethodWithWarpMessage(
 	return tx, receipt, nil
 }
 
-func printFailedReceiptStatusMessage(
+func (client Client) printFailedReceiptStatusMessage(
 	logger logging.Logger,
-	rpcURL string,
 	description string,
 	tx *types.Transaction,
 ) {
 	logger.Error(fmt.Sprintf("Failed receipt status for %s error on %s, tx hash %s",
 		description,
-		rpcURL,
+		client.URL,
 		tx.Hash()),
 	)
 }
 
-func handleFailedReceiptStatus(
+func (client Client) handleFailedReceiptStatus(
 	logger logging.Logger,
-	rpcURL string,
 	description string,
 	errorSignatureToError map[string]error,
 	tx *types.Transaction,
 	receipt *types.Receipt,
 ) (*types.Transaction, *types.Receipt, error) {
-	trace, err := evm.GetTxTrace(
-		rpcURL,
+	trace, err := GetTxTrace(
+		client.URL,
 		tx.Hash().String(),
 	)
 	if err != nil {
-		printFailedReceiptStatusMessage(logger, rpcURL, description, tx)
+		client.printFailedReceiptStatusMessage(logger, description, tx)
 		logger.Error(fmt.Sprintf("Could not get debug trace: %s", err))
 		logger.Error("Verify --debug flag value when calling 'blockchain create'")
 		return tx, receipt, err
 	}
-	if errorFromSignature, err := evm.GetErrorFromTrace(trace, errorSignatureToError); errorFromSignature != nil {
+	if errorFromSignature, err := GetErrorFromTrace(trace, errorSignatureToError); errorFromSignature != nil {
 		return tx, receipt, errorFromSignature
 	} else {
-		printFailedReceiptStatusMessage(logger, rpcURL, description, tx)
+		client.printFailedReceiptStatusMessage(logger, description, tx)
 		logger.Error(fmt.Sprintf("failed to match error selector on trace: %s", err))
 		logger.Error("error trace:")
 		logger.Error(fmt.Sprintf("%#v", trace))
@@ -482,9 +464,8 @@ func handleFailedReceiptStatus(
 	return tx, receipt, ErrFailedReceiptStatus
 }
 
-func DebugTraceCall(
-	rpcURL string,
-	signer *evm.Signer,
+func (client Client) DebugTraceCall(
+	signer *Signer,
 	contractAddress common.Address,
 	payment *big.Int,
 	methodSpec string,
@@ -505,11 +486,11 @@ func DebugTraceCall(
 	if err != nil {
 		return nil, err
 	}
-	client, err := evm.GetRawClient(rpcURL)
+	rawClient, err := GetRawClient(client.URL)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	defer rawClient.Close()
 	data := map[string]string{
 		"from":  signer.Address().Hex(),
 		"to":    contractAddress.Hex(),
@@ -519,11 +500,10 @@ func DebugTraceCall(
 		hexBytes, _ := hexutil.Big(*payment).MarshalText()
 		data["value"] = string(hexBytes)
 	}
-	return client.DebugTraceCall(data)
+	return rawClient.DebugTraceCall(data)
 }
 
-func CallToMethod(
-	rpcURL string,
+func (client Client) CallToMethod(
 	contractAddress common.Address,
 	methodSpec string,
 	outputParams interface{},
@@ -540,11 +520,6 @@ func CallToMethod(
 	if err != nil {
 		return nil, err
 	}
-	client, err := evm.GetClient(rpcURL)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
 	contract := bind.NewBoundContract(contractAddress, *abi, client.EthClient, client.EthClient, client.EthClient)
 	var out []interface{}
 	err = contract.Call(&bind.CallOpts{}, &out, methodName, params...)
@@ -569,9 +544,8 @@ func GetSmartContractCallResult[T any](methodName string, out []interface{}) (T,
 	return received, nil
 }
 
-func DeployContract(
-	rpcURL string,
-	signer *evm.Signer,
+func (client Client) DeployContract(
+	signer *Signer,
 	binBytes []byte,
 	methodSpec string,
 	params ...interface{},
@@ -592,11 +566,6 @@ func DeployContract(
 	if len(bin) == 0 {
 		return common.Address{}, nil, nil, fmt.Errorf("failure on given binary for smart contract: zero len")
 	}
-	client, err := evm.GetClient(rpcURL)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	defer client.Close()
 	txOpts, err := client.GetTxOptsWithSigner(signer)
 	if err != nil {
 		return common.Address{}, nil, nil, err
