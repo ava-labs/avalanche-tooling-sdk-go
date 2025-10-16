@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
@@ -20,6 +21,7 @@ import (
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/params/extras"
+	"github.com/ava-labs/subnet-evm/utils"
 	"go.uber.org/zap"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
@@ -214,14 +216,14 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 	case subnetParams.GenesisFilePath != "":
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
-		genesisBytes, err = createEvmGenesis(subnetParams.SubnetEVM)
+		genesisBytes, err = CreateEvmGenesis(subnetParams.SubnetEVM)
 	default:
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	vmID, err := vmID(subnetParams.Name)
+	vmID, err := VMID(subnetParams.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create VM ID from %s: %w", subnetParams.Name, err)
 	}
@@ -237,7 +239,7 @@ func (c *Subnet) SetSubnetID(subnetID ids.ID) {
 	c.SubnetID = subnetID
 }
 
-func createEvmGenesis(
+func CreateEvmGenesis(
 	subnetEVMParams *SubnetEVMParams,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
@@ -291,7 +293,23 @@ func createEvmGenesis(
 	return prettyJSON.Bytes(), nil
 }
 
-func vmID(vmName string) (ids.ID, error) {
+func GetDefaultSubnetEVMGenesis(initialAllocationAddress string) SubnetEVMParams {
+	genesisBlock0Timestamp := utils.TimeToNewUint64(time.Now())
+	allocation := core.GenesisAlloc{}
+	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
+	allocation[common.HexToAddress(initialAllocationAddress)] = core.GenesisAccount{
+		Balance: defaultAmount,
+	}
+	return SubnetEVMParams{
+		ChainID:     big.NewInt(123456),
+		FeeConfig:   vm.StarterFeeConfig,
+		Allocation:  allocation,
+		Precompiles: extras.Precompiles{},
+		Timestamp:   genesisBlock0Timestamp,
+	}
+}
+
+func VMID(vmName string) (ids.ID, error) {
 	if len(vmName) > 32 {
 		return ids.Empty, fmt.Errorf("VM name must be <= 32 bytes, found %d", len(vmName))
 	}

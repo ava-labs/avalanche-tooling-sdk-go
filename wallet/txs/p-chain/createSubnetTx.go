@@ -2,7 +2,11 @@
 // See the file LICENSE for licensing terms.
 package txs
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+)
 
 // CreateSubnetTxParams contains all parameters needed to create a ConvertSubnetToL1Tx
 type CreateSubnetTxParams struct {
@@ -23,5 +27,5 @@ func (p CreateSubnetTxParams) Validate() error {
 
 // GetChainType returns which chain this transaction is for
 func (p CreateSubnetTxParams) GetChainType() string {
-	return "P-Chain"
+	return constants.ChainTypePChain
 }

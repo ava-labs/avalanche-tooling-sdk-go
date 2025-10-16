@@ -10,3 +10,8 @@ const (
 	UserOnlyWriteReadExecPerms = 0o700
 	WriteReadUserOnlyPerms     = 0o600
 )
+
+// Chain type constants
+const (
+	ChainTypePChain = "P-Chain"
+)
