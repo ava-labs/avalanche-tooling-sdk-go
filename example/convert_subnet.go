@@ -64,10 +64,8 @@ func ConvertSubnet(subnetID, chainID string) error {
 		Address:    ValidatorManagerAddress,
 	}
 	buildTxParams := types.BuildTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:      *existingAccount,
+		Network:      network,
 		BuildTxInput: convertSubnetParams,
 	}
 	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
@@ -76,10 +74,8 @@ func ConvertSubnet(subnetID, chainID string) error {
 	}
 
 	signTxParams := types.SignTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:       *existingAccount,
+		Network:       network,
 		BuildTxResult: &buildTxResult,
 	}
 	signTxResult, err := localWallet.SignTx(ctx, signTxParams)
@@ -88,10 +84,8 @@ func ConvertSubnet(subnetID, chainID string) error {
 	}
 
 	sendTxParams := types.SendTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:      *existingAccount,
+		Network:      network,
 		SignTxResult: &signTxResult,
 	}
 	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)
