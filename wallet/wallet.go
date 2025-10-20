@@ -35,4 +35,8 @@ type Wallet interface {
 
 	// SendTx submits a signed transaction to the Network
 	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
+
+	// Client Access (Getters/Setters)
+	GetClient() Client
+	SetClient(client Client)
 }
