@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -274,4 +275,124 @@ func (w *LocalWallet) Commit(transaction types.SignTxResult) (*avagoTxs.Tx, erro
 		return nil, fmt.Errorf("issue tx error %w", issueTxErr)
 	}
 	return tx, issueTxErr
+}
+
+// EVM convenience methods
+func (w *LocalWallet) GetEVMBalance(ctx context.Context, account Account, network Network) (*big.Int, error) {
+	if w.evmClient == nil {
+		return nil, fmt.Errorf("EVM client not configured")
+	}
+
+	address, err := account.GetEVMAddress(network)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.evmClient.GetBalance(ctx, address)
+}
+
+func (w *LocalWallet) DeployEVMContract(ctx context.Context, account Account, network Network,
+	bytecode []byte, abi string, args ...interface{}) (common.Address, common.Hash, uint64, error) {
+	// Use your existing BuildTx → SignTx → SendTx pattern
+	buildTxResult, err := w.BuildTx(ctx, types.BuildTxParams{
+		Account: account,
+		Network: network,
+		BuildTxInput: &types.EVMDeployContractInput{
+			Bytecode: bytecode,
+			ABI:      abi,
+			Args:     args,
+		},
+	})
+	if err != nil {
+		return common.Address{}, common.Hash{}, 0, err
+	}
+
+	signTxResult, err := w.SignTx(ctx, types.SignTxParams{
+		Account:       account,
+		Network:       network,
+		BuildTxResult: &buildTxResult,
+	})
+	if err != nil {
+		return common.Address{}, common.Hash{}, 0, err
+	}
+
+	sendTxResult, err := w.SendTx(ctx, types.SendTxParams{
+		Account:      account,
+		Network:      network,
+		SignTxResult: &signTxResult,
+	})
+	if err != nil {
+		return common.Address{}, common.Hash{}, 0, err
+	}
+
+	return sendTxResult.GetContractAddress(), sendTxResult.GetTxHash(), sendTxResult.GetGasUsed(), nil
+}
+
+// EVM specific wallet implementations
+func (w *LocalWallet) CallEVMContract(ctx context.Context, account Account, network Network,
+	contractAddr common.Address, method string, value *big.Int, args ...interface{}) (common.Hash, error) {
+	buildTxResult, err := w.BuildTx(ctx, types.BuildTxParams{
+		Account: account,
+		Network: network,
+		BuildTxInput: &types.EVMCallContractInput{
+			ContractAddress: contractAddr,
+			Method:          method,
+			Args:            args,
+			Value:           value,
+		},
+	})
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	signTxResult, err := w.SignTx(ctx, types.SignTxParams{
+		Account:       account,
+		Network:       network,
+		BuildTxResult: &buildTxResult,
+	})
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	sendTxResult, err := w.SendTx(ctx, types.SendTxParams{
+		Account:      account,
+		Network:      network,
+		SignTxResult: &signTxResult,
+	})
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	return sendTxResult.GetTxHash(), nil
+}
+
+func (w *LocalWallet) ReadEVMContract(ctx context.Context, network Network,
+	contractAddr common.Address, method string, args ...interface{}) ([]interface{}, error) {
+	if w.evmClient == nil {
+		return nil, fmt.Errorf("EVM client not configured")
+	}
+
+	return w.evmClient.CallContract(ctx, contractAddr, method, args...)
+}
+
+// Client Access Methods
+func (w *LocalWallet) GetEVMClient() EVMClient {
+	return w.evmClient
+}
+
+func (w *LocalWallet) GetAvalancheClient() Client {
+	return w.avalancheClient
+}
+
+func (w *LocalWallet) SetEVMClient(client EVMClient) {
+	w.evmClient = client
+}
+
+func (w *LocalWallet) SetAvalancheClient(client Client) {
+	w.avalancheClient = client
+}
+
+func (w *LocalWallet) SetClients(evmClient EVMClient, avalancheClient Client) {
+	w.evmClient = evmClient
+	w.avalancheClient = avalancheClient
 }
