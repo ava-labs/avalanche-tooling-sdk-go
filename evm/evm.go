@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ava-labs/avalanchego/vms/evm/predicate"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
@@ -18,7 +19,6 @@ import (
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/plugin/evm/upgrade/legacy"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
-	"github.com/ava-labs/subnet-evm/predicate"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -26,7 +26,6 @@ import (
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	ethereum "github.com/ava-labs/libevm"
 	ethparams "github.com/ava-labs/libevm/params"
-	subnetEvmUtils "github.com/ava-labs/subnet-evm/utils"
 )
 
 const (
@@ -496,7 +495,7 @@ func (client Client) TransactWithWarpMessage(
 	accessList := types.AccessList{
 		types.AccessTuple{
 			Address:     warp.ContractAddress,
-			StorageKeys: subnetEvmUtils.BytesToHashSlice(predicate.PackPredicate(warpMessage.Bytes())),
+			StorageKeys: predicate.New(warpMessage.Bytes()),
 		},
 	}
 	msg := ethereum.CallMsg{
