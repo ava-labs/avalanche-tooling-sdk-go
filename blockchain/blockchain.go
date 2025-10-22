@@ -245,9 +245,18 @@ func createEvmGenesis(
 
 	conf := params.SubnetEVMDefaultChainConfig
 	fmt.Printf("obtained params.SubnetEVMDefaultChainConfig %s \n", params.SubnetEVMDefaultChainConfig)
-	extra := params.GetExtra(conf)
+	// Ensure extras registry is live while we access/attach extras.
+	var ex *extras.ChainConfig
+	params.WithTempRegisteredExtras(func() {
+		ex = params.GetExtra(conf) // safe now
+		if ex == nil {
+			ex = &extras.ChainConfig{}
+			params.WithExtra(conf, ex) // attach if missing
+		}
+	})
+	//extra := params.GetExtra(conf)
 
-	extra.NetworkUpgrades = extras.NetworkUpgrades{}
+	ex.NetworkUpgrades = extras.NetworkUpgrades{}
 
 	var err error
 
@@ -268,15 +277,15 @@ func createEvmGenesis(
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
 	}
 
-	extra.FeeConfig = subnetEVMParams.FeeConfig
-	extra.GenesisPrecompiles = subnetEVMParams.Precompiles
+	ex.FeeConfig = subnetEVMParams.FeeConfig
+	ex.GenesisPrecompiles = subnetEVMParams.Precompiles
 
 	conf.ChainID = subnetEVMParams.ChainID
 
 	genesis.Alloc = allocation
 	genesis.Config = conf
 	genesis.Difficulty = vm.Difficulty
-	genesis.GasLimit = extra.FeeConfig.GasLimit.Uint64()
+	genesis.GasLimit = ex.FeeConfig.GasLimit.Uint64()
 
 	jsonBytes, err := genesis.MarshalJSON()
 	if err != nil {
