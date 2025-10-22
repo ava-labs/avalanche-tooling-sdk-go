@@ -244,7 +244,7 @@ func createEvmGenesis(
 	genesis.Timestamp = *subnetEVMParams.Timestamp
 
 	conf := params.SubnetEVMDefaultChainConfig
-	fmt.Printf("obtained params.SubnetEVMDefaultChainConfig %s \n, params.SubnetEVMDefaultChainConfig")
+	fmt.Printf("obtained params.SubnetEVMDefaultChainConfig %s \n", params.SubnetEVMDefaultChainConfig)
 	extra := params.GetExtra(conf)
 
 	extra.NetworkUpgrades = extras.NetworkUpgrades{}
