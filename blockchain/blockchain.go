@@ -244,17 +244,16 @@ func createEvmGenesis(
 	genesis.Timestamp = *subnetEVMParams.Timestamp
 
 	conf := params.SubnetEVMDefaultChainConfig
-	fmt.Printf("obtained params.SubnetEVMDefaultChainConfig %s \n", params.SubnetEVMDefaultChainConfig)
-	// Ensure extras registry is live while we access/attach extras.
+
 	var ex *extras.ChainConfig
 	params.WithTempRegisteredExtras(func() {
-		ex = params.GetExtra(conf) // safe now
-		if ex == nil {
-			ex = &extras.ChainConfig{}
-			params.WithExtra(conf, ex) // attach if missing
-		}
+		presetCopy := *extras.SubnetEVMDefaultChainConfig
+		params.WithExtra(conf, &presetCopy)
+		ex = params.GetExtra(conf)
 	})
-	//extra := params.GetExtra(conf)
+	if ex == nil {
+		return nil, fmt.Errorf("failed to obtain extras")
+	}
 
 	ex.NetworkUpgrades = extras.NetworkUpgrades{}
 
