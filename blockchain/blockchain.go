@@ -284,7 +284,7 @@ func createEvmGenesis(
 	genesis.Alloc = allocation
 	genesis.Config = conf
 	genesis.Difficulty = vm.Difficulty
-	genesis.GasLimit = ex.FeeConfig.GasLimit.Uint64()
+	genesis.GasLimit = subnetEVMParams.FeeConfig.GasLimit.Uint64()
 
 	jsonBytes, err := genesis.MarshalJSON()
 	if err != nil {
