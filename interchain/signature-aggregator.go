@@ -108,9 +108,9 @@ func SignMessage(
 			zap.Int("attempt", attempt+1),
 		)
 
-		if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 			lastErr = fmt.Errorf("signature aggregator returned non-200 status code: %d, body: %s", resp.StatusCode, string(body))
-			logger.Error("Received non-200 status code",
+			logger.Error("Received non-2xx status code",
 				zap.Int("status_code", resp.StatusCode),
 				zap.String("body", string(body)),
 				zap.Int("attempt", attempt+1),
