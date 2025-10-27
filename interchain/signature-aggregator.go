@@ -109,7 +109,7 @@ func SignMessage(
 		)
 
 		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-			lastErr = fmt.Errorf("signature aggregator returned non-200 status code: %d, body: %s", resp.StatusCode, string(body))
+			lastErr = fmt.Errorf("signature aggregator returned non-2xx status code: %d, body: %s", resp.StatusCode, string(body))
 			logger.Error("Received non-2xx status code",
 				zap.Int("status_code", resp.StatusCode),
 				zap.String("body", string(body)),
@@ -118,8 +118,13 @@ func SignMessage(
 			continue
 		}
 
-		var response api.AggregateSignatureResponse
-		if err := json.Unmarshal(body, &response); err != nil {
+		type aggRespFlexible struct {
+			SignedMessageKebab string `json:"signed-message"`
+			SignedMessageCamel string `json:"signedMessage"`
+		}
+
+		var flex aggRespFlexible
+		if err := json.Unmarshal(body, &flex); err != nil {
 			lastErr = fmt.Errorf("failed to parse response: %w", err)
 			logger.Error("Error parsing response",
 				zap.Error(err),
@@ -128,8 +133,13 @@ func SignMessage(
 			continue
 		}
 
+		signed := flex.SignedMessageKebab
+		if signed == "" {
+			signed = flex.SignedMessageCamel
+		}
+		fmt.Printf("obtained signed %s \n", signed)
 		// Decode the hex string
-		signedMessageBytes, err := hex.DecodeString(response.SignedMessage)
+		signedMessageBytes, err := hex.DecodeString(signed)
 		if err != nil {
 			lastErr = fmt.Errorf("error decoding hex: %w", err)
 			logger.Error("Error decoding hex",
