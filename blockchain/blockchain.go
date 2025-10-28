@@ -5,11 +5,17 @@ package blockchain
 
 import (
 	"bytes"
+	"connectrpc.com/connect"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ava-labs/avalanchego/api/connectclient"
+	"github.com/ava-labs/avalanchego/vms/proposervm"
+	"github.com/ava-labs/icm-services/utils"
 	"math/big"
+	"net/url"
 	"os"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -27,6 +33,8 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
+	pbproposervm "github.com/ava-labs/avalanchego/connectproto/pb/proposervm"
+	pb "github.com/ava-labs/avalanchego/connectproto/pb/proposervm/proposervmconnect"
 )
 
 var (
@@ -366,6 +374,11 @@ func (c *Subnet) InitializeProofOfAuthority(
 	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
 	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
 
+	pchainHeight, err := GetPChainHeight(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
+	if err != nil {
+		return fmt.Errorf("failure getting p-chain height: %w", err)
+	}
+
 	signedMessage, err := interchain.SignMessage(
 		aggregatorLogger,
 		signatureAggregatorEndpoint,
@@ -373,6 +386,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 		justificationHexStr,
 		c.ValidatorManagerSubnetID.String(),
 		0,
+		pchainHeight,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get signed message: %w", err)
@@ -486,6 +500,10 @@ func (c *Subnet) InitializeProofOfStake(
 	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
 	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
 
+	pchainHeight, err := GetPChainHeight(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
+	if err != nil {
+		return fmt.Errorf("failure getting p-chain height: %w", err)
+	}
 	signedMessage, err := interchain.SignMessage(
 		aggregatorLogger,
 		signatureAggregatorEndpoint,
@@ -493,6 +511,7 @@ func (c *Subnet) InitializeProofOfStake(
 		justificationHexStr,
 		c.ValidatorManagerSubnetID.String(),
 		0,
+		pchainHeight,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get signed message: %w", err)
@@ -512,4 +531,34 @@ func (c *Subnet) InitializeProofOfStake(
 		return evm.TransactionError(tx, err, "failure initializing validators set on pos manager")
 	}
 	return nil
+}
+
+func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
+	endpoint, err := url.Parse(rpcURL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse rpc endpoint %w", err)
+	}
+
+	baseURL := fmt.Sprintf("%s://%s", endpoint.Scheme, endpoint.Host)
+	proposerClient := pb.NewProposerVMClient(
+		connectclient.New(),
+		baseURL,
+		connect.WithInterceptors(
+			connectclient.SetRouteHeaderInterceptor{
+				Route: []string{
+					blockchainID,
+					proposervm.HTTPHeaderRoute,
+				},
+			},
+		),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), utils.DefaultCreateSignedMessageTimeout)
+	defer cancel()
+	response, err := proposerClient.GetCurrentEpoch(ctx, &connect.Request[pbproposervm.GetCurrentEpochRequest]{})
+	if err != nil {
+		return 0, fmt.Errorf("failed to get current epoch ProposerVM %w", err)
+	}
+	epoch := response.Msg
+	fmt.Printf("obtained epoch %s \n", epoch.GetPChainHeight())
+	return epoch.PChainHeight, nil
 }

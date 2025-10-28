@@ -33,6 +33,7 @@ func SignMessage(
 	justification string,
 	signingSubnetID string,
 	quorumPercentage uint64,
+	pChainHeight uint64,
 ) (*warp.Message, error) {
 	if quorumPercentage == 0 {
 		quorumPercentage = DefaultQuorumPercentage
@@ -44,6 +45,7 @@ func SignMessage(
 		SigningSubnetID:  signingSubnetID,
 		QuorumPercentage: quorumPercentage,
 		Justification:    justification,
+		PChainHeight:     pChainHeight,
 	}
 
 	requestBody, err := json.Marshal(request)
