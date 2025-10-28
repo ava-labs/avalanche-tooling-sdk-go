@@ -15,14 +15,12 @@ import (
 	"os"
 
 	"connectrpc.com/connect"
-
 	"github.com/ava-labs/avalanchego/api/connectclient"
-	"github.com/ava-labs/avalanchego/vms/proposervm"
-	"github.com/ava-labs/icm-services/utils"
-
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/avalanchego/vms/proposervm"
+	"github.com/ava-labs/icm-services/utils"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core"
 	"github.com/ava-labs/subnet-evm/commontype"
@@ -35,6 +33,7 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
+
 	pbproposervm "github.com/ava-labs/avalanchego/connectproto/pb/proposervm"
 	pb "github.com/ava-labs/avalanchego/connectproto/pb/proposervm/proposervmconnect"
 )
@@ -273,13 +272,24 @@ func createEvmGenesis(
 	if subnetEVMParams.Precompiles == nil {
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
 	}
+
 	conf.ChainID = subnetEVMParams.ChainID
 
 	genesis.Alloc = allocation
 	genesis.Config = conf
 	genesis.Difficulty = vm.Difficulty
 	genesis.GasLimit = subnetEVMParams.FeeConfig.GasLimit.Uint64()
-	jsonBytes, err := genesis.MarshalJSON()
+
+	var jsonBytes []byte
+	params.WithTempRegisteredExtras(func() {
+		chainExtras := *extras.SubnetEVMDefaultChainConfig
+		chainExtras.FeeConfig = subnetEVMParams.FeeConfig
+		chainExtras.GenesisPrecompiles = subnetEVMParams.Precompiles
+		chainExtras.NetworkUpgrades = extras.NetworkUpgrades{}
+		params.WithExtra(conf, &chainExtras)
+
+		jsonBytes, err = genesis.MarshalJSON()
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -561,6 +571,6 @@ func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
 		return 0, fmt.Errorf("failed to get current epoch ProposerVM %w", err)
 	}
 	epoch := response.Msg
-	fmt.Printf("obtained epoch %s \n", epoch.GetPChainHeight())
+	fmt.Printf("obtained epoch %d \n", epoch.GetPChainHeight())
 	return epoch.PChainHeight, nil
 }
