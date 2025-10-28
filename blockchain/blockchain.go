@@ -5,18 +5,20 @@ package blockchain
 
 import (
 	"bytes"
-	"connectrpc.com/connect"
 	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ava-labs/avalanchego/api/connectclient"
-	"github.com/ava-labs/avalanchego/vms/proposervm"
-	"github.com/ava-labs/icm-services/utils"
 	"math/big"
 	"net/url"
 	"os"
+
+	"connectrpc.com/connect"
+
+	"github.com/ava-labs/avalanchego/api/connectclient"
+	"github.com/ava-labs/avalanchego/vms/proposervm"
+	"github.com/ava-labs/icm-services/utils"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
