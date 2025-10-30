@@ -3,19 +3,22 @@ module github.com/ava-labs/avalanche-tooling-sdk-go
 go 1.24.9
 
 require (
+	connectrpc.com/connect v1.19.1
 	github.com/ava-labs/avalanchego v1.14.0-fuji-rc.1
+	github.com/ava-labs/coreth v0.15.4-rc.4
 	github.com/ava-labs/icm-services v1.4.1-0.20251021221544-ae1d7d5a81f3
+	github.com/ava-labs/ledger-avalanche-go v1.1.0
 	github.com/ava-labs/libevm v1.13.15-0.20251003195629-910e897c54c3
 	github.com/ava-labs/subnet-evm v0.8.0-fuji
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/stretchr/testify v1.11.1
+	github.com/tyler-smith/go-bip32 v1.0.0
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9
 )
 
 require (
-	connectrpc.com/connect v1.19.1 // indirect
 	connectrpc.com/grpcreflect v1.3.0 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/FactomProject/basen v0.0.0-20150613233007-fe3947df716e // indirect
@@ -23,9 +26,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/StephenButtolph/canoto v0.17.2 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.1 // indirect
-	github.com/ava-labs/coreth v0.15.4-rc.4 // indirect
 	github.com/ava-labs/firewood-go-ethhash/ffi v0.0.13 // indirect
-	github.com/ava-labs/ledger-avalanche-go v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.5 // indirect
@@ -99,7 +100,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220614013038-64ee5596c38a // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
-	github.com/tyler-smith/go-bip32 v1.0.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zondax/golem v0.27.0 // indirect
 	github.com/zondax/hid v0.9.2 // indirect
