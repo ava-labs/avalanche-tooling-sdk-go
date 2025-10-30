@@ -15,6 +15,8 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/icm-services/signature-aggregator/api"
 	"go.uber.org/zap"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 const (
@@ -24,8 +26,20 @@ const (
 	InitialBackoff                    = 5 * time.Second
 )
 
+// aggregateSignatureRequestCamelCase is the camelCase version of the request
+// for non-local signature aggregator endpoints
+type aggregateSignatureRequestCamelCase struct {
+	Message                string `json:"message"`
+	Justification          string `json:"justification"`
+	SigningSubnetID        string `json:"signingSubnetId"`
+	QuorumPercentage       uint64 `json:"quorumPercentage"`
+	QuorumPercentageBuffer uint64 `json:"quorumPercentageBuffer"`
+	PChainHeight           uint64 `json:"pchainHeight"`
+}
+
 // SignMessage sends a request to the signature aggregator to sign a message.
 // It returns the signed warp message or an error if the operation fails.
+// Automatically uses camelCase JSON for non-local endpoints and kebab-case for local endpoints.
 func SignMessage(
 	logger logging.Logger,
 	signatureAggregatorEndpoint string,
@@ -40,15 +54,35 @@ func SignMessage(
 	} else if quorumPercentage > 100 {
 		return nil, fmt.Errorf("quorum percentage cannot be greater than 100")
 	}
-	request := api.AggregateSignatureRequest{
-		Message:          message,
-		SigningSubnetID:  signingSubnetID,
-		QuorumPercentage: quorumPercentage,
-		Justification:    justification,
-		PChainHeight:     pChainHeight,
+
+	var requestBody []byte
+	var err error
+
+	// Use camelCase JSON for non-local signature aggregators, kebab-case for local
+	useCamelCase := !utils.IsEndpointLocalhost(signatureAggregatorEndpoint)
+
+	if useCamelCase {
+		// Use camelCase JSON field names for non-local signature aggregators
+		camelRequest := aggregateSignatureRequestCamelCase{
+			Message:          message,
+			SigningSubnetID:  signingSubnetID,
+			QuorumPercentage: quorumPercentage,
+			Justification:    justification,
+			PChainHeight:     pChainHeight,
+		}
+		requestBody, err = json.Marshal(camelRequest)
+	} else {
+		// Use kebab-case JSON field names for local signature aggregators
+		request := api.AggregateSignatureRequest{
+			Message:          message,
+			SigningSubnetID:  signingSubnetID,
+			QuorumPercentage: quorumPercentage,
+			Justification:    justification,
+			PChainHeight:     pChainHeight,
+		}
+		requestBody, err = json.Marshal(request)
 	}
 
-	requestBody, err := json.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
