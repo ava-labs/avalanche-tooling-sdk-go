@@ -571,6 +571,5 @@ func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
 		return 0, fmt.Errorf("failed to get current epoch ProposerVM %w", err)
 	}
 	epoch := response.Msg
-	fmt.Printf("obtained epoch %d \n", epoch.GetPChainHeight())
 	return epoch.PChainHeight, nil
 }
