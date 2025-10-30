@@ -2076,7 +2076,7 @@ func TestSetupProposerVM(t *testing.T) {
 				// GetChainID
 				mockClient.EXPECT().ChainID(gomock.Any()).
 					Return(chainID, nil)
-				// Setup
+				// Setup - initial BlockNumber and NonceAt calls
 				mockClient.EXPECT().BlockNumber(gomock.Any()).
 					Return(uint64(1000), nil)
 				mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).
@@ -2160,7 +2160,7 @@ func TestSetupProposerVM(t *testing.T) {
 					// GetChainID succeeds
 					mockClient.EXPECT().ChainID(gomock.Any()).
 						Return(chainID, nil)
-					// Setup
+					// Setup - initial BlockNumber and NonceAt calls
 					mockClient.EXPECT().BlockNumber(gomock.Any()).
 						Return(uint64(1000), nil)
 					mockClient.EXPECT().NonceAt(gomock.Any(), signerAddress, gomock.Any()).

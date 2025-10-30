@@ -5,16 +5,22 @@ package blockchain
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
+	"net/url"
 	"os"
 
+	"connectrpc.com/connect"
+	"github.com/ava-labs/avalanchego/api/connectclient"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+	"github.com/ava-labs/avalanchego/vms/proposervm"
+	"github.com/ava-labs/icm-services/utils"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core"
 	"github.com/ava-labs/subnet-evm/commontype"
@@ -27,6 +33,9 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
+
+	pbproposervm "github.com/ava-labs/avalanchego/connectproto/pb/proposervm"
+	pb "github.com/ava-labs/avalanchego/connectproto/pb/proposervm/proposervmconnect"
 )
 
 var (
@@ -244,9 +253,6 @@ func createEvmGenesis(
 	genesis.Timestamp = *subnetEVMParams.Timestamp
 
 	conf := params.SubnetEVMDefaultChainConfig
-	extra := params.GetExtra(conf)
-
-	extra.NetworkUpgrades = extras.NetworkUpgrades{}
 
 	var err error
 
@@ -267,17 +273,23 @@ func createEvmGenesis(
 		return nil, fmt.Errorf("genesis params precompiles cannot be empty")
 	}
 
-	extra.FeeConfig = subnetEVMParams.FeeConfig
-	extra.GenesisPrecompiles = subnetEVMParams.Precompiles
-
 	conf.ChainID = subnetEVMParams.ChainID
 
 	genesis.Alloc = allocation
 	genesis.Config = conf
 	genesis.Difficulty = vm.Difficulty
-	genesis.GasLimit = extra.FeeConfig.GasLimit.Uint64()
+	genesis.GasLimit = subnetEVMParams.FeeConfig.GasLimit.Uint64()
 
-	jsonBytes, err := genesis.MarshalJSON()
+	var jsonBytes []byte
+	params.WithTempRegisteredExtras(func() {
+		chainExtras := *extras.SubnetEVMDefaultChainConfig
+		chainExtras.FeeConfig = subnetEVMParams.FeeConfig
+		chainExtras.GenesisPrecompiles = subnetEVMParams.Precompiles
+		chainExtras.NetworkUpgrades = extras.NetworkUpgrades{}
+		params.WithExtra(conf, &chainExtras)
+
+		jsonBytes, err = genesis.MarshalJSON()
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -374,6 +386,11 @@ func (c *Subnet) InitializeProofOfAuthority(
 	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
 	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
 
+	pchainHeight, err := GetPChainHeight(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
+	if err != nil {
+		return fmt.Errorf("failure getting p-chain height: %w", err)
+	}
+
 	signedMessage, err := interchain.SignMessage(
 		aggregatorLogger,
 		signatureAggregatorEndpoint,
@@ -381,6 +398,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 		justificationHexStr,
 		c.ValidatorManagerSubnetID.String(),
 		0,
+		pchainHeight,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get signed message: %w", err)
@@ -494,6 +512,10 @@ func (c *Subnet) InitializeProofOfStake(
 	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
 	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
 
+	pchainHeight, err := GetPChainHeight(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
+	if err != nil {
+		return fmt.Errorf("failure getting p-chain height: %w", err)
+	}
 	signedMessage, err := interchain.SignMessage(
 		aggregatorLogger,
 		signatureAggregatorEndpoint,
@@ -501,6 +523,7 @@ func (c *Subnet) InitializeProofOfStake(
 		justificationHexStr,
 		c.ValidatorManagerSubnetID.String(),
 		0,
+		pchainHeight,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get signed message: %w", err)
@@ -520,4 +543,34 @@ func (c *Subnet) InitializeProofOfStake(
 		return evm.TransactionError(tx, err, "failure initializing validators set on pos manager")
 	}
 	return nil
+}
+
+func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
+	endpoint, err := url.Parse(rpcURL)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse rpc endpoint %w", err)
+	}
+
+	baseURL := fmt.Sprintf("%s://%s", endpoint.Scheme, endpoint.Host)
+	proposerClient := pb.NewProposerVMClient(
+		connectclient.New(),
+		baseURL,
+		connect.WithInterceptors(
+			connectclient.SetRouteHeaderInterceptor{
+				Route: []string{
+					blockchainID,
+					proposervm.HTTPHeaderRoute,
+				},
+			},
+		),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), utils.DefaultCreateSignedMessageTimeout)
+	defer cancel()
+	response, err := proposerClient.GetCurrentEpoch(ctx, &connect.Request[pbproposervm.GetCurrentEpochRequest]{})
+	if err != nil {
+		return 0, fmt.Errorf("failed to get current epoch ProposerVM %w", err)
+	}
+	epoch := response.Msg
+	fmt.Printf("obtained epoch %d \n", epoch.GetPChainHeight())
+	return epoch.PChainHeight, nil
 }
