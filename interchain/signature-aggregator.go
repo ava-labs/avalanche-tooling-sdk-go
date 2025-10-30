@@ -15,6 +15,8 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/icm-services/signature-aggregator/api"
 	"go.uber.org/zap"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
 const (
@@ -24,8 +26,20 @@ const (
 	InitialBackoff                    = 5 * time.Second
 )
 
+// aggregateSignatureRequestCamelCase is the camelCase version of the request
+// for non-local signature aggregator endpoints
+type aggregateSignatureRequestCamelCase struct {
+	Message                string `json:"message"`
+	Justification          string `json:"justification"`
+	SigningSubnetID        string `json:"signingSubnetId"`
+	QuorumPercentage       uint64 `json:"quorumPercentage"`
+	QuorumPercentageBuffer uint64 `json:"quorumPercentageBuffer"`
+	PChainHeight           uint64 `json:"pchainHeight"`
+}
+
 // SignMessage sends a request to the signature aggregator to sign a message.
 // It returns the signed warp message or an error if the operation fails.
+// Automatically uses camelCase JSON for non-local endpoints and kebab-case for local endpoints.
 func SignMessage(
 	logger logging.Logger,
 	signatureAggregatorEndpoint string,
@@ -33,20 +47,42 @@ func SignMessage(
 	justification string,
 	signingSubnetID string,
 	quorumPercentage uint64,
+	pChainHeight uint64,
 ) (*warp.Message, error) {
 	if quorumPercentage == 0 {
 		quorumPercentage = DefaultQuorumPercentage
 	} else if quorumPercentage > 100 {
 		return nil, fmt.Errorf("quorum percentage cannot be greater than 100")
 	}
-	request := api.AggregateSignatureRequest{
-		Message:          message,
-		SigningSubnetID:  signingSubnetID,
-		QuorumPercentage: quorumPercentage,
-		Justification:    justification,
+
+	var requestBody []byte
+	var err error
+
+	// Use camelCase JSON for non-local signature aggregators, kebab-case for local
+	useCamelCase := !utils.IsEndpointLocalhost(signatureAggregatorEndpoint)
+
+	if useCamelCase {
+		// Use camelCase JSON field names for non-local signature aggregators
+		camelRequest := aggregateSignatureRequestCamelCase{
+			Message:          message,
+			SigningSubnetID:  signingSubnetID,
+			QuorumPercentage: quorumPercentage,
+			Justification:    justification,
+			PChainHeight:     pChainHeight,
+		}
+		requestBody, err = json.Marshal(camelRequest)
+	} else {
+		// Use kebab-case JSON field names for local signature aggregators
+		request := api.AggregateSignatureRequest{
+			Message:          message,
+			SigningSubnetID:  signingSubnetID,
+			QuorumPercentage: quorumPercentage,
+			Justification:    justification,
+			PChainHeight:     pChainHeight,
+		}
+		requestBody, err = json.Marshal(request)
 	}
 
-	requestBody, err := json.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
@@ -108,9 +144,9 @@ func SignMessage(
 			zap.Int("attempt", attempt+1),
 		)
 
-		if resp.StatusCode != http.StatusOK {
-			lastErr = fmt.Errorf("signature aggregator returned non-200 status code: %d, body: %s", resp.StatusCode, string(body))
-			logger.Error("Received non-200 status code",
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+			lastErr = fmt.Errorf("signature aggregator returned non-2xx status code: %d, body: %s", resp.StatusCode, string(body))
+			logger.Error("Received non-2xx status code",
 				zap.Int("status_code", resp.StatusCode),
 				zap.String("body", string(body)),
 				zap.Int("attempt", attempt+1),
@@ -118,8 +154,13 @@ func SignMessage(
 			continue
 		}
 
-		var response api.AggregateSignatureResponse
-		if err := json.Unmarshal(body, &response); err != nil {
+		type aggRespFlexible struct {
+			SignedMessageKebab string `json:"signed-message"`
+			SignedMessageCamel string `json:"signedMessage"`
+		}
+
+		var flex aggRespFlexible
+		if err := json.Unmarshal(body, &flex); err != nil {
 			lastErr = fmt.Errorf("failed to parse response: %w", err)
 			logger.Error("Error parsing response",
 				zap.Error(err),
@@ -128,8 +169,12 @@ func SignMessage(
 			continue
 		}
 
+		signedResponse := flex.SignedMessageKebab
+		if signedResponse == "" {
+			signedResponse = flex.SignedMessageCamel
+		}
 		// Decode the hex string
-		signedMessageBytes, err := hex.DecodeString(response.SignedMessage)
+		signedMessageBytes, err := hex.DecodeString(signedResponse)
 		if err != nil {
 			lastErr = fmt.Errorf("error decoding hex: %w", err)
 			logger.Error("Error decoding hex",

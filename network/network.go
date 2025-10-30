@@ -14,11 +14,15 @@ const (
 	Mainnet
 	Fuji
 	Devnet
+	Granite
 )
 
 const (
 	FujiAPIEndpoint    = "https://api.avax-test.network"
 	MainnetAPIEndpoint = "https://api.avax.network"
+	GraniteNetworkID   = 76
+
+	GraniteEndpoint = "https://granite.avax-dev.network"
 )
 
 type Network struct {
@@ -35,6 +39,8 @@ func NetworkFromNetworkID(networkID uint32) Network {
 		return MainnetNetwork()
 	case constants.FujiID:
 		return FujiNetwork()
+	case GraniteNetworkID:
+		return GraniteNetwork()
 	}
 	return UndefinedNetwork
 }
@@ -53,4 +59,8 @@ func FujiNetwork() Network {
 
 func MainnetNetwork() Network {
 	return NewNetwork(Mainnet, constants.MainnetID, MainnetAPIEndpoint)
+}
+
+func GraniteNetwork() Network {
+	return NewNetwork(Granite, GraniteNetworkID, GraniteEndpoint)
 }
