@@ -8,6 +8,7 @@ import (
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/libevm/common"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 )
 
@@ -15,15 +16,13 @@ func SetAdmin(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	privateKey string,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		precompile,
 		nil,
 		"set precompile admin",
@@ -38,15 +37,13 @@ func SetManager(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	privateKey string,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		precompile,
 		nil,
 		"set precompile manager",
@@ -61,15 +58,13 @@ func SetEnabled(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	privateKey string,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		precompile,
 		nil,
 		"set precompile enabled",
@@ -84,15 +79,13 @@ func SetNone(
 	logger logging.Logger,
 	rpcURL string,
 	precompile common.Address,
-	privateKey string,
+	signer *evm.Signer,
 	toSet common.Address,
 ) error {
 	_, _, err := contract.TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		precompile,
 		nil,
 		"set precompile none",

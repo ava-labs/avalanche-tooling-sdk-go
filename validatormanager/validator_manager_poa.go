@@ -9,6 +9,7 @@ import (
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
 )
 
@@ -19,7 +20,7 @@ func PoAValidatorManagerInitialize(
 	logger logging.Logger,
 	rpcURL string,
 	managerAddress common.Address,
-	privateKey string,
+	signer *evm.Signer,
 	subnetID ids.ID,
 	ownerAddress common.Address,
 	useACP99 bool,
@@ -28,9 +29,7 @@ func PoAValidatorManagerInitialize(
 		return contract.TxToMethod(
 			logger,
 			rpcURL,
-			false,
-			common.Address{},
-			privateKey,
+			signer,
 			managerAddress,
 			nil,
 			"initialize PoA manager",
@@ -47,9 +46,7 @@ func PoAValidatorManagerInitialize(
 	return contract.TxToMethod(
 		logger,
 		rpcURL,
-		false,
-		common.Address{},
-		privateKey,
+		signer,
 		managerAddress,
 		nil,
 		"initialize PoA manager",

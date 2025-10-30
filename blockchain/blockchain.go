@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
@@ -25,14 +24,9 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/multisig"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
-
-	commonAvago "github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 )
 
 var (
@@ -148,8 +142,8 @@ type Subnet struct {
 	// Address of the owner of the Validator Manager Contract
 	ValidatorManagerOwnerAddress *common.Address
 
-	// Private key of the owner of the Validator Manager Contract
-	ValidatorManagerOwnerPrivateKey string
+	// Signer of the owner of the Validator Manager Contract
+	ValidatorManagerOwnerSigner *evm.Signer
 
 	// BootstrapValidators are bootstrap validators that are included in the ConvertSubnetToL1Tx call
 	// that made Subnet a sovereign L1
@@ -306,57 +300,6 @@ func vmID(vmName string) (ids.ID, error) {
 	return ids.ToID(b)
 }
 
-func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcceptance bool) (ids.ID, error) {
-	if ms.Undefined() {
-		return ids.Empty, multisig.ErrUndefinedTx
-	}
-	isReady, err := ms.IsReadyToCommit()
-	if err != nil {
-		return ids.Empty, err
-	}
-	if !isReady {
-		return ids.Empty, errors.New("tx is not fully signed so can't be committed")
-	}
-	tx, err := ms.GetWrappedPChainTx()
-	if err != nil {
-		return ids.Empty, err
-	}
-	const (
-		repeats             = 3
-		sleepBetweenRepeats = 2 * time.Second
-	)
-	var issueTxErr error
-	if err != nil {
-		return ids.Empty, err
-	}
-	for i := 0; i < repeats; i++ {
-		ctx, cancel := utils.GetAPILargeContext()
-		defer cancel()
-		options := []commonAvago.Option{commonAvago.WithContext(ctx)}
-		if !waitForTxAcceptance {
-			options = append(options, commonAvago.WithAssumeDecided())
-		}
-		// TODO: split error checking and recovery between issuing and waiting for status
-		issueTxErr = wallet.P().IssueTx(tx, options...)
-		if issueTxErr == nil {
-			break
-		}
-		if ctx.Err() != nil {
-			issueTxErr = fmt.Errorf("timeout issuing/verifying tx with ID %s: %w", tx.ID(), issueTxErr)
-		} else {
-			issueTxErr = fmt.Errorf("error issuing tx with ID %s: %w", tx.ID(), issueTxErr)
-		}
-		time.Sleep(sleepBetweenRepeats)
-	}
-	if issueTxErr != nil {
-		return ids.Empty, fmt.Errorf("issue tx error %w", issueTxErr)
-	}
-	if _, ok := ms.PChainTx.Unsigned.(*txs.CreateSubnetTx); ok {
-		c.SubnetID = tx.ID()
-	}
-	return tx.ID(), issueTxErr
-}
-
 // InitializeProofOfAuthority setups PoA manager after a successful execution of
 // ConvertSubnetToL1Tx on P-Chain
 // needs the list of validators for that tx,
@@ -364,7 +307,7 @@ func (c *Subnet) Commit(ms multisig.Multisig, wallet wallet.Wallet, waitForTxAcc
 // to set as the owner of the PoA manager
 func (c *Subnet) InitializeProofOfAuthority(
 	log logging.Logger,
-	privateKey string,
+	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
 	useACP99 bool,
 	signatureAggregatorEndpoint string,
@@ -395,7 +338,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
 		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
 	} else {
-		if err := client.SetupProposerVM(privateKey); err != nil {
+		if err := client.SetupProposerVM(signer); err != nil {
 			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
 		}
 		client.Close()
@@ -405,7 +348,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 		log,
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
-		privateKey,
+		signer,
 		c.SubnetID,
 		*c.ValidatorManagerOwnerAddress,
 		useACP99,
@@ -446,7 +389,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 		log,
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
-		privateKey,
+		signer,
 		c.SubnetID,
 		c.ValidatorManagerBlockchainID,
 		c.BootstrapValidators,
@@ -461,12 +404,12 @@ func (c *Subnet) InitializeProofOfAuthority(
 
 func (c *Subnet) InitializeProofOfStake(
 	log logging.Logger,
-	privateKey string,
+	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
 	posParams validatormanager.PoSParams,
 	useACP99 bool,
 	signatureAggregatorEndpoint string,
-	nativeMinterPrecompileAdminPrivateKey string,
+	nativeMinterPrecompileAdminSigner *evm.Signer,
 ) error {
 	if c.Network == network.UndefinedNetwork {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingNetwork)
@@ -491,13 +434,13 @@ func (c *Subnet) InitializeProofOfStake(
 	if c.ValidatorManagerOwnerAddress == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerAddress)
 	}
-	if useACP99 && c.ValidatorManagerOwnerPrivateKey == "" {
+	if useACP99 && c.ValidatorManagerOwnerSigner == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
 	}
 	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
 		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
 	} else {
-		if err := client.SetupProposerVM(privateKey); err != nil {
+		if err := client.SetupProposerVM(signer); err != nil {
 			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
 		}
 		client.Close()
@@ -507,7 +450,7 @@ func (c *Subnet) InitializeProofOfStake(
 			log,
 			c.ValidatorManagerRPC,
 			*c.ValidatorManagerAddress,
-			privateKey,
+			signer,
 			c.SubnetID,
 			*c.ValidatorManagerOwnerAddress,
 			useACP99,
@@ -524,12 +467,12 @@ func (c *Subnet) InitializeProofOfStake(
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
 		*c.SpecializedValidatorManagerAddress,
-		c.ValidatorManagerOwnerPrivateKey,
-		privateKey,
+		c.ValidatorManagerOwnerSigner,
+		signer,
 		c.SubnetID,
 		posParams,
 		useACP99,
-		nativeMinterPrecompileAdminPrivateKey,
+		nativeMinterPrecompileAdminSigner,
 	)
 	if err != nil {
 		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
@@ -567,7 +510,7 @@ func (c *Subnet) InitializeProofOfStake(
 		log,
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
-		privateKey,
+		signer,
 		c.SubnetID,
 		c.ValidatorManagerBlockchainID,
 		c.BootstrapValidators,
