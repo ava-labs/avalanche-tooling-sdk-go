@@ -71,14 +71,14 @@ keychain/ledger/
 ├── mocks_generate_test.go       # Mock generation directives
 ├── ledgermock/
 │   └── ledger.go                # Generated mock for Ledger interface
-├── examples/
-│   └── validate-ledger-txs.go  # Comprehensive example of all transaction types
 └── README.md                    # This file
 ```
 
 **Core Files:**
 - **ledger_device.go**: Implements the `Ledger` interface using `github.com/ava-labs/ledger-avalanche-go`
 - **ledger_keychain.go**: Implements `keychain.Keychain` and `c.EthKeychain` interfaces, manages address derivation and transaction signing
+
+**Examples:** See [examples/ledger](../../examples/ledger/) for runnable code examples
 
 ## Integration with Avalanche Wallet
 
