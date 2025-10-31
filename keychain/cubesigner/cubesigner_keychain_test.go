@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
+	"github.com/ava-labs/avalanchego/vms/components/avax"
+	"github.com/ava-labs/avalanchego/wallet/chain/x/builder"
+	"github.com/ava-labs/coreth/plugin/evm/atomic"
 	"github.com/ava-labs/libevm/common"
 	"github.com/cubist-labs/cubesigner-go-sdk/client"
 	"github.com/cubist-labs/cubesigner-go-sdk/models"
@@ -16,6 +18,9 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain/cubesigner/cubesignermock"
+
+	avmtxs "github.com/ava-labs/avalanchego/vms/avm/txs"
+	platformvmtxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
 var errTest = errors.New("test")
@@ -247,19 +252,23 @@ func TestCubesignerSigner_Sign(t *testing.T) {
 	signer, found := kc.Get(addr)
 	require.True(found)
 
-	txBytes := []byte("test-transaction-bytes")
+	// Test invalid transaction bytes (unable to auto-detect)
+	invalidTxBytes := []byte("invalid-transaction-bytes")
+	_, err = signer.Sign(invalidTxBytes)
+	require.Error(err)
+	require.Contains(err.Error(), "unable to auto-detect chain")
 
-	// Test missing chain alias
-	_, err = signer.Sign(txBytes)
-	require.ErrorIs(err, ErrChainAliasMissing)
-
-	// Test invalid chain alias
-	_, err = signer.Sign(txBytes, keychain.WithChainAlias("invalid"))
-	require.ErrorIs(err, ErrInvalidChainAlias)
-
-	// Test missing network ID
-	_, err = signer.Sign(txBytes, keychain.WithChainAlias("P"))
-	require.ErrorIs(err, ErrNetworkIDMissing)
+	// Create a valid P-chain transaction
+	networkID := uint32(1)
+	pChainTx := &platformvmtxs.BaseTx{
+		BaseTx: avax.BaseTx{
+			NetworkID:    networkID,
+			BlockchainID: ids.Empty,
+		},
+	}
+	var unsignedPTx platformvmtxs.UnsignedTx = pChainTx
+	pChainTxBytes, err := platformvmtxs.Codec.Marshal(platformvmtxs.CodecVersion, &unsignedPTx)
+	require.NoError(err)
 
 	// Test successful P-chain signing
 	response := &client.CubeSignerResponse[models.SignResponse]{
@@ -273,11 +282,20 @@ func TestCubesignerSigner_Sign(t *testing.T) {
 		gomock.Any(), // request with hex-encoded tx
 	).Return(response, nil).Times(1)
 
-	signature, err := signer.Sign(txBytes,
-		keychain.WithChainAlias("P"),
-		keychain.WithNetworkID(1))
+	signature, err := signer.Sign(pChainTxBytes)
 	require.NoError(err)
 	require.NotNil(signature)
+
+	// Create a valid X-chain transaction
+	xChainTx := &avmtxs.BaseTx{
+		BaseTx: avax.BaseTx{
+			NetworkID:    networkID,
+			BlockchainID: ids.Empty,
+		},
+	}
+	var unsignedXTx avmtxs.UnsignedTx = xChainTx
+	xChainTxBytes, err := builder.Parser.Codec().Marshal(avmtxs.CodecVersion, &unsignedXTx)
+	require.NoError(err)
 
 	// Test successful X-chain signing
 	mockClient.EXPECT().AvaSerializedTxSign(
@@ -286,11 +304,17 @@ func TestCubesignerSigner_Sign(t *testing.T) {
 		gomock.Any(), // request with hex-encoded tx
 	).Return(response, nil).Times(1)
 
-	signature, err = signer.Sign(txBytes,
-		keychain.WithChainAlias("X"),
-		keychain.WithNetworkID(1))
+	signature, err = signer.Sign(xChainTxBytes)
 	require.NoError(err)
 	require.NotNil(signature)
+
+	// Create a valid C-chain transaction
+	cChainTx := &atomic.UnsignedImportTx{
+		NetworkID: networkID,
+	}
+	var unsignedCTx atomic.UnsignedAtomicTx = cChainTx
+	cChainTxBytes, err := atomic.Codec.Marshal(atomic.CodecVersion, &unsignedCTx)
+	require.NoError(err)
 
 	// Test successful C-chain signing
 	mockClient.EXPECT().AvaSerializedTxSign(
@@ -299,9 +323,7 @@ func TestCubesignerSigner_Sign(t *testing.T) {
 		gomock.Any(), // request with hex-encoded tx
 	).Return(response, nil).Times(1)
 
-	signature, err = signer.Sign(txBytes,
-		keychain.WithChainAlias("C"),
-		keychain.WithNetworkID(1))
+	signature, err = signer.Sign(cChainTxBytes)
 	require.NoError(err)
 	require.NotNil(signature)
 
@@ -312,9 +334,7 @@ func TestCubesignerSigner_Sign(t *testing.T) {
 		gomock.Any(),
 	).Return(nil, errTest).Times(1)
 
-	_, err = signer.Sign(txBytes,
-		keychain.WithChainAlias("P"),
-		keychain.WithNetworkID(1))
+	_, err = signer.Sign(pChainTxBytes)
 	require.ErrorIs(err, errTest)
 
 	// Test empty response
@@ -327,8 +347,6 @@ func TestCubesignerSigner_Sign(t *testing.T) {
 		gomock.Any(),
 	).Return(emptyResponse, nil).Times(1)
 
-	_, err = signer.Sign(txBytes,
-		keychain.WithChainAlias("P"),
-		keychain.WithNetworkID(1))
+	_, err = signer.Sign(pChainTxBytes)
 	require.ErrorIs(err, ErrEmptySignatureFromServer)
 }

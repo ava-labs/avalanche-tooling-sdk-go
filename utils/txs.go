@@ -50,3 +50,107 @@ func AutoDetectChain(txBytes []byte) constants.ChainAlias {
 
 	return detectedChain
 }
+
+// GetNetworkID extracts the network ID from P-Chain, X-Chain, or C-Chain transaction bytes.
+// Returns 0 if the transaction cannot be unmarshaled or network ID cannot be determined.
+func GetNetworkID(txBytes []byte) uint32 {
+	// Try P-Chain
+	var unsignedPTx platformvmtxs.UnsignedTx
+	_, err := platformvmtxs.Codec.Unmarshal(txBytes, &unsignedPTx)
+	if err == nil {
+		return GetPChainTxNetworkID(unsignedPTx)
+	}
+
+	// Try X-Chain
+	var unsignedXTx avmtxs.UnsignedTx
+	_, err = builder.Parser.Codec().Unmarshal(txBytes, &unsignedXTx)
+	if err == nil {
+		return GetXChainTxNetworkID(unsignedXTx)
+	}
+
+	// Try C-Chain
+	var unsignedCTx atomic.UnsignedAtomicTx
+	_, err = atomic.Codec.Unmarshal(txBytes, &unsignedCTx)
+	if err == nil {
+		return GetCChainTxNetworkID(unsignedCTx)
+	}
+
+	return 0
+}
+
+// GetPChainTxNetworkID extracts the network ID from a P-Chain unsigned transaction.
+// Returns 0 if the network ID cannot be determined from the transaction type.
+func GetPChainTxNetworkID(tx platformvmtxs.UnsignedTx) uint32 {
+	switch t := tx.(type) {
+	case *platformvmtxs.AddDelegatorTx:
+		return t.NetworkID
+	case *platformvmtxs.AddPermissionlessValidatorTx:
+		return t.NetworkID
+	case *platformvmtxs.AddPermissionlessDelegatorTx:
+		return t.NetworkID
+	case *platformvmtxs.AddSubnetValidatorTx:
+		return t.NetworkID
+	case *platformvmtxs.AddValidatorTx:
+		return t.NetworkID
+	case *platformvmtxs.BaseTx:
+		return t.NetworkID
+	case *platformvmtxs.ConvertSubnetToL1Tx:
+		return t.NetworkID
+	case *platformvmtxs.CreateChainTx:
+		return t.NetworkID
+	case *platformvmtxs.CreateSubnetTx:
+		return t.NetworkID
+	case *platformvmtxs.DisableL1ValidatorTx:
+		return t.NetworkID
+	case *platformvmtxs.ExportTx:
+		return t.NetworkID
+	case *platformvmtxs.ImportTx:
+		return t.NetworkID
+	case *platformvmtxs.IncreaseL1ValidatorBalanceTx:
+		return t.NetworkID
+	case *platformvmtxs.RegisterL1ValidatorTx:
+		return t.NetworkID
+	case *platformvmtxs.RemoveSubnetValidatorTx:
+		return t.NetworkID
+	case *platformvmtxs.SetL1ValidatorWeightTx:
+		return t.NetworkID
+	case *platformvmtxs.TransferSubnetOwnershipTx:
+		return t.NetworkID
+	case *platformvmtxs.TransformSubnetTx:
+		return t.NetworkID
+	default:
+		return 0
+	}
+}
+
+// GetXChainTxNetworkID extracts the network ID from an X-Chain unsigned transaction.
+// Returns 0 if the network ID cannot be determined from the transaction type.
+func GetXChainTxNetworkID(tx avmtxs.UnsignedTx) uint32 {
+	switch t := tx.(type) {
+	case *avmtxs.BaseTx:
+		return t.NetworkID
+	case *avmtxs.CreateAssetTx:
+		return t.NetworkID
+	case *avmtxs.OperationTx:
+		return t.NetworkID
+	case *avmtxs.ImportTx:
+		return t.NetworkID
+	case *avmtxs.ExportTx:
+		return t.NetworkID
+	default:
+		return 0
+	}
+}
+
+// GetCChainTxNetworkID extracts the network ID from a C-Chain unsigned atomic transaction.
+// Returns 0 if the network ID cannot be determined from the transaction type.
+func GetCChainTxNetworkID(tx atomic.UnsignedAtomicTx) uint32 {
+	switch t := tx.(type) {
+	case *atomic.UnsignedImportTx:
+		return t.NetworkID
+	case *atomic.UnsignedExportTx:
+		return t.NetworkID
+	default:
+		return 0
+	}
+}

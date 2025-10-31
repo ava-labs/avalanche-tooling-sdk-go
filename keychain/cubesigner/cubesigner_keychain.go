@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/utils/set"
@@ -21,6 +20,10 @@ import (
 	"github.com/cubist-labs/cubesigner-go-sdk/models"
 	"golang.org/x/exp/maps"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+
+	avagoconstants "github.com/ava-labs/avalanchego/utils/constants"
 	avasecp256k1 "github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
@@ -33,9 +36,6 @@ var (
 
 	ErrNoKeysProvided           = errors.New("you need to provide at least one key to create a server keychain")
 	ErrEmptySignatureFromServer = errors.New("empty signature obtained from server")
-	ErrChainAliasMissing        = errors.New("chainAlias must be specified in options for CubeSigner")
-	ErrInvalidChainAlias        = errors.New("chainAlias must be 'P', 'X' or 'C' for CubeSigner")
-	ErrNetworkIDMissing         = errors.New("network ID must be specified in options for CubeSigner for P/X chain")
 	ErrUnsupportedKeyType       = errors.New("unsupported key type")
 	ErrInvalidPublicKey         = errors.New("invalid public key format")
 )
@@ -219,29 +219,24 @@ func (s *cubesignerSigner) SignHash(b []byte) ([]byte, error) {
 	return processSignatureResponse(response.ResponseData.Signature)
 }
 
-// Sign signs the given payload according to the given signing options.
-// It expects to receive the unsigned transaction bytes and requires ChainAlias and NetworkID
-// to be specified in the signing options for CubeSigner's AvaSerializedTxSign API.
-func (s *cubesignerSigner) Sign(b []byte, opts ...keychain.SigningOption) ([]byte, error) {
-	options := &keychain.SigningOptions{}
-	for _, opt := range opts {
-		opt(options)
+// Sign signs the given payload using CubeSigner's AvaSerializedTxSign API.
+// It expects to receive the unsigned transaction bytes.
+func (s *cubesignerSigner) Sign(b []byte) ([]byte, error) {
+	// Auto-detect chain from transaction bytes
+	chainAlias := utils.AutoDetectChain(b)
+	if chainAlias == constants.UndefinedAlias {
+		return nil, fmt.Errorf("unable to auto-detect chain from transaction bytes")
 	}
-	// Require chainAlias and network from options
-	if options.ChainAlias == "" {
-		return nil, ErrChainAliasMissing
-	}
-	if options.ChainAlias != "P" && options.ChainAlias != "X" && options.ChainAlias != "C" {
-		return nil, fmt.Errorf("%w, got %q", ErrInvalidChainAlias, options.ChainAlias)
-	}
-	if options.ChainAlias != "C" && options.NetworkID == 0 {
-		return nil, ErrNetworkIDMissing
-	}
+
+	// Extract network ID from transaction
+	networkID := utils.GetNetworkID(b)
+
+	// Determine material ID based on chain
 	var materialID string
-	if options.ChainAlias == "C" {
+	if chainAlias == constants.CChainAlias {
 		materialID = s.pubKey.EthAddress().Hex()
 	} else {
-		hrp := constants.GetHRP(options.NetworkID)
+		hrp := avagoconstants.GetHRP(networkID)
 		addr := s.pubKey.Address()
 		var err error
 		materialID, err = address.FormatBech32(hrp, addr.Bytes())
@@ -251,7 +246,7 @@ func (s *cubesignerSigner) Sign(b []byte, opts ...keychain.SigningOption) ([]byt
 	}
 
 	response, err := s.cubesignerClient.AvaSerializedTxSign(
-		options.ChainAlias,
+		string(chainAlias),
 		materialID,
 		models.AvaSerializedTxSignRequest{
 			Tx: "0x" + hex.EncodeToString(b),
