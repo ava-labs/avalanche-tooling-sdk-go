@@ -23,7 +23,7 @@ import (
 
 var errTest = errors.New("test")
 
-func TestNewLedgerKeychain(t *testing.T) {
+func TestNewKeychain(t *testing.T) {
 	require := require.New(t)
 	ctrl := gomock.NewController(t)
 
@@ -54,7 +54,7 @@ func TestNewLedgerKeychain(t *testing.T) {
 	require.NoError(err)
 }
 
-func TestLedgerKeychain_Addresses(t *testing.T) {
+func TestKeychain_Addresses(t *testing.T) {
 	require := require.New(t)
 	ctrl := gomock.NewController(t)
 
@@ -92,7 +92,7 @@ func TestLedgerKeychain_Addresses(t *testing.T) {
 	require.Contains(addrs, pubKey3.Address())
 }
 
-func TestLedgerKeychain_Get(t *testing.T) {
+func TestKeychain_Get(t *testing.T) {
 	require := require.New(t)
 	ctrl := gomock.NewController(t)
 
@@ -241,7 +241,7 @@ func TestLedgerSigner_SignHash(t *testing.T) {
 	require.Equal(expectedSignature3, signature)
 }
 
-func TestNewLedgerKeychainFromIndices(t *testing.T) {
+func TestNewKeychainFromIndices(t *testing.T) {
 	require := require.New(t)
 	ctrl := gomock.NewController(t)
 
@@ -273,7 +273,7 @@ func TestNewLedgerKeychainFromIndices(t *testing.T) {
 	require.NoError(err)
 }
 
-func TestLedgerKeychainFromIndices_Addresses(t *testing.T) {
+func TestKeychainFromIndices_Addresses(t *testing.T) {
 	require := require.New(t)
 	ctrl := gomock.NewController(t)
 
@@ -343,7 +343,7 @@ func TestLedgerKeychainFromIndices_Addresses(t *testing.T) {
 	require.Contains(addrs, addr3)
 }
 
-func TestLedgerKeychainFromIndices_Get(t *testing.T) {
+func TestKeychainFromIndices_Get(t *testing.T) {
 	require := require.New(t)
 	ctrl := gomock.NewController(t)
 
