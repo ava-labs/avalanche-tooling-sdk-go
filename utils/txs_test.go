@@ -707,3 +707,360 @@ func TestAutoDetectChainCChainTxs(t *testing.T) {
 		})
 	}
 }
+
+func TestGetNetworkIDPChainTxs(t *testing.T) {
+	require := require.New(t)
+	networkID := uint32(1337)
+	addr := ids.ShortEmpty
+
+	baseTxData := platformvmtxs.BaseTx{
+		BaseTx: avax.BaseTx{
+			NetworkID:    networkID,
+			BlockchainID: ids.Empty,
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		createTx    func() platformvmtxs.UnsignedTx
+		expectedNet uint32
+	}{
+		{
+			name: "AddValidatorTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.AddValidatorTx{
+					BaseTx:    baseTxData,
+					StakeOuts: []*avax.TransferableOutput{},
+					RewardsOwner: &secp256k1fx.OutputOwners{
+						Threshold: 1,
+						Addrs:     []ids.ShortID{addr},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "AddDelegatorTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.AddDelegatorTx{
+					BaseTx:    baseTxData,
+					StakeOuts: []*avax.TransferableOutput{},
+					DelegationRewardsOwner: &secp256k1fx.OutputOwners{
+						Threshold: 1,
+						Addrs:     []ids.ShortID{addr},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "AddPermissionlessValidatorTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.AddPermissionlessValidatorTx{
+					BaseTx: baseTxData,
+					Signer: &signer.Empty{},
+					StakeOuts: []*avax.TransferableOutput{
+						{
+							Asset: avax.Asset{
+								ID: ids.Empty,
+							},
+							Out: &secp256k1fx.TransferOutput{
+								Amt: 500000,
+								OutputOwners: secp256k1fx.OutputOwners{
+									Threshold: 1,
+									Addrs:     []ids.ShortID{addr},
+								},
+							},
+						},
+					},
+					ValidatorRewardsOwner: &secp256k1fx.OutputOwners{
+						Threshold: 1,
+						Addrs:     []ids.ShortID{addr},
+					},
+					DelegatorRewardsOwner: &secp256k1fx.OutputOwners{
+						Threshold: 1,
+						Addrs:     []ids.ShortID{addr},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "AddPermissionlessDelegatorTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.AddPermissionlessDelegatorTx{
+					BaseTx: baseTxData,
+					StakeOuts: []*avax.TransferableOutput{
+						{
+							Asset: avax.Asset{
+								ID: ids.Empty,
+							},
+							Out: &secp256k1fx.TransferOutput{
+								Amt: 500000,
+								OutputOwners: secp256k1fx.OutputOwners{
+									Threshold: 1,
+									Addrs:     []ids.ShortID{addr},
+								},
+							},
+						},
+					},
+					DelegationRewardsOwner: &secp256k1fx.OutputOwners{
+						Threshold: 1,
+						Addrs:     []ids.ShortID{addr},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "CreateSubnetTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.CreateSubnetTx{
+					BaseTx: baseTxData,
+					Owner: &secp256k1fx.OutputOwners{
+						Threshold: 1,
+						Addrs:     []ids.ShortID{addr},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "CreateChainTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.CreateChainTx{
+					BaseTx:    baseTxData,
+					SubnetID:  ids.Empty,
+					ChainName: "testchain",
+					VMID:      ids.Empty,
+					SubnetAuth: &secp256k1fx.Input{
+						SigIndices: []uint32{0},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "ImportTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.ImportTx{
+					BaseTx:         baseTxData,
+					SourceChain:    ids.Empty,
+					ImportedInputs: []*avax.TransferableInput{},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "ExportTx",
+			createTx: func() platformvmtxs.UnsignedTx {
+				return &platformvmtxs.ExportTx{
+					BaseTx:           baseTxData,
+					DestinationChain: ids.Empty,
+					ExportedOutputs: []*avax.TransferableOutput{
+						{
+							Asset: avax.Asset{
+								ID: ids.Empty,
+							},
+							Out: &secp256k1fx.TransferOutput{
+								Amt: 500000,
+								OutputOwners: secp256k1fx.OutputOwners{
+									Threshold: 1,
+									Addrs:     []ids.ShortID{addr},
+								},
+							},
+						},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(*testing.T) {
+			unsignedTx := tc.createTx()
+
+			// Marshal the unsigned transaction to bytes
+			unsignedBytes, err := platformvmtxs.Codec.Marshal(platformvmtxs.CodecVersion, &unsignedTx)
+			require.NoError(err)
+
+			// Test GetNetworkID (auto-detect)
+			result := GetNetworkID(unsignedBytes)
+			require.Equal(tc.expectedNet, result)
+
+			// Test GetPChainTxNetworkID (direct)
+			result = GetPChainTxNetworkID(unsignedTx)
+			require.Equal(tc.expectedNet, result)
+		})
+	}
+}
+
+func TestGetNetworkIDXChainTxs(t *testing.T) {
+	require := require.New(t)
+	networkID := uint32(1337)
+
+	testCases := []struct {
+		name        string
+		createTx    func() avmtxs.UnsignedTx
+		expectedNet uint32
+	}{
+		{
+			name: "BaseTx",
+			createTx: func() avmtxs.UnsignedTx {
+				return &avmtxs.BaseTx{
+					BaseTx: avax.BaseTx{
+						NetworkID: networkID,
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "CreateAssetTx",
+			createTx: func() avmtxs.UnsignedTx {
+				return &avmtxs.CreateAssetTx{
+					BaseTx: avmtxs.BaseTx{
+						BaseTx: avax.BaseTx{
+							NetworkID: networkID,
+						},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "OperationTx",
+			createTx: func() avmtxs.UnsignedTx {
+				return &avmtxs.OperationTx{
+					BaseTx: avmtxs.BaseTx{
+						BaseTx: avax.BaseTx{
+							NetworkID: networkID,
+						},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "ImportTx",
+			createTx: func() avmtxs.UnsignedTx {
+				return &avmtxs.ImportTx{
+					BaseTx: avmtxs.BaseTx{
+						BaseTx: avax.BaseTx{
+							NetworkID: networkID,
+						},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "ExportTx",
+			createTx: func() avmtxs.UnsignedTx {
+				return &avmtxs.ExportTx{
+					BaseTx: avmtxs.BaseTx{
+						BaseTx: avax.BaseTx{
+							NetworkID: networkID,
+						},
+					},
+				}
+			},
+			expectedNet: networkID,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(*testing.T) {
+			unsignedTx := tc.createTx()
+
+			// Marshal the unsigned transaction to bytes
+			unsignedBytes, err := builder.Parser.Codec().Marshal(avmtxs.CodecVersion, &unsignedTx)
+			require.NoError(err)
+
+			// Test GetNetworkID (auto-detect)
+			result := GetNetworkID(unsignedBytes)
+			require.Equal(tc.expectedNet, result)
+
+			// Test GetXChainTxNetworkID (direct)
+			result = GetXChainTxNetworkID(unsignedTx)
+			require.Equal(tc.expectedNet, result)
+		})
+	}
+}
+
+func TestGetNetworkIDCChainTxs(t *testing.T) {
+	require := require.New(t)
+	networkID := uint32(1337)
+
+	testCases := []struct {
+		name        string
+		createTx    func() atomic.UnsignedAtomicTx
+		expectedNet uint32
+	}{
+		{
+			name: "UnsignedImportTx",
+			createTx: func() atomic.UnsignedAtomicTx {
+				return &atomic.UnsignedImportTx{
+					NetworkID: networkID,
+				}
+			},
+			expectedNet: networkID,
+		},
+		{
+			name: "UnsignedExportTx",
+			createTx: func() atomic.UnsignedAtomicTx {
+				return &atomic.UnsignedExportTx{
+					NetworkID: networkID,
+				}
+			},
+			expectedNet: networkID,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(*testing.T) {
+			unsignedTx := tc.createTx()
+
+			// Marshal the unsigned transaction to bytes
+			unsignedBytes, err := atomic.Codec.Marshal(atomic.CodecVersion, &unsignedTx)
+			require.NoError(err)
+
+			// Test GetNetworkID (auto-detect)
+			result := GetNetworkID(unsignedBytes)
+			require.Equal(tc.expectedNet, result)
+
+			// Test GetCChainTxNetworkID (direct)
+			result = GetCChainTxNetworkID(unsignedTx)
+			require.Equal(tc.expectedNet, result)
+		})
+	}
+}
+
+func TestGetNetworkIDInvalidTxs(t *testing.T) {
+	require := require.New(t)
+
+	testCases := []struct {
+		name        string
+		txBytes     []byte
+		expectedNet uint32
+	}{
+		{
+			name:        "Empty bytes",
+			txBytes:     []byte{},
+			expectedNet: 0,
+		},
+		{
+			name:        "Invalid bytes",
+			txBytes:     []byte{0x00, 0x01, 0x02},
+			expectedNet: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(*testing.T) {
+			result := GetNetworkID(tc.txBytes)
+			require.Equal(tc.expectedNet, result)
+		})
+	}
+}
