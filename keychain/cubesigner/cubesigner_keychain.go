@@ -62,11 +62,14 @@ type Keychain struct {
 	ethAddrToKeyInfo map[common.Address]*keyInfo // Maps Ethereum addresses to key info
 }
 
-// processKey obtains and processes key information from CubeSigner.
+// fetchAndVerifyAvaPublicKey obtains and processes key information from CubeSigner.
 // It validates that the key exists in the CubeSigner organization, verifies
 // that the key type is supported (secp256k1 for Avalanche/Ethereum), and
 // converts the public key from hex format to an Avalanche public key.
-func processKey(
+// We convert specifically to Avalanche public key format because it provides both
+// Avalanche and Ethereum address derivation (via Address() and EthAddress() methods),
+// allowing a single key representation to serve both blockchain ecosystems.
+func fetchAndVerifyAvaPublicKey(
 	cubesignerClient CubeSignerClient,
 	keyID string,
 ) (*avasecp256k1.PublicKey, error) {
@@ -123,7 +126,7 @@ func NewKeychain(
 	ethAddrToKeyInfo := map[common.Address]*keyInfo{}
 
 	for _, keyID := range keyIDs {
-		avaPubKey, err := processKey(cubesignerClient, keyID)
+		avaPubKey, err := fetchAndVerifyAvaPublicKey(cubesignerClient, keyID)
 		if err != nil {
 			return nil, err
 		}
