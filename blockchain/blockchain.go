@@ -21,7 +21,7 @@ import (
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/proposervm"
-	"github.com/ava-labs/icm-services/utils"
+	icmUtils "github.com/ava-labs/icm-services/utils"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core"
 	"github.com/ava-labs/subnet-evm/commontype"
@@ -582,7 +582,7 @@ func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
 			},
 		),
 	)
-	ctx, cancel := context.WithTimeout(context.Background(), utils.DefaultCreateSignedMessageTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), icmUtils.DefaultCreateSignedMessageTimeout)
 	defer cancel()
 	response, err := proposerClient.GetCurrentEpoch(ctx, &connect.Request[pbproposervm.GetCurrentEpochRequest]{})
 	if err != nil {
