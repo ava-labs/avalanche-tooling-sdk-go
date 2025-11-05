@@ -51,10 +51,8 @@ func CreateChain(subnetID string) error {
 		Genesis:        evmGenesisBytes,
 	}
 	buildTxParams := types.BuildTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:      *existingAccount,
+		Network:      network,
 		BuildTxInput: createChainParams,
 	}
 	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
@@ -63,10 +61,8 @@ func CreateChain(subnetID string) error {
 	}
 
 	signTxParams := types.SignTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:       *existingAccount,
+		Network:       network,
 		BuildTxResult: &buildTxResult,
 	}
 
@@ -76,10 +72,8 @@ func CreateChain(subnetID string) error {
 	}
 
 	sendTxParams := types.SendTxParams{
-		BaseParams: types.BaseParams{
-			Account: *existingAccount,
-			Network: network,
-		},
+		Account:      *existingAccount,
+		Network:      network,
 		SignTxResult: &signTxResult,
 	}
 	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)
