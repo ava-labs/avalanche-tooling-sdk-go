@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/local"
@@ -16,59 +17,65 @@ import (
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
+// CreateSubnet demonstrates creating a subnet using the wallet
+// Required environment variables:
+//   - PRIVATE_KEY: Hex-encoded private key for the account
+//   - CONTROL_KEY_ADDRESS: P-Chain address for subnet control
 func CreateSubnet() error {
 	ctx, cancel := utils.GetTimedContext(120 * time.Second)
 	defer cancel()
-	network := network.FujiNetwork()
 
-	localWallet, err := local.NewLocalWallet()
+	// Get required environment variables
+	privateKey := os.Getenv("PRIVATE_KEY")
+	if privateKey == "" {
+		return fmt.Errorf("PRIVATE_KEY environment variable is required")
+	}
+
+	controlKeyAddress := os.Getenv("CONTROL_KEY_ADDRESS")
+	if controlKeyAddress == "" {
+		return fmt.Errorf("CONTROL_KEY_ADDRESS environment variable is required")
+	}
+
+	// Create a local wallet with Fuji network
+	net := network.FujiNetwork()
+	localWallet, err := local.NewLocalWallet(net)
 	if err != nil {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	existingAccount, err := localWallet.ImportAccount("EXISTING_KEY_PATH")
-	if err != nil {
-		return fmt.Errorf("failed to ImportAccount: %w", err)
+	// Import account from private key
+	accountSpec := account.AccountSpec{
+		PrivateKey: privateKey,
 	}
+	accountInfo, err := localWallet.ImportAccount("my-account", accountSpec)
+	if err != nil {
+		return fmt.Errorf("failed to import account: %w", err)
+	}
+	fmt.Printf("Imported account: %s\n", accountInfo.Name)
+	fmt.Printf("  P-Chain: %s\n", accountInfo.PAddress)
 
+	// Create subnet transaction parameters
 	createSubnetParams := &pchainTxs.CreateSubnetTxParams{
-		ControlKeys: []string{"P-fuji1377nx80rx3pzneup5qywgdgdsmzntql7trcqlg"},
+		ControlKeys: []string{controlKeyAddress},
 		Threshold:   1,
 	}
-	buildTxParams := types.BuildTxParams{
-		Account:      *existingAccount,
-		Network:      network,
+
+	// Use SubmitTx to build, sign, and send in one call
+	// No need to specify AccountNames since ImportAccount already set it as active
+	submitTxParams := types.SubmitTxParams{
 		BuildTxInput: createSubnetParams,
 	}
-	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
+	submitTxResult, err := localWallet.Primary().SubmitTx(ctx, submitTxParams)
 	if err != nil {
-		return fmt.Errorf("failed to BuildTx: %w", err)
+		return fmt.Errorf("failed to submit tx: %w", err)
 	}
 
-	signTxParams := types.SignTxParams{
-		Account:       *existingAccount,
-		Network:       network,
-		BuildTxResult: &buildTxResult,
-	}
-	signTxResult, err := localWallet.SignTx(ctx, signTxParams)
-	if err != nil {
-		return fmt.Errorf("failed to signTx: %w", err)
-	}
-
-	sendTxParams := types.SendTxParams{
-		Account:      *existingAccount,
-		Network:      network,
-		SignTxResult: &signTxResult,
-	}
-	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)
-	if err != nil {
-		return fmt.Errorf("failed to sendTx: %w", err)
-	}
-	if tx := sendTxResult.GetTx(); tx != nil {
+	// Print transaction result
+	if tx := submitTxResult.GetTx(); tx != nil {
 		if pChainTx, ok := tx.(*avagoTxs.Tx); ok {
-			fmt.Printf("sendTxResult %s \n", pChainTx.ID())
+			fmt.Printf("Transaction ID: %s\n", pChainTx.ID())
 		} else {
-			fmt.Printf("sendTxResult %s transaction \n", sendTxResult.GetChainType())
+			fmt.Printf("Transaction: %s\n", submitTxResult.GetChainType())
 		}
 	}
 	return nil

@@ -6,9 +6,6 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 )
 
 // SendTxOutput represents a generic interface for sent transaction results
@@ -23,18 +20,14 @@ type SendTxOutput interface {
 
 // SendTxParams contains parameters for sending transactions
 type SendTxParams struct {
-	Account account.Account
-	Network network.Network
+	AccountNames []string
 	*SignTxResult
 }
 
 // Validate validates the send transaction parameters
 func (p *SendTxParams) Validate() error {
-	if p.Account == nil {
-		return fmt.Errorf("account is required")
-	}
-	if p.Network.Kind == network.Undefined {
-		return fmt.Errorf("network is required")
+	if len(p.AccountNames) > 1 {
+		return fmt.Errorf("only one account name is currently supported")
 	}
 	if p.SignTxResult == nil {
 		return fmt.Errorf("sign tx result is required")

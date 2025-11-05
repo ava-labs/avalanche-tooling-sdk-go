@@ -4,6 +4,7 @@ package account
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 
@@ -13,7 +14,7 @@ import (
 
 // LocalAccount represents a local account implementation
 type LocalAccount struct {
-	*key.SoftKey
+	softKey *key.SoftKey
 }
 
 // NewLocalAccount creates a new LocalAccount
@@ -23,31 +24,72 @@ func NewLocalAccount() (Account, error) {
 		return nil, err
 	}
 	return &LocalAccount{
-		SoftKey: k,
+		softKey: k,
 	}, nil
 }
 
-func Import(keyPath string) (Account, error) {
-	k, err := key.LoadSoft(keyPath)
+// ImportFromString imports an account from a hex-encoded private key string
+func ImportFromString(privateKeyHex string) (Account, error) {
+	k, err := key.LoadSoftFromBytes([]byte(privateKeyHex))
 	if err != nil {
 		return nil, err
 	}
 	return &LocalAccount{
-		SoftKey: k,
+		softKey: k,
 	}, nil
 }
 
-func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error) {
-	if a.SoftKey == nil {
-		return "", fmt.Errorf("SoftKey not initialized")
+// ImportFromPath imports an account from a file path
+func ImportFromPath(keyPath string) (Account, error) {
+	kb, err := os.ReadFile(keyPath)
+	if err != nil {
+		return nil, err
 	}
-	pchainAddrs, err := a.SoftKey.GetNetworkChainAddress(network, "P")
+	return ImportFromString(string(kb))
+}
+
+func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error) {
+	if a.softKey == nil {
+		return "", fmt.Errorf("softKey not initialized")
+	}
+	pchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "P")
 	return pchainAddrs[0], err
 }
 
-func (a *LocalAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
-	if a.SoftKey == nil {
-		return nil, fmt.Errorf("SoftKey not initialized")
+func (a *LocalAccount) GetXChainAddress(network network.Network) (string, error) {
+	if a.softKey == nil {
+		return "", fmt.Errorf("softKey not initialized")
 	}
-	return a.SoftKey.KeyChain(), nil
+	xchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "X")
+	return xchainAddrs[0], err
+}
+
+func (a *LocalAccount) GetCChainAddress(network network.Network) (string, error) {
+	if a.softKey == nil {
+		return "", fmt.Errorf("softKey not initialized")
+	}
+	cchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "C")
+	return cchainAddrs[0], err
+}
+
+func (a *LocalAccount) GetEVMAddress() (string, error) {
+	if a.softKey == nil {
+		return "", fmt.Errorf("softKey not initialized")
+	}
+	return a.softKey.C(), nil
+}
+
+func (a *LocalAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
+	if a.softKey == nil {
+		return nil, fmt.Errorf("softKey not initialized")
+	}
+	return a.softKey.KeyChain(), nil
+}
+
+// PrivateKey exports the private key in hex format
+func (a *LocalAccount) PrivateKey() (string, error) {
+	if a.softKey == nil {
+		return "", fmt.Errorf("softKey not initialized")
+	}
+	return a.softKey.PrivKeyHex(), nil
 }
