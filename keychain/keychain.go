@@ -12,6 +12,8 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/ledger"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+
+	ledgerkeychain "github.com/ava-labs/avalanche-tooling-sdk-go/keychain/ledger"
 )
 
 type Keychain struct {
@@ -106,7 +108,7 @@ func (kc *Keychain) AddLedgerIndices(indices []uint32) error {
 	if kc.LedgerEnabled() {
 		kc.Ledger.LedgerIndices = utils.Unique(append(kc.Ledger.LedgerIndices, indices...))
 		utils.Uint32Sort(kc.Ledger.LedgerIndices)
-		newKc, err := keychain.NewLedgerKeychainFromIndices(kc.Ledger.LedgerDevice, kc.Ledger.LedgerIndices)
+		newKc, err := ledgerkeychain.NewKeychainFromIndices(kc.Ledger.LedgerDevice, kc.Ledger.LedgerIndices)
 		if err != nil {
 			return err
 		}

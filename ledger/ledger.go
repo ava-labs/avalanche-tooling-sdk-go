@@ -5,11 +5,11 @@ package ledger
 import (
 	"fmt"
 
-	"github.com/ava-labs/avalanchego/utils/crypto/keychain"
-	"github.com/ava-labs/avalanchego/utils/crypto/ledger"
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain/ledger"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
@@ -20,16 +20,16 @@ const (
 )
 
 type LedgerDevice struct {
-	keychain.Ledger
+	ledger.Ledger
 }
 
 func New() (*LedgerDevice, error) {
-	avagoDev, err := ledger.New()
+	device, err := ledger.New()
 	if err != nil {
 		return nil, err
 	}
 	dev := LedgerDevice{
-		Ledger: avagoDev,
+		Ledger: device,
 	}
 	return &dev, nil
 }
@@ -47,12 +47,13 @@ func (dev *LedgerDevice) FindAddresses(addresses []string, maxIndex uint32) (map
 	}
 	indices := map[string]uint32{}
 	for index := uint32(0); index < maxIndex; index++ {
-		ledgerAddress, err := dev.Addresses([]uint32{index})
+		pubKeys, err := dev.PubKeys([]uint32{index})
 		if err != nil {
 			return nil, err
 		}
+		ledgerAddress := pubKeys[0].Address()
 		for addressIndex, addr := range addressesIDs {
-			if addr == ledgerAddress[0] {
+			if addr == ledgerAddress {
 				indices[addresses[addressIndex]] = index
 			}
 		}
@@ -76,12 +77,13 @@ func (dev *LedgerDevice) FindFunds(
 		maxIndex = maxIndexToSearchForBalance
 	}
 	for index := uint32(0); index < maxIndex; index++ {
-		ledgerAddress, err := dev.Addresses([]uint32{index})
+		pubKeys, err := dev.PubKeys([]uint32{index})
 		if err != nil {
 			return []uint32{}, err
 		}
+		ledgerAddress := pubKeys[0].Address()
 		ctx, cancel := utils.GetAPIContext()
-		resp, err := pClient.GetBalance(ctx, ledgerAddress)
+		resp, err := pClient.GetBalance(ctx, []ids.ShortID{ledgerAddress})
 		cancel()
 		if err != nil {
 			return nil, err

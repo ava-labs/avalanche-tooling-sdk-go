@@ -14,4 +14,17 @@ const (
 // Chain type constants
 const (
 	ChainTypePChain = "P-Chain"
+
+// ChainAlias represents a blockchain alias identifier
+type ChainAlias string
+
+const (
+	// PChainAlias is the alias for P Chain
+	PChainAlias ChainAlias = "P"
+	// XChainAlias is the alias for X Chain
+	XChainAlias ChainAlias = "X"
+	// CChainAlias is the alias for C Chain
+	CChainAlias ChainAlias = "C"
+	// UndefinedAlias is used for undefined chains
+	UndefinedAlias ChainAlias = ""
 )

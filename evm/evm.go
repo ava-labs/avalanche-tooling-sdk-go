@@ -4,7 +4,6 @@ package evm
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"math/big"
@@ -12,15 +11,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ava-labs/avalanchego/vms/evm/predicate"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core/types"
-	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/ethclient"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/plugin/evm/upgrade/legacy"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
-	"github.com/ava-labs/subnet-evm/predicate"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -28,7 +26,6 @@ import (
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	ethereum "github.com/ava-labs/libevm"
 	ethparams "github.com/ava-labs/libevm/params"
-	subnetEvmUtils "github.com/ava-labs/subnet-evm/utils"
 )
 
 const (
@@ -184,16 +181,12 @@ func (client Client) GetContractBytecode(
 	return code, err
 }
 
-// returns the balance for [privateKey]
+// returns the balance for [signer]
 // supports [repeatsOnFailure] failures
-func (client Client) GetPrivateKeyBalance(
-	privateKey string,
+func (client Client) GetSignerBalance(
+	signer *Signer,
 ) (*big.Int, error) {
-	addr, err := PrivateKeyToAddress(privateKey)
-	if err != nil {
-		return nil, err
-	}
-	return client.GetAddressBalance(addr.Hex())
+	return client.GetAddressBalance(signer.Address().Hex())
 }
 
 // returns the balance for [address]
@@ -386,18 +379,14 @@ func (client Client) WaitForTransaction(
 	return nil, false, fmt.Errorf("timeout of %d seconds while waiting for tx %#v on %s: %w", steps, tx, client.URL, cumErr)
 }
 
-// transfers [amount] to [targetAddressStr] using [sourceAddressPrivateKeyStr]
+// transfers [amount] to [targetAddressStr] using [signer]
 // supports [repeatsOnFailure] failures on each step
 func (client Client) FundAddress(
-	sourceAddressPrivateKeyStr string,
+	signer *Signer,
 	targetAddressStr string,
 	amount *big.Int,
 ) (*types.Receipt, error) {
-	sourceAddressPrivateKey, err := crypto.HexToECDSA(sourceAddressPrivateKeyStr)
-	if err != nil {
-		return nil, err
-	}
-	sourceAddress := crypto.PubkeyToAddress(sourceAddressPrivateKey.PublicKey)
+	sourceAddress := signer.Address()
 	gasFeeCap, gasTipCap, nonce, err := client.CalculateTxParams(sourceAddress.Hex())
 	if err != nil {
 		return nil, err
@@ -416,8 +405,7 @@ func (client Client) FundAddress(
 		GasTipCap: gasTipCap,
 		Value:     amount,
 	})
-	txSigner := types.LatestSignerForChainID(chainID)
-	signedTx, err := types.SignTx(tx, txSigner, sourceAddressPrivateKey)
+	signedTx, err := signer.SignTx(chainID, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -453,20 +441,17 @@ func (client Client) IssueTx(
 	return nil
 }
 
-// returns tx options that include signer for [prefundedPrivateKeyStr]
+// returns tx options that include signer for [signer]
 // supports [repeatsOnFailure] failures when gathering chain info
 func (client Client) GetTxOptsWithSigner(
-	prefundedPrivateKeyStr string,
+	signer *Signer,
 ) (*bind.TransactOpts, error) {
-	prefundedPrivateKey, err := crypto.HexToECDSA(prefundedPrivateKeyStr)
-	if err != nil {
-		return nil, err
-	}
 	chainID, err := client.GetChainID()
 	if err != nil {
 		return nil, fmt.Errorf("failure generating signer: %w", err)
 	}
-	return bind.NewKeyedTransactorWithChainID(prefundedPrivateKey, chainID)
+
+	return signer.TransactOpts(chainID)
 }
 
 // waits for [timeout] until evm is bootstrapped
@@ -488,38 +473,17 @@ func (client Client) WaitForEVMBootstrapped(timeout time.Duration) error {
 	return fmt.Errorf("client at %s not bootstrapped after %.2f seconds: %w", client.URL, timeout.Seconds(), cumErr)
 }
 
-// generates a transaction signed with [privateKeyStr], calling a [contract] method using [callData]
+// generates a transaction signed with [signer], calling a [contract] method using [callData]
 // including [warpMessage] in the tx accesslist
-// if [generateRawTxOnly] is set, it generates a similar, unsigned tx, with given [from] address
 func (client Client) TransactWithWarpMessage(
-	from common.Address,
-	privateKeyStr string,
+	signer *Signer,
 	warpMessage *avalancheWarp.Message,
 	contract common.Address,
 	callData []byte,
 	value *big.Int,
-	generateRawTxOnly bool,
 ) (*types.Transaction, error) {
 	const defaultGasLimit = 2_000_000
-	var (
-		privateKey *ecdsa.PrivateKey
-		err        error
-	)
-	if privateKeyStr == "" && from == (common.Address{}) {
-		return nil, fmt.Errorf("from address and private key can't be both empty at GetTxToMethodWithWarpMessage")
-	}
-	if !generateRawTxOnly && privateKeyStr == "" {
-		return nil, fmt.Errorf("from private key must be defined to be able to sign the tx at GetTxToMethodWithWarpMessage")
-	}
-	if privateKeyStr != "" {
-		privateKey, err = crypto.HexToECDSA(privateKeyStr)
-		if err != nil {
-			return nil, err
-		}
-		if from == (common.Address{}) {
-			from = crypto.PubkeyToAddress(privateKey.PublicKey)
-		}
-	}
+	from := signer.Address()
 	gasFeeCap, gasTipCap, nonce, err := client.CalculateTxParams(from.Hex())
 	if err != nil {
 		return nil, err
@@ -531,7 +495,7 @@ func (client Client) TransactWithWarpMessage(
 	accessList := types.AccessList{
 		types.AccessTuple{
 			Address:     warp.ContractAddress,
-			StorageKeys: subnetEvmUtils.BytesToHashSlice(predicate.PackPredicate(warpMessage.Bytes())),
+			StorageKeys: predicate.New(warpMessage.Bytes()),
 		},
 	}
 	msg := ethereum.CallMsg{
@@ -562,11 +526,7 @@ func (client Client) TransactWithWarpMessage(
 		Data:       callData,
 		AccessList: accessList,
 	})
-	if generateRawTxOnly {
-		return tx, nil
-	}
-	txSigner := types.LatestSignerForChainID(chainID)
-	return types.SignTx(tx, txSigner, privateKey)
+	return signer.SignTx(chainID, tx)
 }
 
 // gets block [n]
@@ -663,22 +623,14 @@ func (client Client) WaitForNewBlock(
 // issue dummy txs to create the given number of blocks
 func (client Client) CreateDummyBlocks(
 	numBlocks int,
-	privKeyStr string,
+	signer *Signer,
 ) error {
-	addr, err := PrivateKeyToAddress(privKeyStr)
-	if err != nil {
-		return err
-	}
-	privKey, err := crypto.HexToECDSA(privKeyStr)
-	if err != nil {
-		return err
-	}
+	addr := signer.Address()
 	chainID, err := client.GetChainID()
 	if err != nil {
 		return err
 	}
 	gasPrice := big.NewInt(legacy.BaseFee)
-	txSigner := types.LatestSignerForChainID(chainID)
 	blockNumber, err := client.BlockNumber()
 	if err != nil {
 		return fmt.Errorf("unable to get block number: %w", err)
@@ -703,9 +655,9 @@ func (client Client) CreateDummyBlocks(
 		}
 		// send Big1 to himself
 		tx := types.NewTransaction(nonce, addr, common.Big1, ethparams.TxGas, gasPrice, nil)
-		triggerTx, err := types.SignTx(tx, txSigner, privKey)
+		triggerTx, err := signer.SignTx(chainID, tx)
 		if err != nil {
-			return fmt.Errorf("types.SignTx failure at step %d: %w", i, err)
+			return fmt.Errorf("signer.SignTx failure at step %d: %w", i, err)
 		}
 		if err := client.SendTransaction(triggerTx); err != nil {
 			return fmt.Errorf("client.SendTransaction failure at step %d: %w", i, err)
@@ -728,12 +680,12 @@ func (client Client) CreateDummyBlocks(
 // the current timestamp should be after the ProposerVM activation time (aka ApricotPhase4).
 // supports [repeatsOnFailure] failures on each step
 func (client Client) SetupProposerVM(
-	privKey string,
+	signer *Signer,
 ) error {
 	const numBlocks = 2 // Number of blocks needed to activate the proposer VM fork
 	_, err := utils.Retry(
 		func() (any, error) {
-			return nil, client.CreateDummyBlocks(numBlocks, privKey)
+			return nil, client.CreateDummyBlocks(numBlocks, signer)
 		},
 		repeatsOnFailure,
 		sleepBetweenRepeats,
