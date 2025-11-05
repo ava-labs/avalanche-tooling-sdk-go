@@ -127,7 +127,7 @@ func extractSubnetIDFromTx(tx interface{}) (ids.ID, error) {
 			// For CreateChainTx, the subnet ID field is SubnetID
 			return unsignedTx.SubnetID, nil
 		case *avagoTxs.ConvertSubnetToL1Tx:
-			// For CreateChainTx, the subnet ID field is SubnetID
+			// For ConvertSubnetToL1Tx, the subnet ID field is Subnet
 			return unsignedTx.Subnet, nil
 		}
 	}
