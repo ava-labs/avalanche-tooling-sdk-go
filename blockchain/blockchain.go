@@ -21,7 +21,6 @@ import (
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/proposervm"
-	icmUtils "github.com/ava-labs/icm-services/utils"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core"
 	"github.com/ava-labs/subnet-evm/commontype"
@@ -38,6 +37,7 @@ import (
 
 	pbproposervm "github.com/ava-labs/avalanchego/connectproto/pb/proposervm"
 	pb "github.com/ava-labs/avalanchego/connectproto/pb/proposervm/proposervmconnect"
+	icmUtils "github.com/ava-labs/icm-services/utils"
 )
 
 var (
