@@ -321,7 +321,6 @@ func (c *Subnet) InitializeProofOfAuthority(
 	log logging.Logger,
 	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
-	useACP99 bool,
 	signatureAggregatorEndpoint string,
 ) error {
 	if c.Network == network.UndefinedNetwork {
@@ -363,7 +362,6 @@ func (c *Subnet) InitializeProofOfAuthority(
 		signer,
 		c.SubnetID,
 		*c.ValidatorManagerOwnerAddress,
-		useACP99,
 	)
 	if err != nil {
 		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
@@ -471,7 +469,6 @@ func (c *Subnet) InitializeProofOfStake(
 			signer,
 			c.SubnetID,
 			*c.ValidatorManagerOwnerAddress,
-			useACP99,
 		)
 		if err != nil {
 			if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {

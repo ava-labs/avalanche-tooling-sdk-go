@@ -23,26 +23,7 @@ func PoAValidatorManagerInitialize(
 	signer *evm.Signer,
 	subnetID ids.ID,
 	ownerAddress common.Address,
-	useACP99 bool,
 ) (*types.Transaction, *types.Receipt, error) {
-	if useACP99 {
-		return contract.TxToMethod(
-			logger,
-			rpcURL,
-			signer,
-			managerAddress,
-			nil,
-			"initialize PoA manager",
-			ErrorSignatureToError,
-			"initialize((address, bytes32,uint64,uint8))",
-			ACP99ValidatorManagerSettings{
-				Admin:                  ownerAddress,
-				SubnetID:               subnetID,
-				ChurnPeriodSeconds:     ChurnPeriodSeconds,
-				MaximumChurnPercentage: MaximumChurnPercentage,
-			},
-		)
-	}
 	return contract.TxToMethod(
 		logger,
 		rpcURL,
