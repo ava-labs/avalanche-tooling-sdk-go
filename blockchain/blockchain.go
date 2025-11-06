@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"net/url"
 	"os"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ava-labs/avalanchego/api/connectclient"
@@ -20,12 +21,12 @@ import (
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/proposervm"
-	"github.com/ava-labs/icm-services/utils"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core"
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/params/extras"
+	"github.com/ava-labs/subnet-evm/utils"
 	"go.uber.org/zap"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
@@ -36,6 +37,7 @@ import (
 
 	pbproposervm "github.com/ava-labs/avalanchego/connectproto/pb/proposervm"
 	pb "github.com/ava-labs/avalanchego/connectproto/pb/proposervm/proposervmconnect"
+	icmUtils "github.com/ava-labs/icm-services/utils"
 )
 
 var (
@@ -223,14 +225,14 @@ func New(subnetParams *SubnetParams) (*Subnet, error) {
 	case subnetParams.GenesisFilePath != "":
 		genesisBytes, err = os.ReadFile(subnetParams.GenesisFilePath)
 	case subnetParams.SubnetEVM != nil:
-		genesisBytes, err = createEvmGenesis(subnetParams.SubnetEVM)
+		genesisBytes, err = CreateEvmGenesis(subnetParams.SubnetEVM)
 	default:
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	vmID, err := vmID(subnetParams.Name)
+	vmID, err := VMID(subnetParams.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create VM ID from %s: %w", subnetParams.Name, err)
 	}
@@ -246,7 +248,7 @@ func (c *Subnet) SetSubnetID(subnetID ids.ID) {
 	c.SubnetID = subnetID
 }
 
-func createEvmGenesis(
+func CreateEvmGenesis(
 	subnetEVMParams *SubnetEVMParams,
 ) ([]byte, error) {
 	genesis := core.Genesis{}
@@ -303,7 +305,23 @@ func createEvmGenesis(
 	return prettyJSON.Bytes(), nil
 }
 
-func vmID(vmName string) (ids.ID, error) {
+func GetDefaultSubnetEVMGenesis(initialAllocationAddress string) SubnetEVMParams {
+	genesisBlock0Timestamp := utils.TimeToNewUint64(time.Now())
+	allocation := core.GenesisAlloc{}
+	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
+	allocation[common.HexToAddress(initialAllocationAddress)] = core.GenesisAccount{
+		Balance: defaultAmount,
+	}
+	return SubnetEVMParams{
+		ChainID:     big.NewInt(123456),
+		FeeConfig:   vm.StarterFeeConfig,
+		Allocation:  allocation,
+		Precompiles: extras.Precompiles{},
+		Timestamp:   genesisBlock0Timestamp,
+	}
+}
+
+func VMID(vmName string) (ids.ID, error) {
 	if len(vmName) > 32 {
 		return ids.Empty, fmt.Errorf("VM name must be <= 32 bytes, found %d", len(vmName))
 	}
@@ -564,7 +582,7 @@ func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
 			},
 		),
 	)
-	ctx, cancel := context.WithTimeout(context.Background(), utils.DefaultCreateSignedMessageTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), icmUtils.DefaultCreateSignedMessageTimeout)
 	defer cancel()
 	response, err := proposerClient.GetCurrentEpoch(ctx, &connect.Request[pbproposervm.GetCurrentEpochRequest]{})
 	if err != nil {
