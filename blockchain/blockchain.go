@@ -423,7 +423,6 @@ func (c *Subnet) InitializeProofOfStake(
 	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
 	posParams validatormanager.PoSParams,
-	useACP99 bool,
 	signatureAggregatorEndpoint string,
 	nativeMinterPrecompileAdminSigner *evm.Signer,
 ) error {
@@ -439,9 +438,7 @@ func (c *Subnet) InitializeProofOfStake(
 	if c.ValidatorManagerRPC == "" {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerRPC)
 	}
-	if !useACP99 {
-		c.SpecializedValidatorManagerAddress = &common.Address{}
-	} else if c.SpecializedValidatorManagerAddress == nil {
+	if c.SpecializedValidatorManagerAddress == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingSpecializedValidatorManagerAddress)
 	}
 	if c.ValidatorManagerAddress == nil {
@@ -450,7 +447,7 @@ func (c *Subnet) InitializeProofOfStake(
 	if c.ValidatorManagerOwnerAddress == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerAddress)
 	}
-	if useACP99 && c.ValidatorManagerOwnerSigner == nil {
+	if c.ValidatorManagerOwnerSigner == nil {
 		return fmt.Errorf("unable to initialize Proof of Stake: %w", errMissingValidatorManagerOwnerPrivateKey)
 	}
 	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
@@ -461,32 +458,28 @@ func (c *Subnet) InitializeProofOfStake(
 		}
 		client.Close()
 	}
-	if useACP99 {
-		tx, _, err := validatormanager.PoAValidatorManagerInitialize(
-			log,
-			c.ValidatorManagerRPC,
-			*c.ValidatorManagerAddress,
-			signer,
-			c.SubnetID,
-			*c.ValidatorManagerOwnerAddress,
-		)
-		if err != nil {
-			if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
-				return evm.TransactionError(tx, err, "failure initializing validator manager")
-			}
-			log.Info("the Validator Manager contract is already initialized, skipping initializing it")
+	tx, _, err := validatormanager.PoAValidatorManagerInitialize(
+		log,
+		c.ValidatorManagerRPC,
+		*c.ValidatorManagerAddress,
+		signer,
+		c.SubnetID,
+		*c.ValidatorManagerOwnerAddress,
+	)
+	if err != nil {
+		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
+			return evm.TransactionError(tx, err, "failure initializing validator manager")
 		}
+		log.Info("the Validator Manager contract is already initialized, skipping initializing it")
 	}
-	tx, _, err := validatormanager.PoSValidatorManagerInitialize(
+	tx, _, err = validatormanager.PoSValidatorManagerInitialize(
 		log,
 		c.ValidatorManagerRPC,
 		*c.ValidatorManagerAddress,
 		*c.SpecializedValidatorManagerAddress,
 		c.ValidatorManagerOwnerSigner,
 		signer,
-		c.SubnetID,
 		posParams,
-		useACP99,
 		nativeMinterPrecompileAdminSigner,
 	)
 	if err != nil {
