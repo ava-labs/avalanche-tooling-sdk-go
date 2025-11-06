@@ -15,8 +15,8 @@ CubeSigner enables secure transaction signing without exposing private keys loca
 ## Quick Start
 
 For complete usage examples, see:
-- [Creating a Subnet](../../examples/cubesigner/create-subnet/)
-- [Cross-Chain Transfer (P-Chain to C-Chain)](../../examples/cubesigner/cross-chain-transfer/)
+- [Creating a Subnet](../../examples/cubesigner/create-subnet.go)
+- [Cross-Chain Transfer (P-Chain to C-Chain)](../../examples/cubesigner/cross-chain-transfer.go)
 
 ## Key Features
 

@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 )
 
 // SendTxOutput represents a generic interface for sent transaction results
@@ -54,7 +56,7 @@ type PChainSendTxResult struct {
 }
 
 func (p *PChainSendTxResult) GetChainType() string {
-	return ChainTypePChain
+	return constants.ChainTypePChain
 }
 
 func (p *PChainSendTxResult) GetTx() interface{} {

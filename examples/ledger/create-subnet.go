@@ -1,3 +1,6 @@
+//go:build ledger_create_subnet
+// +build ledger_create_subnet
+
 // Copyright (C) 2019-2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 

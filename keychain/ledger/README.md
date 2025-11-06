@@ -25,18 +25,18 @@ Working examples are available in the [examples/ledger](../../examples/ledger/) 
 
 ### Basic Examples
 
-* **[create-subnet](../../examples/ledger/create-subnet/)** - Create a subnet using a Ledger device
+* **[create-subnet](../../examples/ledger/create-subnet.go)** - Create a subnet using a Ledger device
   - Shows basic Ledger connection and keychain setup
   - Demonstrates P-Chain subnet creation with Ledger signing
 
-* **[cross-chain-transfer](../../examples/ledger/cross-chain-transfer/)** - Transfer AVAX between chains
+* **[cross-chain-transfer](../../examples/ledger/cross-chain-transfer.go)** - Transfer AVAX between chains
   - Export AVAX from P-Chain to C-Chain
   - Import AVAX on C-Chain
   - Derive Ethereum address from Ledger public key
 
 ### Comprehensive Example
 
-* **[validate-ledger-txs](../../examples/ledger/validate-ledger-txs/)** - Complete demonstration of all transaction types
+* **[validate-ledger-txs](../../examples/ledger/validate-ledger-txs.go)** - Complete demonstration of all transaction types
   - All P-Chain transaction types (CreateSubnet, ConvertSubnetToL1, AddValidator, etc.)
   - X-Chain transactions (BaseTx, CreateAsset, Import/Export)
   - C-Chain atomic transactions (Import/Export)

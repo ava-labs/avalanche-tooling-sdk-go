@@ -1,3 +1,6 @@
+//go:build create_subnet
+// +build create_subnet
+
 // Copyright (C) 2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 package main
@@ -61,7 +64,6 @@ func CreateSubnet() error {
 	}
 
 	// Use SubmitTx to build, sign, and send in one call
-	// No need to specify AccountNames since ImportAccount already set it as active
 	submitTxParams := types.SubmitTxParams{
 		BuildTxInput: createSubnetParams,
 	}

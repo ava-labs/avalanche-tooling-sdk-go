@@ -1,3 +1,6 @@
+//go:build validate_ledger_txs
+// +build validate_ledger_txs
+
 // Copyright (C) 2019-2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
@@ -5,13 +8,13 @@
 // to build and sign all supported Avalanche transaction types across P-Chain, X-Chain, and C-Chain.
 //
 // This example covers:
-// - P-Chain: Subnet operations (CreateSubnet, ConvertSubnetToL1), validator management
-//   (AddValidator, AddSubnetValidator, RemoveSubnetValidator), L1 validator operations
-//   (RegisterL1Validator, SetL1ValidatorWeight, IncreaseL1ValidatorBalance, DisableL1Validator),
-//   cross-chain transfers (ExportTx, ImportTx), and ownership transfers (TransferSubnetOwnership)
-// - X-Chain: Asset operations (BaseTx, CreateAssetTx, OperationTx) and cross-chain transfers
-//   (ImportTx, ExportTx)
-// - C-Chain: Atomic transactions for cross-chain transfers (ImportTx, ExportTx)
+//   - P-Chain: Subnet operations (CreateSubnet, ConvertSubnetToL1), validator management
+//     (AddValidator, AddSubnetValidator, RemoveSubnetValidator), L1 validator operations
+//     (RegisterL1Validator, SetL1ValidatorWeight, IncreaseL1ValidatorBalance, DisableL1Validator),
+//     cross-chain transfers (ExportTx, ImportTx), and ownership transfers (TransferSubnetOwnership)
+//   - X-Chain: Asset operations (BaseTx, CreateAssetTx, OperationTx) and cross-chain transfers
+//     (ImportTx, ExportTx)
+//   - C-Chain: Atomic transactions for cross-chain transfers (ImportTx, ExportTx)
 //
 // The example connects to both a local Avalanche network and Fuji testnet. The local network is
 // used for P-Chain operations, while Fuji testnet is used for X-Chain and C-Chain operations
@@ -36,6 +39,8 @@ import (
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/crypto/bls/signer/localsigner"
+	"github.com/ava-labs/avalanchego/vms/components/avax"
+	"github.com/ava-labs/avalanchego/vms/components/verify"
 	"github.com/ava-labs/avalanchego/vms/platformvm/signer"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
@@ -44,13 +49,12 @@ import (
 	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
-	avmtxs "github.com/ava-labs/avalanchego/vms/avm/txs"
-	"github.com/ava-labs/avalanchego/vms/components/avax"
-	"github.com/ava-labs/avalanchego/vms/components/verify"
 	"github.com/ava-labs/coreth/plugin/evm/atomic"
-	ethcommon "github.com/ava-labs/libevm/common"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/keychain/ledger"
+
+	avmtxs "github.com/ava-labs/avalanchego/vms/avm/txs"
+	ethcommon "github.com/ava-labs/libevm/common"
 )
 
 const (

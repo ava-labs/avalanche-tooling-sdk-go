@@ -21,7 +21,7 @@ func (w *LocalWallet) generateAccountName() string {
 
 // setWalletAccount loads an account into the underlying primary wallet
 func (w *LocalWallet) setWalletAccount(ctx context.Context, acc account.Account, net network.Network) error {
-	wallet, err := getWalletFromAccount(ctx, acc, net)
+	wallet, err := getWalletFromAccount(ctx, acc, net, nil)
 	if err != nil {
 		return err
 	}
@@ -194,17 +194,23 @@ func (w *LocalWallet) ActiveAccount() string {
 }
 
 // getWalletFromAccount creates an avalanchego wallet from an account
-func getWalletFromAccount(ctx context.Context, acc account.Account, net network.Network) (*primary.Wallet, error) {
+func getWalletFromAccount(ctx context.Context, acc account.Account, net network.Network, walletConfig *primary.WalletConfig) (*primary.Wallet, error) {
 	keychain, err := acc.GetKeychain()
 	if err != nil {
 		return nil, err
 	}
+
+	config := primary.WalletConfig{}
+	if walletConfig != nil {
+		config = *walletConfig
+	}
+
 	wallet, err := primary.MakeWallet(
 		ctx,
 		net.Endpoint,
 		keychain,
 		keychain,
-		primary.WalletConfig{},
+		config,
 	)
 	if err != nil {
 		return nil, err
