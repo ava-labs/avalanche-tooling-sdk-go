@@ -14,6 +14,7 @@ const (
 	Undefined TxKind = iota
 	PChainRemoveSubnetValidatorTx
 	PChainAddSubnetValidatorTx
+	PChainRegisterL1ValidatorTx
 	PChainCreateChainTx
 	PChainTransformSubnetTx
 	PChainAddPermissionlessValidatorTx
