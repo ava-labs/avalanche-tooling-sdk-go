@@ -53,7 +53,13 @@ func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error)
 		return "", fmt.Errorf("softKey not initialized")
 	}
 	pchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "P")
-	return pchainAddrs[0], err
+	if err != nil {
+		return "", err
+	}
+	if len(pchainAddrs) == 0 {
+		return "", fmt.Errorf("no P-Chain address found")
+	}
+	return pchainAddrs[0], nil
 }
 
 func (a *LocalAccount) GetXChainAddress(network network.Network) (string, error) {
@@ -61,15 +67,21 @@ func (a *LocalAccount) GetXChainAddress(network network.Network) (string, error)
 		return "", fmt.Errorf("softKey not initialized")
 	}
 	xchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "X")
-	return xchainAddrs[0], err
+	if err != nil {
+		return "", err
+	}
+	if len(xchainAddrs) == 0 {
+		return "", fmt.Errorf("no X-Chain address found")
+	}
+	return xchainAddrs[0], nil
 }
 
-func (a *LocalAccount) GetCChainAddress(network network.Network) (string, error) {
+func (a *LocalAccount) GetCChainAddress() (string, error) {
 	if a.softKey == nil {
 		return "", fmt.Errorf("softKey not initialized")
 	}
-	cchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "C")
-	return cchainAddrs[0], err
+	// C-Chain uses EVM address format (0x...)
+	return a.softKey.C(), nil
 }
 
 func (a *LocalAccount) GetEVMAddress() (string, error) {

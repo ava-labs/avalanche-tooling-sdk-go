@@ -23,6 +23,7 @@ func GetNextMessageID(
 ) (ids.ID, error) {
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		messengerAddress,
 		"getNextMessageID(bytes32)->(bytes32)",
 		nil,
@@ -43,6 +44,7 @@ func MessageReceived(
 ) (bool, error) {
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		messengerAddress,
 		"messageReceived(bytes32)->(bool)",
 		nil,
