@@ -19,7 +19,6 @@ import (
 // ChainClients is now defined in wallet/types/common.go
 
 // Options, Option, and With* functions are defined in options.go
-// ContractMethod and NewContractMethod are defined in contract_method.go
 
 // =========================================================================
 // Wallet Operations Interfaces
@@ -148,11 +147,11 @@ type Wallet interface {
 
 	// ReadContract calls a read-only function on a contract
 	// Examples:
-	//   method := NewContractMethod("balanceOf(address)", addr)
-	//   wallet.ReadContract(contractAddr, method, &balance)                      // from active account
-	//   wallet.ReadContract(contractAddr, method, &balance, WithAccount("acc1")) // from named account
-	//   wallet.ReadContract(contractAddr, method, &balance, WithAddress("0x...")) // from any address
-	ReadContract(contractAddr common.Address, method ContractMethod, outputParams interface{}, opts ...Option) ([]interface{}, error)
+	//   method := wallet.Method("balanceOf(address)", addr)
+	//   wallet.ReadContract(contractAddr, method)                      // from active account
+	//   wallet.ReadContract(contractAddr, method, WithAccount("acc1")) // from named account
+	//   wallet.ReadContract(contractAddr, method, WithAddress("0x...")) // from any address
+	ReadContract(contractAddr common.Address, method ContractMethod, opts ...Option) ([]interface{}, error)
 
 	// =========================================================================
 	// EVM Operations (Write)
@@ -182,17 +181,17 @@ type Wallet interface {
 
 	// DeployContract deploys a contract and returns the address, transaction, and receipt
 	// Examples:
-	//   constructor := NewContractMethod("(uint256,address)", protocolVersion, messengerAddr)
+	//   constructor := wallet.Method("(uint256,address)", protocolVersion, messengerAddr)
 	//   wallet.DeployContract(bin, constructor)                    // deploy from active account
 	//   wallet.DeployContract(bin, constructor, WithAccount("acc1")) // deploy from named account
 	DeployContract(binBytes []byte, constructor ContractMethod, opts ...Option) (common.Address, *ethTypes.Transaction, *ethTypes.Receipt, error)
 
 	// WriteContract executes a state-changing transaction to a contract
 	// Examples:
-	//   method := NewContractMethod("setAdmin(address)", adminAddr)
+	//   method := wallet.Method("setAdmin(address)", adminAddr)
 	//   wallet.WriteContract(contractAddr, nil, method)  // no payment
 	//   wallet.WriteContract(contractAddr, big.NewInt(1000), method)  // with 1000 wei payment
-	//   wallet.WriteContract(contractAddr, nil, method, WithAccount("acc1"), WithDescription("Set admin"))
+	//   wallet.WriteContract(contractAddr, nil, method, WithAccount("acc1"))
 	//   wallet.WriteContract(contractAddr, nil, method, WithWarpMessage(warpMsg))  // cross-chain call
 	WriteContract(contractAddr common.Address, payment *big.Int, method ContractMethod, opts ...Option) (*ethTypes.Transaction, *ethTypes.Receipt, error)
 

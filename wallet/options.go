@@ -10,7 +10,6 @@ type Options struct {
 	AccountName string           // Named account from wallet
 	Address     string           // Explicit address (overrides AccountName)
 	WarpMessage interface{}      // Warp message for cross-chain operations (*warp.Message)
-	Description string           // Description for logging/debugging
 	ErrorMap    map[string]error // Maps Solidity error signatures to Go errors
 }
 
@@ -32,13 +31,6 @@ func WithAddress(address string) Option {
 func WithWarpMessage(warpMessage interface{}) Option {
 	return func(opts *Options) {
 		opts.WarpMessage = warpMessage
-	}
-}
-
-// WithDescription specifies a description for logging/debugging
-func WithDescription(description string) Option {
-	return func(opts *Options) {
-		opts.Description = description
 	}
 }
 
