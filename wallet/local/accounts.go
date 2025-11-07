@@ -88,7 +88,7 @@ func (w *LocalWallet) Account(name string) (account.AccountInfo, error) {
 		return account.AccountInfo{}, err
 	}
 
-	cAddr, err := acc.GetCChainAddress(w.defaultNetwork)
+	cAddr, err := acc.GetCChainAddress()
 	if err != nil {
 		return account.AccountInfo{}, err
 	}
