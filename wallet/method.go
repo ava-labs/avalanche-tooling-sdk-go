@@ -8,8 +8,8 @@ type ContractMethod struct {
 	Params []interface{} // Method parameters
 }
 
-// NewContractMethod creates a new ContractMethod with the given signature and parameters
-func NewContractMethod(spec string, params ...interface{}) ContractMethod {
+// Method creates a new ContractMethod with the given signature and parameters
+func Method(spec string, params ...interface{}) ContractMethod {
 	return ContractMethod{
 		Spec:   spec,
 		Params: params,

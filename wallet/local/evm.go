@@ -77,8 +77,8 @@ func (w *LocalWallet) Code(address string) ([]byte, error) {
 }
 
 // ReadContract calls a read-only function on a contract
-func (w *LocalWallet) ReadContract(contractAddr ethCommon.Address, method wallet.ContractMethod, outputParams interface{}, opts ...wallet.Option) ([]interface{}, error) {
-	_, _, _, _ = contractAddr, method, outputParams, opts
+func (w *LocalWallet) ReadContract(contractAddr ethCommon.Address, method wallet.ContractMethod, opts ...wallet.Option) ([]interface{}, error) {
+	_, _, _ = contractAddr, method, opts
 	return nil, errors.New("not implemented")
 }
 

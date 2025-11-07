@@ -19,7 +19,8 @@ import (
 // ChainClients is now defined in wallet/types/common.go
 
 // Options, Option, and With* functions are defined in options.go
-// ContractMethod and NewContractMethod are defined in contract_method.go
+
+// ContractMethod, Method, and ParseResult are defined in method.go and result.go
 
 // =========================================================================
 // Wallet Operations Interfaces
@@ -113,9 +114,9 @@ type Wallet interface {
 
 	// Balance returns the balance of an account
 	// Examples:
-	//   wallet.Balance()                        // active account
-	//   wallet.Balance(WithAccount("acc1"))     // named account
-	//   wallet.Balance(WithAddress("0x..."))    // any address
+	//   w.Balance()                        // active account
+	//   w.Balance(WithAccount("acc1"))     // named account
+	//   w.Balance(WithAddress("0x..."))    // any address
 	Balance(opts ...Option) (*big.Int, error)
 
 	// ChainID returns the chain ID of the current EVM chain
@@ -123,9 +124,9 @@ type Wallet interface {
 
 	// Nonce returns the nonce for an account
 	// Examples:
-	//   wallet.Nonce()                        // active account
-	//   wallet.Nonce(WithAccount("acc1"))     // named account
-	//   wallet.Nonce(WithAddress("0x..."))    // any address
+	//   w.Nonce()                        // active account
+	//   w.Nonce(WithAccount("acc1"))     // named account
+	//   w.Nonce(WithAddress("0x..."))    // any address
 	Nonce(opts ...Option) (uint64, error)
 
 	// BlockNumber returns the latest block number
@@ -148,11 +149,11 @@ type Wallet interface {
 
 	// ReadContract calls a read-only function on a contract
 	// Examples:
-	//   method := NewContractMethod("balanceOf(address)", addr)
-	//   wallet.ReadContract(contractAddr, method, &balance)                      // from active account
-	//   wallet.ReadContract(contractAddr, method, &balance, WithAccount("acc1")) // from named account
-	//   wallet.ReadContract(contractAddr, method, &balance, WithAddress("0x...")) // from any address
-	ReadContract(contractAddr common.Address, method ContractMethod, outputParams interface{}, opts ...Option) ([]interface{}, error)
+	//   method := wallet.Method("balanceOf(address)", addr)
+	//   w.ReadContract(contractAddr, method)                      // from active account
+	//   w.ReadContract(contractAddr, method, WithAccount("acc1")) // from named account
+	//   w.ReadContract(contractAddr, method, WithAddress("0x...")) // from any address
+	ReadContract(contractAddr common.Address, method ContractMethod, opts ...Option) ([]interface{}, error)
 
 	// =========================================================================
 	// EVM Operations (Write)
@@ -164,8 +165,8 @@ type Wallet interface {
 
 	// SignTransaction signs an EVM transaction
 	// Examples:
-	//   wallet.SignTransaction(tx)                    // sign with active account
-	//   wallet.SignTransaction(tx, WithAccount("acc1")) // sign with named account
+	//   w.SignTransaction(tx)                    // sign with active account
+	//   w.SignTransaction(tx, WithAccount("acc1")) // sign with named account
 	SignTransaction(tx *ethTypes.Transaction, opts ...Option) (*ethTypes.Transaction, error)
 
 	// SendTransaction sends a signed transaction to the network
@@ -176,24 +177,24 @@ type Wallet interface {
 
 	// FundAddress sends native tokens to the specified address
 	// Examples:
-	//   wallet.FundAddress(to, amount)                    // from active account
-	//   wallet.FundAddress(to, amount, WithAccount("acc1")) // from named account
+	//   w.FundAddress(to, amount)                    // from active account
+	//   w.FundAddress(to, amount, WithAccount("acc1")) // from named account
 	FundAddress(to string, amount *big.Int, opts ...Option) (*ethTypes.Receipt, error)
 
 	// DeployContract deploys a contract and returns the address, transaction, and receipt
 	// Examples:
-	//   constructor := NewContractMethod("(uint256,address)", protocolVersion, messengerAddr)
-	//   wallet.DeployContract(bin, constructor)                    // deploy from active account
-	//   wallet.DeployContract(bin, constructor, WithAccount("acc1")) // deploy from named account
+	//   constructor := wallet.Method("(uint256,address)", protocolVersion, messengerAddr)
+	//   w.DeployContract(bin, constructor)                    // deploy from active account
+	//   w.DeployContract(bin, constructor, WithAccount("acc1")) // deploy from named account
 	DeployContract(binBytes []byte, constructor ContractMethod, opts ...Option) (common.Address, *ethTypes.Transaction, *ethTypes.Receipt, error)
 
 	// WriteContract executes a state-changing transaction to a contract
 	// Examples:
-	//   method := NewContractMethod("setAdmin(address)", adminAddr)
-	//   wallet.WriteContract(contractAddr, nil, method)  // no payment
-	//   wallet.WriteContract(contractAddr, big.NewInt(1000), method)  // with 1000 wei payment
-	//   wallet.WriteContract(contractAddr, nil, method, WithAccount("acc1"), WithDescription("Set admin"))
-	//   wallet.WriteContract(contractAddr, nil, method, WithWarpMessage(warpMsg))  // cross-chain call
+	//   method := wallet.Method("setAdmin(address)", adminAddr)
+	//   w.WriteContract(contractAddr, nil, method)  // no payment
+	//   w.WriteContract(contractAddr, big.NewInt(1000), method)  // with 1000 wei payment
+	//   w.WriteContract(contractAddr, nil, method, WithAccount("acc1"))
+	//   w.WriteContract(contractAddr, nil, method, WithWarpMessage(warpMsg))  // cross-chain call
 	WriteContract(contractAddr common.Address, payment *big.Int, method ContractMethod, opts ...Option) (*ethTypes.Transaction, *ethTypes.Receipt, error)
 
 	// =========================================================================
@@ -202,9 +203,9 @@ type Wallet interface {
 
 	// CalculateTxParams calculates gas parameters for a transaction
 	// Examples:
-	//   wallet.CalculateTxParams()                     // for active account
-	//   wallet.CalculateTxParams(WithAccount("acc1"))  // for named account
-	//   wallet.CalculateTxParams(WithAddress("0x...")) // for any address
+	//   w.CalculateTxParams()                     // for active account
+	//   w.CalculateTxParams(WithAccount("acc1"))  // for named account
+	//   w.CalculateTxParams(WithAddress("0x...")) // for any address
 	CalculateTxParams(opts ...Option) (*big.Int, *big.Int, uint64, error)
 
 	// EstimateGasLimit estimates the gas limit for a transaction
@@ -215,6 +216,6 @@ type Wallet interface {
 	// =========================================================================
 
 	// Primary returns the interface for P/X/C chain operations
-	// Example: wallet.Primary().BuildTx(...)
+	// Example: w.Primary().BuildTx(...)
 	Primary() PrimaryOperations
 }

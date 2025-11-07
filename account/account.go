@@ -16,8 +16,8 @@ type Account interface {
 	// GetXChainAddress returns the X-Chain address for the given network
 	GetXChainAddress(network network.Network) (string, error)
 
-	// GetCChainAddress returns the C-Chain address for the given network
-	GetCChainAddress(network network.Network) (string, error)
+	// GetCChainAddress returns the C-Chain address (same as EVM address)
+	GetCChainAddress() (string, error)
 
 	// GetEVMAddress returns the EVM address (0x format)
 	GetEVMAddress() (string, error)
