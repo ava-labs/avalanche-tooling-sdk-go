@@ -50,7 +50,7 @@ func ImportFromPath(keyPath string) (Account, error) {
 
 func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error) {
 	if a.softKey == nil {
-		return "", fmt.Errorf("softKey not initialized")
+		return "", fmt.Errorf("uninitialized local account")
 	}
 	pchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "P")
 	if err != nil {
@@ -64,7 +64,7 @@ func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error)
 
 func (a *LocalAccount) GetXChainAddress(network network.Network) (string, error) {
 	if a.softKey == nil {
-		return "", fmt.Errorf("softKey not initialized")
+		return "", fmt.Errorf("uninitialized local account")
 	}
 	xchainAddrs, err := a.softKey.GetNetworkChainAddress(network, "X")
 	if err != nil {
@@ -78,7 +78,7 @@ func (a *LocalAccount) GetXChainAddress(network network.Network) (string, error)
 
 func (a *LocalAccount) GetCChainAddress() (string, error) {
 	if a.softKey == nil {
-		return "", fmt.Errorf("softKey not initialized")
+		return "", fmt.Errorf("uninitialized local account")
 	}
 	// C-Chain uses EVM address format (0x...)
 	return a.softKey.C(), nil
@@ -86,14 +86,14 @@ func (a *LocalAccount) GetCChainAddress() (string, error) {
 
 func (a *LocalAccount) GetEVMAddress() (string, error) {
 	if a.softKey == nil {
-		return "", fmt.Errorf("softKey not initialized")
+		return "", fmt.Errorf("uninitialized local account")
 	}
 	return a.softKey.C(), nil
 }
 
 func (a *LocalAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 	if a.softKey == nil {
-		return nil, fmt.Errorf("softKey not initialized")
+		return nil, fmt.Errorf("uninitialized local account")
 	}
 	return a.softKey.KeyChain(), nil
 }
@@ -101,7 +101,7 @@ func (a *LocalAccount) GetKeychain() (*secp256k1fx.Keychain, error) {
 // PrivateKey exports the private key in hex format
 func (a *LocalAccount) PrivateKey() (string, error) {
 	if a.softKey == nil {
-		return "", fmt.Errorf("softKey not initialized")
+		return "", fmt.Errorf("uninitialized local account")
 	}
 	return a.softKey.PrivKeyHex(), nil
 }

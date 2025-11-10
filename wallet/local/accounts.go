@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
@@ -17,16 +18,6 @@ import (
 // generateAccountName generates an automatic account name based on the current count
 func (w *LocalWallet) generateAccountName() string {
 	return fmt.Sprintf("account-%d", len(w.accounts)+1)
-}
-
-// setWalletAccount loads an account into the underlying primary wallet
-func (w *LocalWallet) setWalletAccount(ctx context.Context, acc account.Account, net network.Network) error {
-	wallet, err := getWalletFromAccount(ctx, acc, net, nil)
-	if err != nil {
-		return err
-	}
-	w.wallet = wallet
-	return nil
 }
 
 // Accounts returns all accounts managed by this wallet with their info
@@ -177,13 +168,16 @@ func (w *LocalWallet) SetActiveAccount(name string) error {
 		return fmt.Errorf("account %q not found", name)
 	}
 	w.activeAccount = name
+	w.seenSubnetIDs = []ids.ID{}
 
 	// Load account into the wallet for P/X/C operations
 	ctx, cancel := utils.GetWalletRefreshContext()
 	defer cancel()
-	if err := w.setWalletAccount(ctx, acc, w.defaultNetwork); err != nil {
+	wallet, err := getWalletFromAccount(ctx, acc, w.defaultNetwork, nil)
+	if err != nil {
 		return fmt.Errorf("failed to load account into wallet: %w", err)
 	}
+	w.wallet = wallet
 
 	return nil
 }
