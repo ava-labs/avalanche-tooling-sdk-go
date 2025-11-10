@@ -23,34 +23,42 @@ import (
 
 // CreateChain demonstrates creating a blockchain on a subnet using the wallet
 // Required environment variables:
-//   - PRIVATE_KEY: Hex-encoded private key for the account
-//   - SUBNET_AUTH_KEY: P-Chain address that has subnet auth rights
-//   - SUBNET_ID: The subnet ID where the blockchain will be created
-//   - EVM_ADDRESS: EVM address for genesis allocation
-//   - BLOCKCHAIN_NAME: Name for the new blockchain
+//   - PRIVATE_KEY: Hex-encoded private key (e.g., "56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027")
+//   - SUBNET_AUTH_KEY: P-Chain bech32 address with subnet auth rights (e.g., "P-fuji1zwch24mn3sjkahds98fjd0asudjk2e4ajduu")
+//   - SUBNET_ID: The subnet ID (e.g., "2DeHa7Qb6sufPkmQcFWG2uCd4pBPv9WB6dkzroiMQhd1NSRtof")
+//   - EVM_ADDRESS: EVM address for genesis allocation (e.g., "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC")
+//   - BLOCKCHAIN_NAME: Name for the new blockchain (optional, defaults to "MyBlockchain")
 func CreateChain() error {
 	ctx, cancel := utils.GetTimedContext(120 * time.Second)
 	defer cancel()
 
 	// Get required environment variables
+	// PRIVATE_KEY should be a hex-encoded private key string (64 characters)
+	// Example: "56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
 	privateKey := os.Getenv("PRIVATE_KEY")
 	if privateKey == "" {
-		return fmt.Errorf("PRIVATE_KEY environment variable is required")
+		return fmt.Errorf("PRIVATE_KEY environment variable is required (hex-encoded private key)")
 	}
 
+	// SUBNET_AUTH_KEY should be a P-Chain bech32 address with control over the subnet
+	// Example: "P-fuji1zwch24mn3sjkahds98fjd0asudjk2e4ajduu"
 	subnetAuthKey := os.Getenv("SUBNET_AUTH_KEY")
 	if subnetAuthKey == "" {
-		return fmt.Errorf("SUBNET_AUTH_KEY environment variable is required")
+		return fmt.Errorf("SUBNET_AUTH_KEY environment variable is required (P-Chain bech32 address)")
 	}
 
+	// SUBNET_ID should be the subnet ID where the blockchain will be created
+	// Example: "2DeHa7Qb6sufPkmQcFWG2uCd4pBPv9WB6dkzroiMQhd1NSRtof"
 	subnetID := os.Getenv("SUBNET_ID")
 	if subnetID == "" {
 		return fmt.Errorf("SUBNET_ID environment variable is required")
 	}
 
+	// EVM_ADDRESS should be an Ethereum-style address for genesis allocation
+	// Example: "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC"
 	evmAddress := os.Getenv("EVM_ADDRESS")
 	if evmAddress == "" {
-		return fmt.Errorf("EVM_ADDRESS environment variable is required")
+		return fmt.Errorf("EVM_ADDRESS environment variable is required (EVM address format)")
 	}
 
 	blockchainName := os.Getenv("BLOCKCHAIN_NAME")

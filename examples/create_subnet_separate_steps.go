@@ -23,21 +23,25 @@ import (
 // CreateSubnetSeparateSteps demonstrates creating a subnet using separate BuildTx, SignTx, and SendTx calls
 // This example shows the individual steps that SubmitTx performs internally.
 // Required environment variables:
-//   - PRIVATE_KEY: Hex-encoded private key for the account
-//   - CONTROL_KEY_ADDRESS: P-Chain address for subnet control
+//   - PRIVATE_KEY: Hex-encoded private key (e.g., "56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027")
+//   - CONTROL_KEY_ADDRESS: P-Chain bech32 address for subnet control (e.g., "P-fuji1zwch24mn3sjkahds98fjd0asudjk2e4ajduu")
 func CreateSubnetSeparateSteps() error {
 	ctx, cancel := utils.GetTimedContext(120 * time.Second)
 	defer cancel()
 
 	// Get required environment variables
+	// PRIVATE_KEY should be a hex-encoded private key string (64 characters)
+	// Example: "56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
 	privateKey := os.Getenv("PRIVATE_KEY")
 	if privateKey == "" {
-		return fmt.Errorf("PRIVATE_KEY environment variable is required")
+		return fmt.Errorf("PRIVATE_KEY environment variable is required (hex-encoded private key)")
 	}
 
+	// CONTROL_KEY_ADDRESS should be a P-Chain bech32 address
+	// Example: "P-fuji1zwch24mn3sjkahds98fjd0asudjk2e4ajduu"
 	controlKeyAddress := os.Getenv("CONTROL_KEY_ADDRESS")
 	if controlKeyAddress == "" {
-		return fmt.Errorf("CONTROL_KEY_ADDRESS environment variable is required")
+		return fmt.Errorf("CONTROL_KEY_ADDRESS environment variable is required (P-Chain bech32 address format)")
 	}
 
 	// Create a local wallet with Fuji network
