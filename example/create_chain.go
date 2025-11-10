@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/blockchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -25,12 +26,15 @@ func CreateChain(subnetID string) error {
 	defer cancel()
 	network := network.FujiNetwork()
 
-	localWallet, err := local.NewLocalWallet()
+	localWallet, err := local.NewLocalWallet(network)
 	if err != nil {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	existingAccount, err := localWallet.ImportAccount("EXISTING_KEY_PATH")
+	accountSpec := account.AccountSpec{
+		PrivateKey: "EXISTING_PRIVATE_KEY_HEX",
+	}
+	_, err = localWallet.ImportAccount("my-account", accountSpec)
 	if err != nil {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}
@@ -51,8 +55,6 @@ func CreateChain(subnetID string) error {
 		Genesis:        evmGenesisBytes,
 	}
 	buildTxParams := types.BuildTxParams{
-		Account:      *existingAccount,
-		Network:      network,
 		BuildTxInput: createChainParams,
 	}
 	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
@@ -61,8 +63,6 @@ func CreateChain(subnetID string) error {
 	}
 
 	signTxParams := types.SignTxParams{
-		Account:       *existingAccount,
-		Network:       network,
 		BuildTxResult: &buildTxResult,
 	}
 
@@ -72,8 +72,6 @@ func CreateChain(subnetID string) error {
 	}
 
 	sendTxParams := types.SendTxParams{
-		Account:      *existingAccount,
-		Network:      network,
 		SignTxResult: &signTxResult,
 	}
 	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)

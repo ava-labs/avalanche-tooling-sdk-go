@@ -7,6 +7,7 @@ import "time"
 const (
 	APIRequestTimeout          = 10 * time.Second
 	APIRequestLargeTimeout     = 30 * time.Second
+	WalletRefreshTimeout       = 2 * time.Minute
 	UserOnlyWriteReadExecPerms = 0o700
 	WriteReadUserOnlyPerms     = 0o600
 )

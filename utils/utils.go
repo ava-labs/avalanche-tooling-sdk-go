@@ -51,6 +51,11 @@ func GetAPILargeContext() (context.Context, context.CancelFunc) {
 	return GetTimedContext(constants.APIRequestLargeTimeout)
 }
 
+// Context for wallet refresh operations
+func GetWalletRefreshContext() (context.Context, context.CancelFunc) {
+	return GetTimedContext(constants.WalletRefreshTimeout)
+}
+
 // Timed Context
 func GetTimedContext(timeout time.Duration) (context.Context, context.CancelFunc) {
 	parent, sigCancel := signal.NotifyContext(context.Background(), os.Interrupt)

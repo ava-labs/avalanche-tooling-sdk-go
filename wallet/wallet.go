@@ -14,19 +14,41 @@ import (
 // Wallet represents the core wallet interface that can be implemented
 // by different wallet types (local, API-based, etc.)
 type Wallet interface {
-	// Accounts returns the accounts in the Wallet
-	Accounts() []account.Account
+	// =========================================================================
 	// Account Management
-	// CreateAccount creates a new Account
-	CreateAccount() (*account.Account, error)
+	// =========================================================================
 
-	// ListAccounts returns all accounts managed by this wallet
-	ListAccounts() ([]*account.Account, error)
+	// Accounts returns all accounts managed by this wallet with their info
+	// Returns map[name]AccountInfo for easy lookup by account name
+	Accounts() map[string]account.AccountInfo
 
-	// ImportAccount imports an existing Account into the wallet
-	ImportAccount(keyPath string) (*account.Account, error)
+	// CreateAccount creates a new account with an optional name.
+	// If name is empty, generates a default name (e.g., "account-1")
+	// Returns the account info including all chain addresses.
+	CreateAccount(name string) (account.AccountInfo, error)
 
+	// ImportAccount imports an account with a name
+	// Returns the imported account info
+	ImportAccount(name string, spec account.AccountSpec) (account.AccountInfo, error)
+
+	// ExportAccount exports an account by name
+	// WARNING: For local accounts, this exposes the private key!
+	ExportAccount(name string) (account.AccountSpec, error)
+
+	// Account returns info for a specific account by name
+	Account(name string) (account.AccountInfo, error)
+
+	// SetActiveAccount sets the default account for operations
+	// Automatically set when first adding an account
+	SetActiveAccount(name string) error
+
+	// ActiveAccount returns the currently active account name
+	ActiveAccount() string
+
+	// =========================================================================
 	// Transaction Operations
+	// =========================================================================
+
 	// BuildTx constructs a transaction for the specified operation
 	BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error)
 
