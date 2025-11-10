@@ -32,12 +32,12 @@ func PoAValidatorManagerInitialize(
 		nil,
 		"initialize PoA manager",
 		ErrorSignatureToError,
-		"initialize((bytes32,uint64,uint8),address)",
-		ValidatorManagerSettings{
+		"initialize((address, bytes32,uint64,uint8))",
+		ACP99ValidatorManagerSettings{
+			Admin:                  ownerAddress,
 			SubnetID:               subnetID,
 			ChurnPeriodSeconds:     ChurnPeriodSeconds,
 			MaximumChurnPercentage: MaximumChurnPercentage,
 		},
-		ownerAddress,
 	)
 }
