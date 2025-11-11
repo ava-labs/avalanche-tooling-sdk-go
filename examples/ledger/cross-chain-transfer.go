@@ -1,3 +1,6 @@
+//go:build ledger_cross_chain_transfer
+// +build ledger_cross_chain_transfer
+
 // Copyright (C) 2019-2025, Ava Labs, Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
