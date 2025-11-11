@@ -71,7 +71,7 @@ func CreateSubnet() error {
 	submitTxParams := types.SubmitTxParams{
 		BuildTxInput: createSubnetParams,
 	}
-	submitTxResult, err := localWallet.SubmitTx(ctx, submitTxParams)
+	submitTxResult, err := localWallet.Primary().SubmitTx(ctx, submitTxParams)
 	if err != nil {
 		return fmt.Errorf("failed to submit tx: %w", err)
 	}

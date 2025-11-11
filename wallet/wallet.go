@@ -12,6 +12,25 @@ import (
 
 // ChainClients is now defined in wallet/types/common.go
 
+// =========================================================================
+// Wallet Operations Interfaces
+// =========================================================================
+
+// PrimaryOperations handles P/X/C chain operations (Avalanche consensus)
+type PrimaryOperations interface {
+	// BuildTx constructs a transaction for the specified operation
+	BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error)
+
+	// SignTx signs a transaction
+	SignTx(ctx context.Context, params types.SignTxParams) (types.SignTxResult, error)
+
+	// SendTx submits a signed transaction to the Network
+	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
+
+	// SubmitTx is a convenience method that combines BuildTx, SignTx, and SendTx
+	SubmitTx(ctx context.Context, params types.SubmitTxParams) (types.SubmitTxResult, error)
+}
+
 // Wallet represents the core wallet interface that can be implemented
 // by different wallet types (local, API-based, etc.)
 type Wallet interface {
@@ -57,18 +76,10 @@ type Wallet interface {
 	ActiveAccount() string
 
 	// =========================================================================
-	// Transaction Operations
+	// Primary Network Operations (P/X/C Chains)
 	// =========================================================================
 
-	// BuildTx constructs a transaction for the specified operation
-	BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error)
-
-	// SignTx signs a transaction
-	SignTx(ctx context.Context, params types.SignTxParams) (types.SignTxResult, error)
-
-	// SendTx submits a signed transaction to the Network
-	SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error)
-
-	// SubmitTx builds, signs, and sends a transaction in one call
-	SubmitTx(ctx context.Context, params types.SubmitTxParams) (types.SubmitTxResult, error)
+	// Primary returns the interface for P/X/C chain operations
+	// Example: w.Primary().BuildTx(...)
+	Primary() PrimaryOperations
 }
