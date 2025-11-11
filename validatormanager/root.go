@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ava-labs/avalanchego/api/info"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
+	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/libevm/common"
@@ -16,7 +18,9 @@ import (
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm/precompiles"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager/validatormanagertypes"
 
 	avagoconstants "github.com/ava-labs/avalanchego/utils/constants"
@@ -316,4 +320,87 @@ func GetValidatorManagerType(
 		return validatormanagertypes.ProofOfAuthority
 	}
 	return validatormanagertypes.UndefinedValidatorManagement
+}
+
+// ValidatorManagerInfo contains information about a validator manager
+type ValidatorManagerInfo struct {
+	BlockchainID        ids.ID
+	SubnetID            ids.ID
+	ManagerRPC          string
+	ManagerBlockchainID ids.ID
+	ManagerAddress      common.Address
+}
+
+// GetValidatorManagerInfo returns information about a validator manager by querying the L1 RPC
+// It gets the blockchain ID from the Warp precompile, queries P-Chain for subnet info,
+// and determines the validator manager RPC (auto-detecting C-Chain if needed)
+func GetValidatorManagerInfo(
+	net network.Network,
+	l1RPC string,
+	validatorManagerRPC string,
+) (*ValidatorManagerInfo, error) {
+	vmInfo := &ValidatorManagerInfo{}
+
+	// Get blockchain ID using Warp precompile
+	blockchainID, err := precompiles.WarpPrecompileGetBlockchainID(l1RPC)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get blockchain ID: %w", err)
+	}
+	vmInfo.BlockchainID = blockchainID
+
+	// Create P-Chain client
+	pClient := platformvm.NewClient(net.Endpoint)
+	ctx, cancel := utils.GetAPIContext()
+	defer cancel()
+
+	// Get subnet ID from blockchain using ValidatedBy
+	subnetID, err := pClient.ValidatedBy(ctx, blockchainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subnet ID: %w", err)
+	}
+	vmInfo.SubnetID = subnetID
+
+	// Get subnet info from P-Chain
+	subnetInfo, err := pClient.GetSubnet(ctx, subnetID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subnet info: %w", err)
+	}
+
+	if subnetInfo.IsPermissioned {
+		return nil, fmt.Errorf("blockchain is not sovereign (permissioned subnet)")
+	}
+
+	// Extract manager address and blockchain ID from subnet info
+	vmInfo.ManagerAddress = common.BytesToAddress(subnetInfo.ManagerAddress)
+	vmInfo.ManagerBlockchainID = subnetInfo.ManagerChainID
+
+	// Determine validator manager RPC
+	switch {
+	case blockchainID == subnetInfo.ManagerChainID:
+		// Manager lives on the same blockchain
+		vmInfo.ManagerRPC = l1RPC
+	case validatorManagerRPC != "":
+		// User provided validator manager RPC
+		vmInfo.ManagerRPC = validatorManagerRPC
+	default:
+		// Try to detect if manager is on C-Chain
+		infoClient := info.NewClient(net.Endpoint)
+		ctx, cancel := utils.GetAPIContext()
+		defer cancel()
+		cChainID, err := infoClient.GetBlockchainID(ctx, "C")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get C-Chain ID: %w", err)
+		}
+
+		if cChainID == subnetInfo.ManagerChainID {
+			// Manager lives on C-Chain - construct C-Chain RPC
+			vmInfo.ManagerRPC = net.Endpoint + "/ext/bc/C/rpc"
+		}
+	}
+
+	if vmInfo.ManagerRPC == "" {
+		return nil, fmt.Errorf("validator manager lives on different blockchain (%s), please provide validatorManagerRPC parameter", subnetInfo.ManagerChainID)
+	}
+
+	return vmInfo, nil
 }

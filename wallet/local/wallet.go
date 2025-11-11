@@ -4,14 +4,14 @@ package local
 
 import (
 	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 )
-
-// ChainClients is now defined in the wallet package
 
 // LocalWallet represents a local wallet implementation
 type LocalWallet struct {
@@ -20,19 +20,23 @@ type LocalWallet struct {
 	activeAccount  string                     // Currently active account name
 	defaultNetwork network.Network            // Default network for operations
 	seenSubnetIDs  []ids.ID                   // Subnet IDs seen for active account
+	evmClient      *evm.Client                // EVM client for current chain (nil if no chain set)
+	evmRPC         string                     // Current EVM chain RPC URL (empty if no chain set)
+	logger         logging.Logger             // Logger for wallet operations
 }
 
 // Ensure LocalWallet implements Wallet interface
 var _ wallet.Wallet = (*LocalWallet)(nil)
 
 // NewLocalWallet creates a new local wallet with the specified network
-func NewLocalWallet(net network.Network) (*LocalWallet, error) {
+func NewLocalWallet(logger logging.Logger, net network.Network) (*LocalWallet, error) {
 	return &LocalWallet{
 		wallet:         nil,
 		accounts:       make(map[string]account.Account),
 		activeAccount:  "",
 		defaultNetwork: net,
 		seenSubnetIDs:  []ids.ID{},
+		logger:         logger,
 	}, nil
 }
 

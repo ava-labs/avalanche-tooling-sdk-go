@@ -42,6 +42,7 @@ func GetValidator(
 	getValidatorReturn := &GetValidatorReturn{}
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		managerAddress,
 		"getValidator(bytes32)->((uint8,bytes,uint64,uint64,uint64,uint64,uint64,uint64))",
 		[]interface{}{*getValidatorReturn},
@@ -81,6 +82,7 @@ func GetChurnSettings(
 	churnSettings := ChurnSettings{}
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		managerAddress,
 		"getChurnTracker()->(uint64,uint8,uint256,uint64,uint64,uint64)",
 		nil,
@@ -120,6 +122,7 @@ func GetValidationID(
 	}
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		managerAddress,
 		"registeredValidators(bytes)->(bytes32)",
 		nil,
@@ -145,6 +148,7 @@ func GetSubnetID(
 	}
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		managerAddress,
 		"subnetID()->(bytes32)",
 		nil,

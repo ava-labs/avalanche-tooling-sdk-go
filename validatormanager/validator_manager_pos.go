@@ -149,6 +149,7 @@ func PoSWeightToValue(
 ) (*big.Int, error) {
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		managerAddress,
 		"weightToValue(uint64)->(uint256)",
 		nil,
@@ -183,6 +184,7 @@ func GetStakingManagerSettings(
 	getStakingManagerSetttingsReturn := GetStakingManagerSetttingsReturn{}
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		managerAddress,
 		"getStakingManagerSettings()->(address,uint256,uint256,uint64,uint16,uint8,uint256,address,bytes32)",
 		nil,
@@ -248,6 +250,7 @@ func GetStakingValidator(
 	getStakingValidatorReturn := GetStakingValidatorReturn{}
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		managerAddress,
 		"getStakingValidator(bytes32)->(address,uint16,uint64,uint64)",
 		nil,
