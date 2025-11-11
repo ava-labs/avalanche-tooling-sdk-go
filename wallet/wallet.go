@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 )
 
@@ -14,6 +15,16 @@ import (
 // Wallet represents the core wallet interface that can be implemented
 // by different wallet types (local, API-based, etc.)
 type Wallet interface {
+	// =========================================================================
+	// Network Management
+	// =========================================================================
+
+	// SetNetwork sets the default network for wallet operations
+	SetNetwork(net network.Network)
+
+	// Network returns the default network for wallet operations
+	Network() network.Network
+
 	// =========================================================================
 	// Account Management
 	// =========================================================================
