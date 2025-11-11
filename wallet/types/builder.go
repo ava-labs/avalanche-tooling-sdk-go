@@ -7,9 +7,7 @@ import (
 
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 
-	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 )
 
 // BuildTxOutput represents a generic interface for transaction results
@@ -24,8 +22,7 @@ type BuildTxOutput interface {
 
 // BuildTxParams contains parameters for building transactions
 type BuildTxParams struct {
-	Account account.Account
-	Network network.Network
+	AccountNames []string
 	BuildTxInput
 }
 
@@ -39,11 +36,8 @@ type BuildTxInput interface {
 
 // Validate validates the build transaction parameters
 func (p *BuildTxParams) Validate() error {
-	if p.Account == nil {
-		return fmt.Errorf("account is required")
-	}
-	if p.Network.Kind == network.Undefined {
-		return fmt.Errorf("network is required")
+	if len(p.AccountNames) > 1 {
+		return fmt.Errorf("only one account name is currently supported")
 	}
 	if p.BuildTxInput == nil {
 		return fmt.Errorf("build tx input is required")
