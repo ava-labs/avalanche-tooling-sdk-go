@@ -73,7 +73,7 @@ func CreateSubnetSeparateSteps() error {
 	buildTxParams := types.BuildTxParams{
 		BuildTxInput: createSubnetParams,
 	}
-	buildTxResult, err := localWallet.BuildTx(ctx, buildTxParams)
+	buildTxResult, err := localWallet.Primary().BuildTx(ctx, buildTxParams)
 	if err != nil {
 		return fmt.Errorf("failed to build tx: %w", err)
 	}
@@ -84,7 +84,7 @@ func CreateSubnetSeparateSteps() error {
 	signTxParams := types.SignTxParams{
 		BuildTxResult: &buildTxResult,
 	}
-	signTxResult, err := localWallet.SignTx(ctx, signTxParams)
+	signTxResult, err := localWallet.Primary().SignTx(ctx, signTxParams)
 	if err != nil {
 		return fmt.Errorf("failed to sign tx: %w", err)
 	}
@@ -95,7 +95,7 @@ func CreateSubnetSeparateSteps() error {
 	sendTxParams := types.SendTxParams{
 		SignTxResult: &signTxResult,
 	}
-	sendTxResult, err := localWallet.SendTx(ctx, sendTxParams)
+	sendTxResult, err := localWallet.Primary().SendTx(ctx, sendTxParams)
 	if err != nil {
 		return fmt.Errorf("failed to send tx: %w", err)
 	}
