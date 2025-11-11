@@ -30,11 +30,11 @@ func ConvertSubnet(subnetID, chainID string) error {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	accountSpec := account.AccountSpec{
-		PrivateKey: "EXISTING_PRIVATE_KEY_HEX",
-	}
-	_, err = localWallet.ImportAccount("my-account", accountSpec)
+	acc, err := account.NewLocalAccountFromPrivateKey("my-account", "EXISTING_PRIVATE_KEY_HEX")
 	if err != nil {
+		return fmt.Errorf("failed to create account: %w", err)
+	}
+	if err = localWallet.ImportAccount(acc); err != nil {
 		return fmt.Errorf("failed to ImportAccount: %w", err)
 	}
 

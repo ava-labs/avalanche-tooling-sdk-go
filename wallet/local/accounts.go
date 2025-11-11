@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
@@ -15,151 +16,49 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
 
-// generateAccountName generates an automatic account name based on the current count
-func (w *LocalWallet) generateAccountName() string {
-	return fmt.Sprintf("account-%d", len(w.accounts)+1)
+// Accounts returns all accounts managed by this wallet
+func (w *LocalWallet) Accounts() map[string]account.Account {
+	return maps.Clone(w.accounts)
 }
 
-// Accounts returns all accounts managed by this wallet with their info
-func (w *LocalWallet) Accounts() map[string]account.AccountInfo {
-	result := make(map[string]account.AccountInfo)
-	for name := range w.accounts {
-		info, _ := w.Account(name)
-		result[name] = info
+// Account returns a specific account by name
+func (w *LocalWallet) Account(name string) (account.Account, error) {
+	acc, exists := w.accounts[name]
+	if !exists {
+		return nil, fmt.Errorf("account %q not found", name)
 	}
-	return result
+	return acc, nil
 }
 
-// CreateAccount creates a new account with an optional name
-func (w *LocalWallet) CreateAccount(name string) (account.AccountInfo, error) {
-	// Generate automatic name if empty
+// ImportAccount imports an account into the wallet
+func (w *LocalWallet) ImportAccount(acc account.Account) error {
+	name := acc.Name()
 	if name == "" {
-		name = w.generateAccountName()
+		return errors.New("account name cannot be empty")
 	}
 
 	// Check if name already exists
 	if _, exists := w.accounts[name]; exists {
-		return account.AccountInfo{}, fmt.Errorf("account with name %q already exists", name)
-	}
-
-	// Create new local account
-	newAccount, err := account.NewLocalAccount()
-	if err != nil {
-		return account.AccountInfo{}, fmt.Errorf("failed to create new account: %w", err)
+		return fmt.Errorf("account with name %q already exists", name)
 	}
 
 	// Store in map
-	w.accounts[name] = newAccount
+	w.accounts[name] = acc
 
 	// Set as active if it's the first account
 	if len(w.accounts) == 1 {
 		if err := w.SetActiveAccount(name); err != nil {
-			return account.AccountInfo{}, fmt.Errorf("failed to set active account: %w", err)
+			return fmt.Errorf("failed to set active account: %w", err)
 		}
 	}
 
-	// Return account info
-	return w.Account(name)
-}
-
-// Account returns info for a specific account by name
-func (w *LocalWallet) Account(name string) (account.AccountInfo, error) {
-	acc, exists := w.accounts[name]
-	if !exists {
-		return account.AccountInfo{}, fmt.Errorf("account %q not found", name)
-	}
-
-	pAddr, err := acc.GetPChainAddress(w.defaultNetwork)
-	if err != nil {
-		return account.AccountInfo{}, err
-	}
-
-	xAddr, err := acc.GetXChainAddress(w.defaultNetwork)
-	if err != nil {
-		return account.AccountInfo{}, err
-	}
-
-	cAddr, err := acc.GetCChainAddress()
-	if err != nil {
-		return account.AccountInfo{}, err
-	}
-
-	evmAddr, err := acc.GetEVMAddress()
-	if err != nil {
-		return account.AccountInfo{}, err
-	}
-
-	return account.AccountInfo{
-		Name:       name,
-		PAddress:   pAddr,
-		XAddress:   xAddr,
-		CAddress:   cAddr,
-		EVMAddress: evmAddr,
-	}, nil
-}
-
-// ImportAccount imports an account with a name
-func (w *LocalWallet) ImportAccount(name string, spec account.AccountSpec) (account.AccountInfo, error) {
-	// Generate automatic name if empty
-	if name == "" {
-		name = w.generateAccountName()
-	}
-
-	// Check if name already exists
-	if _, exists := w.accounts[name]; exists {
-		return account.AccountInfo{}, fmt.Errorf("account with name %q already exists", name)
-	}
-
-	// Import from private key
-	if spec.PrivateKey != "" {
-		acc, err := account.ImportFromString(spec.PrivateKey)
-		if err != nil {
-			return account.AccountInfo{}, fmt.Errorf("failed to import account: %w", err)
-		}
-
-		// Store in map
-		w.accounts[name] = acc
-
-		// Set as active if it's the first account
-		if len(w.accounts) == 1 {
-			if err := w.SetActiveAccount(name); err != nil {
-				return account.AccountInfo{}, fmt.Errorf("failed to set active account: %w", err)
-			}
-		}
-
-		return w.Account(name)
-	}
-
-	// TODO: Handle DerivationPath and RemoteKeyID
-	return account.AccountInfo{}, errors.New("only PrivateKey import is currently supported")
-}
-
-// ExportAccount exports an account by name
-func (w *LocalWallet) ExportAccount(name string) (account.AccountSpec, error) {
-	acc, exists := w.accounts[name]
-	if !exists {
-		return account.AccountSpec{}, fmt.Errorf("account %q not found", name)
-	}
-
-	// For local accounts, we can export the private key
-	if localAcc, ok := acc.(*account.LocalAccount); ok {
-		privKey, err := localAcc.PrivateKey()
-		if err != nil {
-			return account.AccountSpec{}, fmt.Errorf("failed to export private key: %w", err)
-		}
-		return account.AccountSpec{
-			PrivateKey: privKey,
-		}, nil
-	}
-
-	// For other account types, return error
-	return account.AccountSpec{}, fmt.Errorf("account type does not support export")
+	return nil
 }
 
 // SetActiveAccount sets the default account for operations
 func (w *LocalWallet) SetActiveAccount(name string) error {
 	// Do nothing if already active
-	if name == w.activeAccount {
+	if name == w.activeAccountName {
 		return nil
 	}
 
@@ -167,7 +66,7 @@ func (w *LocalWallet) SetActiveAccount(name string) error {
 	if !exists {
 		return fmt.Errorf("account %q not found", name)
 	}
-	w.activeAccount = name
+	w.activeAccountName = name
 	w.seenSubnetIDs = []ids.ID{}
 
 	// Load account into the wallet for P/X/C operations
@@ -182,9 +81,9 @@ func (w *LocalWallet) SetActiveAccount(name string) error {
 	return nil
 }
 
-// ActiveAccount returns the currently active account name
-func (w *LocalWallet) ActiveAccount() string {
-	return w.activeAccount
+// ActiveAccountName returns the currently active account name
+func (w *LocalWallet) ActiveAccountName() string {
+	return w.activeAccountName
 }
 
 // getWalletFromAccount creates an avalanchego wallet from an account

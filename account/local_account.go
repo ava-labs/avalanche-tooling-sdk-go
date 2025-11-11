@@ -14,38 +14,45 @@ import (
 
 // LocalAccount represents a local account implementation
 type LocalAccount struct {
+	name    string
 	softKey *key.SoftKey
 }
 
-// NewLocalAccount creates a new LocalAccount
-func NewLocalAccount() (Account, error) {
+// NewLocalAccount creates a new local account with a freshly generated private key
+func NewLocalAccount(name string) (*LocalAccount, error) {
 	k, err := key.NewSoft()
 	if err != nil {
 		return nil, err
 	}
 	return &LocalAccount{
+		name:    name,
 		softKey: k,
 	}, nil
 }
 
-// ImportFromString imports an account from a hex-encoded private key string
-func ImportFromString(privateKeyHex string) (Account, error) {
+// NewLocalAccountFromPrivateKey imports a local account from a hex-encoded private key string
+func NewLocalAccountFromPrivateKey(name string, privateKeyHex string) (*LocalAccount, error) {
 	k, err := key.LoadSoftFromBytes([]byte(privateKeyHex))
 	if err != nil {
 		return nil, err
 	}
 	return &LocalAccount{
+		name:    name,
 		softKey: k,
 	}, nil
 }
 
-// ImportFromPath imports an account from a file path
-func ImportFromPath(keyPath string) (Account, error) {
+// NewLocalAccountFromKeyPath imports a local account from a file path containing a private key
+func NewLocalAccountFromKeyPath(name string, keyPath string) (*LocalAccount, error) {
 	kb, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
 	}
-	return ImportFromString(string(kb))
+	return NewLocalAccountFromPrivateKey(name, string(kb))
+}
+
+func (a *LocalAccount) Name() string {
+	return a.name
 }
 
 func (a *LocalAccount) GetPChainAddress(network network.Network) (string, error) {
