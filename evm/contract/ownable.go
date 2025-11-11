@@ -16,6 +16,7 @@ func GetContractOwner(
 ) (common.Address, error) {
 	out, err := CallToMethod(
 		rpcURL,
+		common.Address{},
 		contractAddress,
 		"owner()->(address)",
 		nil,

@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/ava-labs/avalanchego/utils/logging"
+
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
@@ -45,7 +47,7 @@ func CreateSubnet() error {
 
 	// Create a local wallet with Fuji network
 	net := network.FujiNetwork()
-	localWallet, err := local.NewLocalWallet(net)
+	localWallet, err := local.NewLocalWallet(logging.NoLog{}, net)
 	if err != nil {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}

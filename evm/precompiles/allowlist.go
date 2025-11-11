@@ -103,6 +103,7 @@ func ReadAllowList(
 ) (*big.Int, error) {
 	out, err := contract.CallToMethod(
 		rpcURL,
+		common.Address{},
 		precompile,
 		"readAllowList(address)->(uint256)",
 		nil,
