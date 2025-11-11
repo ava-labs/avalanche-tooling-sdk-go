@@ -5,13 +5,12 @@ package local
 import (
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 )
-
-// ChainClients is now defined in the wallet package
 
 // LocalWallet represents a local wallet implementation
 type LocalWallet struct {
@@ -20,6 +19,8 @@ type LocalWallet struct {
 	activeAccount  string                     // Currently active account name
 	defaultNetwork network.Network            // Default network for operations
 	seenSubnetIDs  []ids.ID                   // Subnet IDs seen for active account
+	evmClient      *ethclient.Client          // EVM client for current chain
+	evmRPC         string                     // Current EVM chain RPC URL
 }
 
 // Ensure LocalWallet implements Wallet interface
