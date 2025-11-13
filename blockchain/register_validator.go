@@ -4,34 +4,35 @@ package blockchain
 
 import (
 	"context"
-	_ "embed"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 	"math/big"
 	"time"
 
-	"github.com/zondax/golem/pkg/logger"
-
-	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
-	contractSDK "github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
-	sdkutils "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
-	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/proto/pb/platformvm"
-	avagoconstants "github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/ava-labs/avalanchego/utils/logging"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/zondax/golem/pkg/logger"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
+
+	_ "embed"
+
+	contractSDK "github.com/ava-labs/avalanche-tooling-sdk-go/evm/contract"
+	sdkutils "github.com/ava-labs/avalanche-tooling-sdk-go/utils"
+	avagoconstants "github.com/ava-labs/avalanchego/utils/constants"
 	warp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	warpMessage "github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
 	warpPayload "github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
 	ethereum "github.com/ava-labs/libevm"
-	"github.com/ava-labs/libevm/common"
-	"github.com/ava-labs/libevm/core/types"
 	subnetEvmWarp "github.com/ava-labs/subnet-evm/precompile/contracts/warp"
-
-	"google.golang.org/protobuf/proto"
 )
 
 func InitializeValidatorRegistrationPoSNative(
