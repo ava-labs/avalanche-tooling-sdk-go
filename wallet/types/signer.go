@@ -360,6 +360,8 @@ func (p *PChainSignTxResult) GetTxKind() (pchainTxs.TxKind, error) {
 		return pchainTxs.PChainRemoveSubnetValidatorTx, nil
 	case *txs.AddSubnetValidatorTx:
 		return pchainTxs.PChainAddSubnetValidatorTx, nil
+	case *txs.RegisterL1ValidatorTx:
+		return pchainTxs.PChainRegisterL1ValidatorTx, nil
 	case *txs.CreateChainTx:
 		return pchainTxs.PChainCreateChainTx, nil
 	case *txs.TransformSubnetTx:
@@ -396,6 +398,8 @@ func (p *PChainSignTxResult) GetNetworkID() (uint32, error) {
 	case *txs.TransferSubnetOwnershipTx:
 		networkID = unsignedTx.NetworkID
 	case *txs.ConvertSubnetToL1Tx:
+		networkID = unsignedTx.NetworkID
+	case *txs.RegisterL1ValidatorTx:
 		networkID = unsignedTx.NetworkID
 	default:
 		return 0, fmt.Errorf("unable to GetNetworkID due to unexpected unsigned tx type %T", unsignedTx)
@@ -434,6 +438,8 @@ func (p *PChainSignTxResult) GetBlockchainID() (ids.ID, error) {
 	case *txs.TransformSubnetTx:
 		blockchainID = unsignedTx.BlockchainID
 	case *txs.AddPermissionlessValidatorTx:
+		blockchainID = unsignedTx.BlockchainID
+	case *txs.RegisterL1ValidatorTx:
 		blockchainID = unsignedTx.BlockchainID
 	case *txs.TransferSubnetOwnershipTx:
 		blockchainID = unsignedTx.BlockchainID
