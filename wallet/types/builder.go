@@ -8,6 +8,7 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/account"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/constants"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
 )
 
@@ -69,7 +70,7 @@ type PChainBuildTxResult struct {
 }
 
 func (p *PChainBuildTxResult) GetChainType() string {
-	return ChainTypePChain
+	return constants.ChainTypePChain
 }
 
 func (p *PChainBuildTxResult) GetTx() interface{} {

@@ -11,6 +11,11 @@ const (
 	WriteReadUserOnlyPerms     = 0o600
 )
 
+// Chain type constants
+const (
+	ChainTypePChain = "P-Chain"
+)
+
 // ChainAlias represents a blockchain alias identifier
 type ChainAlias string
 
