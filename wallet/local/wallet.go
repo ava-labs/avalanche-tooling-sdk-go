@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary/common"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/wallet/types"
 
+	txs "github.com/ava-labs/avalanche-tooling-sdk-go/wallet/txs/p-chain"
 	avagoTxs "github.com/ava-labs/avalanchego/vms/platformvm/txs"
 )
 
@@ -40,17 +42,111 @@ func NewLocalWallet() (*LocalWallet, error) {
 	}, nil
 }
 
-func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account.Account, network network.Network) error {
+// buildWalletConfig creates a WalletConfig with appropriate SubnetIDs based on transaction type
+func buildWalletConfig(txInput interface{}) primary.WalletConfig {
+	config := primary.WalletConfig{}
+
+	// Handle different input types
+	switch input := txInput.(type) {
+	case *types.SignTxParams:
+		// Extract subnet ID from SignTxParams by looking at the BuildTxResult
+		if input != nil && input.BuildTxResult != nil {
+			if subnetID, err := extractSubnetIDFromBuildTxResult(input.BuildTxResult); err == nil && subnetID != ids.Empty {
+				config.SubnetIDs = []ids.ID{subnetID}
+			}
+		}
+	case *types.SendTxParams:
+		// Extract subnet ID from SendTxParams by looking at the SignTxResult
+		if input != nil && input.SignTxResult != nil {
+			if subnetID, err := extractSubnetIDFromSignTxResult(input.SignTxResult); err == nil && subnetID != ids.Empty {
+				config.SubnetIDs = []ids.ID{subnetID}
+			}
+		}
+	case *types.BuildTxParams:
+		// Extract subnet ID from BuildTxParams by looking at the BuildTxInput
+		if input != nil && input.BuildTxInput != nil {
+			if subnetID, err := extractSubnetIDFromBuildTxInput(input.BuildTxInput); err == nil && subnetID != ids.Empty {
+				config.SubnetIDs = []ids.ID{subnetID}
+			}
+		}
+	}
+
+	return config
+}
+
+// extractSubnetIDFromBuildTxInput extracts subnet ID from BuildTxInput parameters
+// This function handles the case where we have transaction parameters but not the built transaction yet
+func extractSubnetIDFromBuildTxInput(input types.BuildTxInput) (ids.ID, error) {
+	// Handle different BuildTxInput types
+	switch params := input.(type) {
+	case *txs.CreateChainTxParams:
+		// For CreateChainTx, extract subnet ID from parameters
+		if params.SubnetID != "" {
+			return ids.FromString(params.SubnetID)
+		}
+	case *txs.ConvertSubnetToL1TxParams:
+		// For ConvertSubnetToL1Tx, extract subnet ID from parameters
+		if params.SubnetID != "" {
+			return ids.FromString(params.SubnetID)
+		}
+	case *txs.CreateSubnetTxParams:
+		// CreateSubnetTx doesn't have a subnet ID since it creates the subnet
+		return ids.Empty, fmt.Errorf("CreateSubnetTx doesn't have a subnet ID")
+	default:
+		// Unknown BuildTxInput type
+	}
+	return ids.Empty, fmt.Errorf("no subnet ID found in BuildTxInput")
+}
+
+// extractSubnetIDFromBuildTxResult extracts subnet ID from a BuildTxResult
+func extractSubnetIDFromBuildTxResult(result *types.BuildTxResult) (ids.ID, error) {
+	if result != nil && result.BuildTxOutput != nil {
+		if tx := result.BuildTxOutput.GetTx(); tx != nil {
+			return extractSubnetIDFromTx(tx)
+		}
+	}
+	return ids.Empty, fmt.Errorf("no transaction found in BuildTxResult")
+}
+
+// extractSubnetIDFromSignTxResult extracts subnet ID from a SignTxResult
+func extractSubnetIDFromSignTxResult(result *types.SignTxResult) (ids.ID, error) {
+	if result != nil && result.SignTxOutput != nil {
+		if tx := result.SignTxOutput.GetTx(); tx != nil {
+			return extractSubnetIDFromTx(tx)
+		}
+	}
+	return ids.Empty, fmt.Errorf("no transaction found in SignTxResult")
+}
+
+// extractSubnetIDFromTx extracts subnet ID from a transaction object
+func extractSubnetIDFromTx(tx interface{}) (ids.ID, error) {
+	// Handle P-Chain transactions
+	if pChainTx, ok := tx.(*avagoTxs.Tx); ok && pChainTx.Unsigned != nil {
+		switch unsignedTx := pChainTx.Unsigned.(type) {
+		case *avagoTxs.CreateChainTx:
+			// For CreateChainTx, the subnet ID field is SubnetID
+			return unsignedTx.SubnetID, nil
+		case *avagoTxs.ConvertSubnetToL1Tx:
+			// For ConvertSubnetToL1Tx, the subnet ID field is Subnet
+			return unsignedTx.Subnet, nil
+		}
+	}
+	return ids.Empty, fmt.Errorf("no subnet ID found in transaction")
+}
+
+func (w *LocalWallet) loadAccountIntoWallet(ctx context.Context, account account.Account, network network.Network, txInput interface{}) error {
 	keychain, err := account.GetKeychain()
 	if err != nil {
 		return err
 	}
+
+	walletConfig := buildWalletConfig(txInput)
 	wallet, err := primary.MakeWallet(
 		ctx,
 		network.Endpoint,
 		keychain,
 		keychain,
-		primary.WalletConfig{},
+		walletConfig,
 	)
 	if err != nil {
 		return err
@@ -101,7 +197,7 @@ func (w *LocalWallet) ImportAccount(keyPath string) (*account.Account, error) {
 
 // BuildTx constructs a transaction for the specified operation
 func (w *LocalWallet) BuildTx(ctx context.Context, params types.BuildTxParams) (types.BuildTxResult, error) {
-	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
+	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, &params); err != nil {
 		return types.BuildTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 	return wallet.BuildTx(w.Wallet, params)
@@ -109,7 +205,7 @@ func (w *LocalWallet) BuildTx(ctx context.Context, params types.BuildTxParams) (
 
 // SignTx signs a transaction
 func (w *LocalWallet) SignTx(ctx context.Context, params types.SignTxParams) (types.SignTxResult, error) {
-	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
+	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, &params); err != nil {
 		return types.SignTxResult{}, fmt.Errorf("error signing tx: %w", err)
 	}
 
@@ -118,7 +214,7 @@ func (w *LocalWallet) SignTx(ctx context.Context, params types.SignTxParams) (ty
 
 // SendTx submits a signed transaction to the Network
 func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (types.SendTxResult, error) {
-	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network); err != nil {
+	if err := w.loadAccountIntoWallet(ctx, params.Account, params.Network, &params); err != nil {
 		return types.SendTxResult{}, fmt.Errorf("error loading account into wallet: %w", err)
 	}
 
