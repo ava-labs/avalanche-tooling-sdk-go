@@ -420,7 +420,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 	return nil
 }
 
-func (c *Subnet) InitializeProofOfStake(
+func (c *Subnet) InitializeProofOfStakeNative(
 	log logging.Logger,
 	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
@@ -541,6 +541,123 @@ func (c *Subnet) InitializeProofOfStake(
 	)
 	if err != nil {
 		return evm.TransactionError(tx, err, "failure initializing validators set on pos manager")
+	}
+	return nil
+}
+
+func (c *Subnet) InitializeProofOfStakeERC20(
+	log logging.Logger,
+	signer *evm.Signer,
+	aggregatorLogger logging.Logger,
+	posParams validatormanager.PoSParams,
+	erc20TokenAddress common.Address,
+	signatureAggregatorEndpoint string,
+) error {
+	if c.Network == network.UndefinedNetwork {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingNetwork)
+	}
+	if c.SubnetID == ids.Empty {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingSubnetID)
+	}
+	if c.ValidatorManagerBlockchainID == ids.Empty {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerBlockchainID)
+	}
+	if c.ValidatorManagerRPC == "" {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerRPC)
+	}
+	if c.SpecializedValidatorManagerAddress == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingSpecializedValidatorManagerAddress)
+	}
+	if c.ValidatorManagerAddress == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerAddress)
+	}
+	if c.ValidatorManagerOwnerAddress == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerOwnerAddress)
+	}
+	if c.ValidatorManagerOwnerSigner == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerOwnerPrivateKey)
+	}
+	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
+		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
+	} else {
+		if err := client.SetupProposerVM(signer); err != nil {
+			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
+		}
+		client.Close()
+	}
+	tx, _, err := validatormanager.PoAValidatorManagerInitialize(
+		log,
+		c.ValidatorManagerRPC,
+		*c.ValidatorManagerAddress,
+		signer,
+		c.SubnetID,
+		*c.ValidatorManagerOwnerAddress,
+		true,
+	)
+	if err != nil {
+		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
+			return evm.TransactionError(tx, err, "failure initializing validator manager")
+		}
+		log.Info("the Validator Manager contract is already initialized, skipping initializing it")
+	}
+	if err := validatormanager.PoSERC20ValidatorManagerInitialize(
+		log,
+		c.ValidatorManagerRPC,
+		*c.ValidatorManagerAddress,
+		*c.SpecializedValidatorManagerAddress,
+		c.ValidatorManagerOwnerSigner,
+		signer,
+		posParams,
+		erc20TokenAddress,
+	); err != nil {
+		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
+			return fmt.Errorf("failure initializing ERC20 PoS validator manager: %w", err)
+		}
+		log.Info("the ERC20 PoS contract is already initialized, skipping initializing Proof of Stake contract")
+	}
+	subnetConversionUnsignedMessage, err := validatormanager.GetPChainSubnetToL1ConversionUnsignedMessage(
+		c.Network,
+		c.SubnetID,
+		c.ValidatorManagerBlockchainID,
+		*c.ValidatorManagerAddress,
+		c.BootstrapValidators,
+	)
+	if err != nil {
+		return fmt.Errorf("failure signing subnet conversion warp message: %w", err)
+	}
+
+	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
+	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
+
+	pchainHeight, err := GetPChainHeight(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
+	if err != nil {
+		return fmt.Errorf("failure getting p-chain height: %w", err)
+	}
+	signedMessage, err := interchain.SignMessage(
+		aggregatorLogger,
+		signatureAggregatorEndpoint,
+		messageHexStr,
+		justificationHexStr,
+		c.ValidatorManagerSubnetID.String(),
+		0,
+		pchainHeight,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get signed message: %w", err)
+	}
+
+	tx, _, err = validatormanager.InitializeValidatorsSet(
+		log,
+		c.ValidatorManagerRPC,
+		*c.ValidatorManagerAddress,
+		signer,
+		c.SubnetID,
+		c.ValidatorManagerBlockchainID,
+		c.BootstrapValidators,
+		signedMessage,
+	)
+	if err != nil {
+		return evm.TransactionError(tx, err, "failure initializing validators set on ERC20 pos manager")
 	}
 	return nil
 }

@@ -49,7 +49,7 @@ type NativeTokenValidatorManagerSettingsV1_0_0 struct {
 	UptimeBlockchainID       [32]byte
 }
 
-type NativeTokenValidatorManagerSettingsV2_0_0 struct {
+type StakingValidatorManagerSettingsV2_0_0 struct {
 	Manager                  common.Address
 	MinimumStakeAmount       *big.Int
 	MaximumStakeAmount       *big.Int
