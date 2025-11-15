@@ -68,7 +68,6 @@ const (
 	ValidatorProxyAdminContractAddress      = "0xA0AFFE1234567890aBcDEF1234567890AbCdEf34"
 	SpecializationProxyContractAddress      = "0x100C0DE1C0FFEE00000000000000000000000000"
 	SpecializationProxyAdminContractAddress = "0x97A35a4A2A8a56256de7A32160819c7B3F4C9DA6"
-	RewardCalculatorAddress                 = "0x0DEADC0DE0000000000000000000000000000000"
 
 	MaximumChurnPercentage = 20 // 20% of the validator set can be churned per churn period
 	ChurnPeriodSeconds     = 0  // no churn period
