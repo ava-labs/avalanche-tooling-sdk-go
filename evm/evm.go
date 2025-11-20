@@ -488,7 +488,6 @@ func (client Client) TransactWithWarpMessage(
 	callData []byte,
 	value *big.Int,
 ) (*types.Transaction, error) {
-	const defaultGasLimit = 2_000_000
 	from := signer.Address()
 	gasFeeCap, gasTipCap, nonce, err := client.CalculateTxParams(from.Hex())
 	if err != nil {
@@ -516,10 +515,7 @@ func (client Client) TransactWithWarpMessage(
 	}
 	gasLimit, err := client.EstimateGasLimit(msg)
 	if err != nil {
-		// assuming this is related to the tx itself.
-		// just using default gas limit, and let the user debug the
-		// tx if needed so
-		gasLimit = defaultGasLimit
+		return nil, err
 	}
 	tx := types.NewTx(&types.DynamicFeeTx{
 		ChainID:    chainID,
@@ -700,4 +696,56 @@ func (client Client) SetupProposerVM(
 		err = fmt.Errorf("failure issuing tx to activate proposer VM: %w", err)
 	}
 	return err
+}
+
+// CallContract executes a message call transaction, which is directly executed in the VM
+// of the node, but never mined into the blockchain.
+// blockNumber selects the block height at which the call runs. It can be nil, in which
+// case the code is taken from the latest known block. Note that state from very old
+// blocks might not be available.
+// supports [repeatsOnFailure] failures
+func (client Client) CallContract(
+	msg ethereum.CallMsg,
+	blockNumber *big.Int,
+) ([]byte, error) {
+	result, err := utils.RetryWithContextGen(
+		utils.GetAPILargeContext,
+		func(ctx context.Context) ([]byte, error) {
+			return client.EthClient.CallContract(ctx, msg, blockNumber)
+		},
+		repeatsOnFailure,
+		sleepBetweenRepeats,
+	)
+	if err != nil {
+		err = fmt.Errorf("failure calling contract on %s: %w", client.URL, err)
+	}
+	return result, err
+}
+
+// TransactionByHash returns the transaction with the given hash.
+// supports [repeatsOnFailure] failures
+func (client Client) TransactionByHash(
+	txHash common.Hash,
+) (*types.Transaction, bool, error) {
+	type result struct {
+		tx        *types.Transaction
+		isPending bool
+	}
+	res, err := utils.RetryWithContextGen(
+		utils.GetAPILargeContext,
+		func(ctx context.Context) (*result, error) {
+			tx, isPending, err := client.EthClient.TransactionByHash(ctx, txHash)
+			if err != nil {
+				return nil, err
+			}
+			return &result{tx: tx, isPending: isPending}, nil
+		},
+		repeatsOnFailure,
+		sleepBetweenRepeats,
+	)
+	if err != nil {
+		err = fmt.Errorf("failure getting transaction %s on %s: %w", txHash.Hex(), client.URL, err)
+		return nil, false, err
+	}
+	return res.tx, res.isPending, nil
 }
