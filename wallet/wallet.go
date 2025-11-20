@@ -19,10 +19,10 @@ type Wallet interface {
 	// Network Management
 	// =========================================================================
 
-	// SetNetwork sets the default network for wallet operations
-	SetNetwork(net network.Network)
+	// SetNetwork sets the active network for wallet operations
+	SetNetwork(network network.Network)
 
-	// Network returns the default network for wallet operations
+	// Network returns the active network for wallet operations
 	Network() network.Network
 
 	// =========================================================================
@@ -35,12 +35,12 @@ type Wallet interface {
 
 	// ImportAccount imports an account into the wallet
 	// The account name is taken from the Account.Name() method and must be unique within the wallet
-	ImportAccount(acc account.Account) error
+	ImportAccount(account account.Account) error
 
 	// Account returns a specific account by name
 	Account(name string) (account.Account, error)
 
-	// SetActiveAccount sets the default account for operations
+	// SetActiveAccount sets the active account for operations
 	// Automatically set when first adding an account
 	SetActiveAccount(name string) error
 

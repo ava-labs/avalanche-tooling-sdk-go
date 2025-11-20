@@ -51,9 +51,9 @@ func GetAPILargeContext() (context.Context, context.CancelFunc) {
 	return GetTimedContext(constants.APIRequestLargeTimeout)
 }
 
-// Context for wallet refresh operations
-func GetWalletRefreshContext() (context.Context, context.CancelFunc) {
-	return GetTimedContext(constants.WalletRefreshTimeout)
+// Context for primary wallet creation operations
+func GetPrimaryWalletCreationContext() (context.Context, context.CancelFunc) {
+	return GetTimedContext(constants.PrimaryWalletCreationTimeout)
 }
 
 // Timed Context

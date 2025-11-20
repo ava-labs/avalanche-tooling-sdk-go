@@ -31,8 +31,8 @@ func (w *LocalWallet) Account(name string) (account.Account, error) {
 }
 
 // ImportAccount imports an account into the wallet
-func (w *LocalWallet) ImportAccount(acc account.Account) error {
-	name := acc.Name()
+func (w *LocalWallet) ImportAccount(account account.Account) error {
+	name := account.Name()
 	if name == "" {
 		return errors.New("account name cannot be empty")
 	}
@@ -43,7 +43,7 @@ func (w *LocalWallet) ImportAccount(acc account.Account) error {
 	}
 
 	// Store in map
-	w.accounts[name] = acc
+	w.accounts[name] = account
 
 	// Set as active if it's the first account
 	if len(w.accounts) == 1 {
@@ -55,7 +55,7 @@ func (w *LocalWallet) ImportAccount(acc account.Account) error {
 	return nil
 }
 
-// SetActiveAccount sets the default account for operations
+// SetActiveAccount sets the active account for operations
 func (w *LocalWallet) SetActiveAccount(name string) error {
 	// Do nothing if already active
 	if name == w.activeAccountName {
@@ -70,13 +70,13 @@ func (w *LocalWallet) SetActiveAccount(name string) error {
 	w.seenSubnetIDs = []ids.ID{}
 
 	// Load account into the wallet for P/X/C operations
-	ctx, cancel := utils.GetWalletRefreshContext()
+	ctx, cancel := utils.GetPrimaryWalletCreationContext()
 	defer cancel()
-	wallet, err := getWalletFromAccount(ctx, acc, w.defaultNetwork, nil)
+	wallet, err := createPrimaryWallet(ctx, acc, w.activeNetwork, nil)
 	if err != nil {
 		return fmt.Errorf("failed to load account into wallet: %w", err)
 	}
-	w.wallet = wallet
+	w.primaryWallet = wallet
 
 	return nil
 }
@@ -86,8 +86,8 @@ func (w *LocalWallet) ActiveAccountName() string {
 	return w.activeAccountName
 }
 
-// getWalletFromAccount creates an avalanchego wallet from an account
-func getWalletFromAccount(ctx context.Context, acc account.Account, net network.Network, walletConfig *primary.WalletConfig) (*primary.Wallet, error) {
+// createPrimaryWallet creates an avalanchego wallet from an account
+func createPrimaryWallet(ctx context.Context, acc account.Account, network network.Network, walletConfig *primary.WalletConfig) (*primary.Wallet, error) {
 	keychain, err := acc.GetKeychain()
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func getWalletFromAccount(ctx context.Context, acc account.Account, net network.
 
 	wallet, err := primary.MakeWallet(
 		ctx,
-		net.Endpoint,
+		network.Endpoint,
 		keychain,
 		keychain,
 		config,

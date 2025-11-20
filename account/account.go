@@ -13,7 +13,7 @@ import (
 // addresses for all chain types (AVAX-type addresses for X/P chains and EVM-type for C-Chain).
 //
 // An Account can be created using constructors like NewLocalAccount() or imported from an existing
-// private key using NewLocalAccountFromPrivateKey(). Once created, the account can be imported
+// private key using ImportFromPrivateKey(). Once created, the account can be imported
 // into a wallet for transaction operations.
 type Account interface {
 	// Name returns the account name

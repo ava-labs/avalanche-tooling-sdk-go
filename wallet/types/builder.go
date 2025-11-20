@@ -12,7 +12,9 @@ import (
 
 // BuildTxOutput represents a generic interface for transaction results
 type BuildTxOutput interface {
-	// GetChainType returns which chain this transaction is for
+	// GetChainType returns which Avalanche chain this transaction is for.
+	// Returns one of: "P-Chain", "X-Chain", "C-Chain"
+	// Note: This is different from ChainID (blockchain identifier) or Network (Mainnet/Fuji/etc).
 	GetChainType() string
 	// GetTx returns the actual transaction (interface{} to support different chain types)
 	GetTx() interface{}
@@ -22,6 +24,9 @@ type BuildTxOutput interface {
 
 // BuildTxParams contains parameters for building transactions
 type BuildTxParams struct {
+	// AccountNames specifies which accounts to use for this transaction.
+	// Currently only single-account transactions are supported (first element is used).
+	// Future: Will support multi-account for multisig transactions.
 	AccountNames []string
 	BuildTxInput
 }
@@ -30,12 +35,15 @@ type BuildTxParams struct {
 type BuildTxInput interface {
 	// Validate validates the parameters
 	Validate() error
-	// GetChainType returns which chain this transaction is for
+	// GetChainType returns which Avalanche chain this transaction is for.
+	// Returns one of: "P-Chain", "X-Chain", "C-Chain"
+	// Note: This is different from ChainID (blockchain identifier) or Network (Mainnet/Fuji/etc).
 	GetChainType() string
 }
 
 // Validate validates the build transaction parameters
 func (p *BuildTxParams) Validate() error {
+	// TODO: Support multiple accounts for multisig transactions
 	if len(p.AccountNames) > 1 {
 		return fmt.Errorf("only one account name is currently supported")
 	}

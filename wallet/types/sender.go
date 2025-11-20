@@ -12,7 +12,9 @@ import (
 
 // SendTxOutput represents a generic interface for sent transaction results
 type SendTxOutput interface {
-	// GetChainType returns which chain this transaction is for
+	// GetChainType returns which Avalanche chain this transaction is for.
+	// Returns one of: "P-Chain", "X-Chain", "C-Chain"
+	// Note: This is different from ChainID (blockchain identifier) or Network (Mainnet/Fuji/etc).
 	GetChainType() string
 	// GetTx returns the actual sent transaction (interface{} to support different chain types)
 	GetTx() interface{}
@@ -22,12 +24,16 @@ type SendTxOutput interface {
 
 // SendTxParams contains parameters for sending transactions
 type SendTxParams struct {
+	// AccountNames specifies which accounts to use for sending this transaction.
+	// Currently only single-account transactions are supported (first element is used).
+	// Future: Will support multi-account for multisig transactions.
 	AccountNames []string
 	*SignTxResult
 }
 
 // Validate validates the send transaction parameters
 func (p *SendTxParams) Validate() error {
+	// TODO: Support multiple accounts for multisig transactions
 	if len(p.AccountNames) > 1 {
 		return fmt.Errorf("only one account name is currently supported")
 	}

@@ -31,7 +31,7 @@ func CreateChain(subnetID string) error {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	acc, err := account.NewLocalAccountFromPrivateKey("my-account", "EXISTING_PRIVATE_KEY_HEX")
+	acc, err := account.ImportFromPrivateKey("my-account", "EXISTING_PRIVATE_KEY_HEX")
 	if err != nil {
 		return fmt.Errorf("failed to create account: %w", err)
 	}
