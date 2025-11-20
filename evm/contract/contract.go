@@ -3,7 +3,6 @@
 package contract
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -13,7 +12,6 @@ import (
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/libevm/common"
-	"github.com/ava-labs/libevm/common/hexutil"
 	"github.com/ava-labs/libevm/core/types"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 
@@ -328,27 +326,8 @@ func TxToMethod(
 	txOpts.Value = payment
 	tx, err := contract.Transact(txOpts, methodName, params...)
 	if err != nil {
-		trace, traceCallErr := DebugTraceCall(
-			rpcURL,
-			signer,
-			contractAddress,
-			payment,
-			methodSpec,
-			params...,
-		)
-		if traceCallErr != nil {
-			logger.Error(fmt.Sprintf("Could not get debug trace for %s error on %s: %s", description, rpcURL, traceCallErr))
-			logger.Error("Verify --debug flag value when calling 'blockchain create'")
-			return tx, nil, err
-		}
-		if errorFromSignature, err := evm.GetErrorFromTrace(trace, errorSignatureToError); errorFromSignature != nil {
-			return tx, nil, errorFromSignature
-		} else {
-			logger.Error(fmt.Sprintf("failed to match error selector on trace: %s", err))
-			logger.Error(fmt.Sprintf("error trace for %s error:", description))
-			logger.Error(fmt.Sprintf("%#v", trace))
-		}
-		return tx, nil, err
+		// Try to map the error, or enrich it with selector/revert data if no mapping found
+		return tx, nil, ExtractAndEnrichRPCError(err, errorSignatureToError)
 	}
 	if txOpts.NoSend {
 		return tx, nil, nil
@@ -414,7 +393,8 @@ func TxToMethodWithWarpMessage(
 		payment,
 	)
 	if err != nil {
-		return nil, nil, err
+		// Try to map the error, or enrich it with selector/revert data if no mapping found
+		return nil, nil, ExtractAndEnrichRPCError(err, errorSignatureToError)
 	}
 	if isNoOp, err := signer.IsNoOp(); err != nil {
 		return nil, nil, err
@@ -461,65 +441,34 @@ func handleFailedReceiptStatus(
 	tx *types.Transaction,
 	receipt *types.Receipt,
 ) (*types.Transaction, *types.Receipt, error) {
-	trace, err := evm.GetTxTrace(
-		rpcURL,
-		tx.Hash().String(),
-	)
-	if err != nil {
-		printFailedReceiptStatusMessage(logger, rpcURL, description, tx)
-		logger.Error(fmt.Sprintf("Could not get debug trace: %s", err))
-		logger.Error("Verify --debug flag value when calling 'blockchain create'")
-		return tx, receipt, err
-	}
-	if errorFromSignature, err := evm.GetErrorFromTrace(trace, errorSignatureToError); errorFromSignature != nil {
-		return tx, receipt, errorFromSignature
-	} else {
-		printFailedReceiptStatusMessage(logger, rpcURL, description, tx)
-		logger.Error(fmt.Sprintf("failed to match error selector on trace: %s", err))
-		logger.Error("error trace:")
-		logger.Error(fmt.Sprintf("%#v", trace))
-	}
-	return tx, receipt, ErrFailedReceiptStatus
-}
+	// Re-simulate the transaction at the block before it was mined to get the revert reason
+	// This uses standard eth_call instead of debug_traceTransaction
+	txHash := tx.Hash().String()
+	simErr := evm.SimulateTransaction(rpcURL, txHash)
 
-func DebugTraceCall(
-	rpcURL string,
-	signer *evm.Signer,
-	contractAddress common.Address,
-	payment *big.Int,
-	methodSpec string,
-	params ...interface{},
-) (map[string]interface{}, error) {
-	methodName, methodABI, err := ParseSpec(methodSpec, nil, false, false, false, false, nil, params...)
-	if err != nil {
-		return nil, err
+	// If the simulation returned an error, try to extract and map it
+	if simErr != nil {
+		if mappedErr := ExtractErrorFromRPCError(simErr, errorSignatureToError); mappedErr != simErr {
+			// Successfully mapped the error
+			return tx, receipt, mappedErr
+		}
+		// Could not map the error, but we have the revert reason
+		printFailedReceiptStatusMessage(logger, rpcURL, description, tx)
+		// Try to extract and print error selector and revert data for debugging
+		if errorSelector, err := GetErrorSelectorFromRPCError(simErr); err == nil {
+			logger.Error(fmt.Sprintf("Error selector: %s", errorSelector))
+		}
+		if revertData, err := GetRevertDataFromRPCError(simErr); err == nil {
+			logger.Error(fmt.Sprintf("Revert data: %s", revertData))
+		}
+		logger.Error(fmt.Sprintf("Transaction reverted: %s", simErr))
+		return tx, receipt, simErr
 	}
-	metadata := &bind.MetaData{
-		ABI: methodABI,
-	}
-	abi, err := metadata.GetAbi()
-	if err != nil {
-		return nil, err
-	}
-	callData, err := abi.Pack(methodName, params...)
-	if err != nil {
-		return nil, err
-	}
-	client, err := evm.GetRawClient(rpcURL)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-	data := map[string]string{
-		"from":  signer.Address().Hex(),
-		"to":    contractAddress.Hex(),
-		"input": "0x" + hex.EncodeToString(callData),
-	}
-	if payment != nil {
-		hexBytes, _ := hexutil.Big(*payment).MarshalText()
-		data["value"] = string(hexBytes)
-	}
-	return client.DebugTraceCall(data)
+
+	// Simulation succeeded but original tx failed (race condition or other issue)
+	printFailedReceiptStatusMessage(logger, rpcURL, description, tx)
+	logger.Error("Transaction failed on-chain but succeeded during simulation (possible race condition)")
+	return tx, receipt, ErrFailedReceiptStatus
 }
 
 func CallToMethod(
