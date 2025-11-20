@@ -26,120 +26,91 @@ func PoSValidatorManagerInitialize(
 	specializedManagerAddress common.Address,
 	managerOwnerSigner *evm.Signer,
 	signer *evm.Signer,
-	subnetID [32]byte,
 	posParams PoSParams,
-	useACP99 bool,
 	nativeMinterPrecompileAdminSigner *evm.Signer,
 ) (*types.Transaction, *types.Receipt, error) {
 	if err := posParams.Verify(); err != nil {
 		return nil, nil, err
 	}
-	if useACP99 {
-		client, err := evm.GetClient(rpcURL)
-		if err != nil {
-			return nil, nil, err
-		}
-		nativeMinterPrecompileOn, err := client.ContractAlreadyDeployed(precompiles.NativeMinterPrecompile.Hex())
-		if err != nil {
-			return nil, nil, err
-		}
-		if !nativeMinterPrecompileOn {
-			return nil, nil, fmt.Errorf("native minter precompile should be enabled for Native PoS")
-		}
-		allowedStatus, err := precompiles.ReadAllowList(
-			rpcURL,
-			precompiles.NativeMinterPrecompile,
-			specializedManagerAddress,
-		)
-		if err != nil {
-			return nil, nil, err
-		}
-		if allowedStatus.Cmp(big.NewInt(0)) == 0 {
-			if nativeMinterPrecompileAdminSigner == nil {
-				return nil, nil, fmt.Errorf("no managed native minter precompile admin was found, and need to be used to enable Native PoS")
-			}
-			if err := precompiles.SetEnabled(
-				logger,
-				rpcURL,
-				precompiles.NativeMinterPrecompile,
-				nativeMinterPrecompileAdminSigner,
-				specializedManagerAddress,
-			); err != nil {
-				return nil, nil, err
-			}
-		}
-		weightToValueFactor := new(big.Int)
-		weightToValueFactor.Mul(posParams.WeightToValueFactor, big.NewInt(1_000_000_000_000_000_000))
-		minimumStakeAmount := new(big.Int)
-		minimumStakeAmount.Mul(posParams.MinimumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
-		maximumStakeAmount := new(big.Int)
-		maximumStakeAmount.Mul(posParams.MaximumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
-		if tx, receipt, err := contract.TxToMethod(
-			logger,
-			rpcURL,
-			signer,
-			specializedManagerAddress,
-			nil,
-			"initialize Native Token PoS manager",
-			ErrorSignatureToError,
-			"initialize((address,uint256,uint256,uint64,uint16,uint8,uint256,address,bytes32))",
-			NativeTokenValidatorManagerSettingsV2_0_0{
-				Manager:                  managerAddress,
-				MinimumStakeAmount:       minimumStakeAmount,
-				MaximumStakeAmount:       maximumStakeAmount,
-				MinimumStakeDuration:     posParams.MinimumStakeDuration,
-				MinimumDelegationFeeBips: posParams.MinimumDelegationFee,
-				MaximumStakeMultiplier:   posParams.MaximumStakeMultiplier,
-				WeightToValueFactor:      weightToValueFactor,
-				RewardCalculator:         common.HexToAddress(posParams.RewardCalculatorAddress),
-				UptimeBlockchainID:       posParams.UptimeBlockchainID,
-			},
-		); err != nil {
-			return tx, receipt, err
-		}
-		managerOwnerAddress := managerOwnerSigner.Address()
-		_, err = client.FundAddress(
-			signer,
-			managerOwnerAddress.Hex(),
-			big.NewInt(100_000_000_000_000_000), // 0.1 TOKEN
-		)
-		if err != nil {
-			return nil, nil, err
-		}
-		err = contract.TransferOwnership(
-			logger,
-			rpcURL,
-			managerAddress,
-			managerOwnerSigner,
-			specializedManagerAddress,
-		)
+	client, err := evm.GetClient(rpcURL)
+	if err != nil {
 		return nil, nil, err
 	}
-	return contract.TxToMethod(
+	nativeMinterPrecompileOn, err := client.ContractAlreadyDeployed(precompiles.NativeMinterPrecompile.Hex())
+	if err != nil {
+		return nil, nil, err
+	}
+	if !nativeMinterPrecompileOn {
+		return nil, nil, fmt.Errorf("native minter precompile should be enabled for Native PoS")
+	}
+	allowedStatus, err := precompiles.ReadAllowList(
+		rpcURL,
+		precompiles.NativeMinterPrecompile,
+		specializedManagerAddress,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if allowedStatus.Cmp(big.NewInt(0)) == 0 {
+		if nativeMinterPrecompileAdminSigner == nil {
+			return nil, nil, fmt.Errorf("no managed native minter precompile admin was found, and need to be used to enable Native PoS")
+		}
+		if err := precompiles.SetEnabled(
+			logger,
+			rpcURL,
+			precompiles.NativeMinterPrecompile,
+			nativeMinterPrecompileAdminSigner,
+			specializedManagerAddress,
+		); err != nil {
+			return nil, nil, err
+		}
+	}
+	weightToValueFactor := new(big.Int)
+	weightToValueFactor.Mul(posParams.WeightToValueFactor, big.NewInt(1_000_000_000_000_000_000))
+	minimumStakeAmount := new(big.Int)
+	minimumStakeAmount.Mul(posParams.MinimumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
+	maximumStakeAmount := new(big.Int)
+	maximumStakeAmount.Mul(posParams.MaximumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
+	if tx, receipt, err := contract.TxToMethod(
 		logger,
 		rpcURL,
 		signer,
-		managerAddress,
+		specializedManagerAddress,
 		nil,
 		"initialize Native Token PoS manager",
 		ErrorSignatureToError,
-		"initialize(((bytes32,uint64,uint8),uint256,uint256,uint64,uint16,uint8,uint256,address,bytes32))",
-		NativeTokenValidatorManagerSettingsV1_0_0{
-			BaseSettings: ValidatorManagerSettings{
-				SubnetID:               subnetID,
-				ChurnPeriodSeconds:     ChurnPeriodSeconds,
-				MaximumChurnPercentage: MaximumChurnPercentage,
-			},
-			MinimumStakeAmount:       posParams.MinimumStakeAmount,
-			MaximumStakeAmount:       posParams.MaximumStakeAmount,
+		"initialize((address,uint256,uint256,uint64,uint16,uint8,uint256,address,bytes32))",
+		NativeTokenValidatorManagerSettingsV2_0_0{
+			Manager:                  managerAddress,
+			MinimumStakeAmount:       minimumStakeAmount,
+			MaximumStakeAmount:       maximumStakeAmount,
 			MinimumStakeDuration:     posParams.MinimumStakeDuration,
 			MinimumDelegationFeeBips: posParams.MinimumDelegationFee,
 			MaximumStakeMultiplier:   posParams.MaximumStakeMultiplier,
-			WeightToValueFactor:      posParams.WeightToValueFactor,
+			WeightToValueFactor:      weightToValueFactor,
 			RewardCalculator:         common.HexToAddress(posParams.RewardCalculatorAddress),
 			UptimeBlockchainID:       posParams.UptimeBlockchainID,
 		},
+	); err != nil {
+		return tx, receipt, err
+	}
+	managerOwnerAddress := managerOwnerSigner.Address()
+	_, err = client.FundAddress(
+		signer,
+		managerOwnerAddress.Hex(),
+		big.NewInt(100_000_000_000_000_000), // 0.1 TOKEN
 	)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = contract.TransferOwnership(
+		logger,
+		rpcURL,
+		managerAddress,
+		managerOwnerSigner,
+		specializedManagerAddress,
+	)
+	return nil, nil, err
 }
 
 func PoSWeightToValue(
