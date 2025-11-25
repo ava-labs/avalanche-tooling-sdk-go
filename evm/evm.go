@@ -281,7 +281,13 @@ func (client Client) CalculateTxParams(
 		return nil, nil, 0, err
 	}
 	gasFeeCap := baseFee.Mul(baseFee, big.NewInt(baseFeeFactor))
-	gasFeeCap.Add(gasFeeCap, big.NewInt(maxPriorityFeePerGas))
+	// Use the max of gasTipCap and the hardcoded minimum to ensure gasFeeCap is always valid
+	tipToUse := gasTipCap
+	minTip := big.NewInt(maxPriorityFeePerGas)
+	if gasTipCap.Cmp(minTip) < 0 {
+		tipToUse = minTip
+	}
+	gasFeeCap.Add(gasFeeCap, tipToUse)
 	return gasFeeCap, gasTipCap, nonce, nil
 }
 
