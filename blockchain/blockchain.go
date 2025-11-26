@@ -5,39 +5,32 @@ package blockchain
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
-	"net/url"
 	"os"
 	"time"
 
-	"connectrpc.com/connect"
-	"github.com/ava-labs/avalanchego/api/connectclient"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
-	"github.com/ava-labs/avalanchego/vms/proposervm"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/core"
 	"github.com/ava-labs/subnet-evm/commontype"
 	"github.com/ava-labs/subnet-evm/params"
 	"github.com/ava-labs/subnet-evm/params/extras"
-	"github.com/ava-labs/subnet-evm/utils"
 	"go.uber.org/zap"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/evm"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/interchain"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/network"
+	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/validatormanager"
 	"github.com/ava-labs/avalanche-tooling-sdk-go/vm"
 
-	pbproposervm "github.com/ava-labs/avalanchego/connectproto/pb/proposervm"
-	pb "github.com/ava-labs/avalanchego/connectproto/pb/proposervm/proposervmconnect"
-	icmUtils "github.com/ava-labs/icm-services/utils"
+	subnetevmutils "github.com/ava-labs/subnet-evm/utils"
 )
 
 var (
@@ -306,7 +299,7 @@ func CreateEvmGenesis(
 }
 
 func GetDefaultSubnetEVMGenesis(initialAllocationAddress string) SubnetEVMParams {
-	genesisBlock0Timestamp := utils.TimeToNewUint64(time.Now())
+	genesisBlock0Timestamp := subnetevmutils.TimeToNewUint64(time.Now())
 	allocation := core.GenesisAlloc{}
 	defaultAmount, _ := new(big.Int).SetString(vm.DefaultEvmAirdropAmount, 10)
 	allocation[common.HexToAddress(initialAllocationAddress)] = core.GenesisAccount{
@@ -402,7 +395,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
 	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
 
-	pchainHeight, err := GetPChainHeight(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
+	l1Epoch, err := utils.GetCurrentL1Epoch(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
 	if err != nil {
 		return fmt.Errorf("failure getting p-chain height: %w", err)
 	}
@@ -414,7 +407,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 		justificationHexStr,
 		c.ValidatorManagerSubnetID.String(),
 		0,
-		pchainHeight,
+		l1Epoch.PChainHeight,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get signed message: %w", err)
@@ -436,7 +429,7 @@ func (c *Subnet) InitializeProofOfAuthority(
 	return nil
 }
 
-func (c *Subnet) InitializeProofOfStake(
+func (c *Subnet) InitializeProofOfStakeNative(
 	log logging.Logger,
 	signer *evm.Signer,
 	aggregatorLogger logging.Logger,
@@ -520,7 +513,7 @@ func (c *Subnet) InitializeProofOfStake(
 	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
 	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
 
-	pchainHeight, err := GetPChainHeight(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
+	l1Epoch, err := utils.GetCurrentL1Epoch(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
 	if err != nil {
 		return fmt.Errorf("failure getting p-chain height: %w", err)
 	}
@@ -531,7 +524,7 @@ func (c *Subnet) InitializeProofOfStake(
 		justificationHexStr,
 		c.ValidatorManagerSubnetID.String(),
 		0,
-		pchainHeight,
+		l1Epoch.PChainHeight,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to get signed message: %w", err)
@@ -553,31 +546,118 @@ func (c *Subnet) InitializeProofOfStake(
 	return nil
 }
 
-func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
-	endpoint, err := url.Parse(rpcURL)
+func (c *Subnet) InitializeProofOfStakeERC20(
+	log logging.Logger,
+	signer *evm.Signer,
+	aggregatorLogger logging.Logger,
+	posParams validatormanager.PoSParams,
+	erc20TokenAddress common.Address,
+	signatureAggregatorEndpoint string,
+) error {
+	if c.Network == network.UndefinedNetwork {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingNetwork)
+	}
+	if c.SubnetID == ids.Empty {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingSubnetID)
+	}
+	if c.ValidatorManagerBlockchainID == ids.Empty {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerBlockchainID)
+	}
+	if c.ValidatorManagerRPC == "" {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerRPC)
+	}
+	if c.SpecializedValidatorManagerAddress == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingSpecializedValidatorManagerAddress)
+	}
+	if c.ValidatorManagerAddress == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerAddress)
+	}
+	if c.ValidatorManagerOwnerAddress == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerOwnerAddress)
+	}
+	if c.ValidatorManagerOwnerSigner == nil {
+		return fmt.Errorf("unable to initialize Proof of Stake ERC20: %w", errMissingValidatorManagerOwnerPrivateKey)
+	}
+	if client, err := evm.GetClient(c.ValidatorManagerRPC); err != nil {
+		log.Error("failure connecting to Validator Manager RPC to setup proposer VM", zap.Error(err))
+	} else {
+		if err := client.SetupProposerVM(signer); err != nil {
+			log.Error("failure setting proposer VM on Validator Manager's Blockchain", zap.Error(err))
+		}
+		client.Close()
+	}
+	tx, _, err := validatormanager.PoAValidatorManagerInitialize(
+		log,
+		c.ValidatorManagerRPC,
+		*c.ValidatorManagerAddress,
+		signer,
+		c.SubnetID,
+		*c.ValidatorManagerOwnerAddress,
+	)
 	if err != nil {
-		return 0, fmt.Errorf("failed to parse rpc endpoint %w", err)
+		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
+			return evm.TransactionError(tx, err, "failure initializing validator manager")
+		}
+		log.Info("the Validator Manager contract is already initialized, skipping initializing it")
+	}
+	if err := validatormanager.PoSERC20ValidatorManagerInitialize(
+		log,
+		c.ValidatorManagerRPC,
+		*c.ValidatorManagerAddress,
+		*c.SpecializedValidatorManagerAddress,
+		c.ValidatorManagerOwnerSigner,
+		signer,
+		posParams,
+		erc20TokenAddress,
+	); err != nil {
+		if !errors.Is(err, validatormanager.ErrAlreadyInitialized) {
+			return fmt.Errorf("failure initializing ERC20 PoS validator manager: %w", err)
+		}
+		log.Info("the ERC20 PoS contract is already initialized, skipping initializing Proof of Stake contract")
+	}
+	subnetConversionUnsignedMessage, err := validatormanager.GetPChainSubnetToL1ConversionUnsignedMessage(
+		c.Network,
+		c.SubnetID,
+		c.ValidatorManagerBlockchainID,
+		*c.ValidatorManagerAddress,
+		c.BootstrapValidators,
+	)
+	if err != nil {
+		return fmt.Errorf("failure signing subnet conversion warp message: %w", err)
 	}
 
-	baseURL := fmt.Sprintf("%s://%s", endpoint.Scheme, endpoint.Host)
-	proposerClient := pb.NewProposerVMClient(
-		connectclient.New(),
-		baseURL,
-		connect.WithInterceptors(
-			connectclient.SetRouteHeaderInterceptor{
-				Route: []string{
-					blockchainID,
-					proposervm.HTTPHeaderRoute,
-				},
-			},
-		),
-	)
-	ctx, cancel := context.WithTimeout(context.Background(), icmUtils.DefaultCreateSignedMessageTimeout)
-	defer cancel()
-	response, err := proposerClient.GetCurrentEpoch(ctx, &connect.Request[pbproposervm.GetCurrentEpochRequest]{})
+	messageHexStr := hex.EncodeToString(subnetConversionUnsignedMessage.Bytes())
+	justificationHexStr := hex.EncodeToString(c.SubnetID[:])
+
+	l1Epoch, err := utils.GetCurrentL1Epoch(c.ValidatorManagerRPC, c.ValidatorManagerBlockchainID.String())
 	if err != nil {
-		return 0, fmt.Errorf("failed to get current epoch ProposerVM %w", err)
+		return fmt.Errorf("failure getting p-chain height: %w", err)
 	}
-	epoch := response.Msg
-	return epoch.PChainHeight, nil
+	signedMessage, err := interchain.SignMessage(
+		aggregatorLogger,
+		signatureAggregatorEndpoint,
+		messageHexStr,
+		justificationHexStr,
+		c.ValidatorManagerSubnetID.String(),
+		0,
+		l1Epoch.PChainHeight,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get signed message: %w", err)
+	}
+
+	tx, _, err = validatormanager.InitializeValidatorsSet(
+		log,
+		c.ValidatorManagerRPC,
+		*c.ValidatorManagerAddress,
+		signer,
+		c.SubnetID,
+		c.ValidatorManagerBlockchainID,
+		c.BootstrapValidators,
+		signedMessage,
+	)
+	if err != nil {
+		return evm.TransactionError(tx, err, "failure initializing validators set on ERC20 pos manager")
+	}
+	return nil
 }

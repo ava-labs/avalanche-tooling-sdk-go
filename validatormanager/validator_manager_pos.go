@@ -80,7 +80,7 @@ func PoSValidatorManagerInitialize(
 		"initialize Native Token PoS manager",
 		ErrorSignatureToError,
 		"initialize((address,uint256,uint256,uint64,uint16,uint8,uint256,address,bytes32))",
-		NativeTokenValidatorManagerSettingsV2_0_0{
+		StakingValidatorManagerSettingsV2_0_0{
 			Manager:                  managerAddress,
 			MinimumStakeAmount:       minimumStakeAmount,
 			MaximumStakeAmount:       maximumStakeAmount,
@@ -113,6 +113,71 @@ func PoSValidatorManagerInitialize(
 	return nil, nil, err
 }
 
+func PoSERC20ValidatorManagerInitialize(
+	logger logging.Logger,
+	rpcURL string,
+	managerAddress common.Address,
+	specializedManagerAddress common.Address,
+	managerOwnerSigner *evm.Signer,
+	signer *evm.Signer,
+	posParams PoSParams,
+	erc20TokenAddress common.Address,
+) error {
+	if err := posParams.Verify(); err != nil {
+		return err
+	}
+	weightToValueFactor := new(big.Int)
+	weightToValueFactor.Mul(posParams.WeightToValueFactor, big.NewInt(1_000_000_000_000_000_000))
+	minimumStakeAmount := new(big.Int)
+	minimumStakeAmount.Mul(posParams.MinimumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
+	maximumStakeAmount := new(big.Int)
+	maximumStakeAmount.Mul(posParams.MaximumStakeAmount, big.NewInt(1_000_000_000_000_000_000))
+	if tx, _, err := contract.TxToMethod(
+		logger,
+		rpcURL,
+		signer,
+		specializedManagerAddress,
+		nil,
+		"initialize ERC20 Token PoS manager",
+		ErrorSignatureToError,
+		"initialize((address,uint256,uint256,uint64,uint16,uint8,uint256,address,bytes32),address)",
+		StakingValidatorManagerSettingsV2_0_0{
+			Manager:                  managerAddress,
+			MinimumStakeAmount:       minimumStakeAmount,
+			MaximumStakeAmount:       maximumStakeAmount,
+			MinimumStakeDuration:     posParams.MinimumStakeDuration,
+			MinimumDelegationFeeBips: posParams.MinimumDelegationFee,
+			MaximumStakeMultiplier:   posParams.MaximumStakeMultiplier,
+			WeightToValueFactor:      weightToValueFactor,
+			RewardCalculator:         common.HexToAddress(posParams.RewardCalculatorAddress),
+			UptimeBlockchainID:       posParams.UptimeBlockchainID,
+		},
+		erc20TokenAddress,
+	); err != nil {
+		return evm.TransactionError(tx, err, "failure initializing ERC20 PoS validator manager")
+	}
+	client, err := evm.GetClient(rpcURL)
+	if err != nil {
+		return err
+	}
+	managerOwnerAddress := managerOwnerSigner.Address()
+	_, err = client.FundAddress(
+		signer,
+		managerOwnerAddress.Hex(),
+		big.NewInt(100_000_000_000_000_000),
+	)
+	if err != nil {
+		return err
+	}
+	return contract.TransferOwnership(
+		logger,
+		rpcURL,
+		managerAddress,
+		managerOwnerSigner,
+		specializedManagerAddress,
+	)
+}
+
 func PoSWeightToValue(
 	rpcURL string,
 	managerAddress common.Address,
@@ -133,6 +198,27 @@ func PoSWeightToValue(
 		return nil, fmt.Errorf("error at weightToValue, expected *big.Int, got %T", out[0])
 	}
 	return value, nil
+}
+
+// GetERC20StakingTokenAddress queries the ERC20TokenStakingManager for the staking token address
+func GetERC20StakingTokenAddress(
+	rpcURL string,
+	managerAddress common.Address,
+) (common.Address, error) {
+	out, err := contract.CallToMethod(
+		rpcURL,
+		managerAddress,
+		"erc20()->(address)",
+		nil,
+	)
+	if err != nil {
+		return common.Address{}, err
+	}
+	tokenAddress, ok := out[0].(common.Address)
+	if !ok {
+		return common.Address{}, fmt.Errorf("error at erc20, expected common.Address, got %T", out[0])
+	}
+	return tokenAddress, nil
 }
 
 type GetStakingManagerSetttingsReturn struct {
