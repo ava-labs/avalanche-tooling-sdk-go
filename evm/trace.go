@@ -4,17 +4,12 @@ package evm
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
-	"strings"
 
-	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/rpc"
 
 	"github.com/ava-labs/avalanche-tooling-sdk-go/utils"
 )
-
-var ErrUnknownErrorSelector = fmt.Errorf("unknown error selector")
 
 // also used at mocks
 var (
@@ -141,43 +136,4 @@ func GetTxTrace(rpcURL string, txID string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return client.DebugTraceTransaction(txID)
-}
-
-// returns evm function selector code for the given function signature
-// evm maps function and error signatures into codes that are then used in traces
-func GetFunctionSelector(functionSignature string) string {
-	return "0x" + hex.EncodeToString(crypto.Keccak256([]byte(functionSignature))[:4])
-}
-
-// returns golang error associated with [trace] by using [functionSignatureToError]
-// to map function signatures to evm function selectors in [trace], and then to golang errors
-// first returned error is the mapped error, second error is for errors obtained
-// executing this function
-func GetErrorFromTrace(
-	trace map[string]interface{},
-	functionSignatureToError map[string]error,
-) (error, error) {
-	traceOutputI, ok := trace["output"]
-	if !ok {
-		return nil, fmt.Errorf("trace does not contain output field")
-	}
-	traceOutput, ok := traceOutputI.(string)
-	if !ok {
-		return nil, fmt.Errorf("expected type string for trace output, got %T", traceOutputI)
-	}
-	traceOutputBytes, err := hex.DecodeString(strings.TrimPrefix(traceOutput, "0x"))
-	if err != nil {
-		return nil, fmt.Errorf("failure decoding trace output: %w", err)
-	}
-	if len(traceOutputBytes) < 4 {
-		return nil, fmt.Errorf("less than 4 bytes in trace output")
-	}
-	traceErrorSelector := "0x" + hex.EncodeToString(traceOutputBytes[:4])
-	for errorSignature, err := range functionSignatureToError {
-		errorSelector := GetFunctionSelector(errorSignature)
-		if traceErrorSelector == errorSelector {
-			return err, nil
-		}
-	}
-	return nil, fmt.Errorf("%w: %s", ErrUnknownErrorSelector, traceErrorSelector)
 }
