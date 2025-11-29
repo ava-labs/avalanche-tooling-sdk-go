@@ -252,6 +252,43 @@ func (w *LocalWallet) SendTx(ctx context.Context, params types.SendTxParams) (ty
 	return wallet.SendTx(walletToUse, params)
 }
 
+// SubmitTx builds, signs, and sends a transaction in one call
+func (w *LocalWallet) SubmitTx(ctx context.Context, params types.SubmitTxParams) (types.SubmitTxResult, error) {
+	// Validate parameters first
+	if err := params.Validate(); err != nil {
+		return types.SubmitTxResult{}, fmt.Errorf("invalid parameters: %w", err)
+	}
+
+	// Step 1: Build the transaction
+	buildParams := types.BuildTxParams(params)
+	buildResult, err := w.BuildTx(ctx, buildParams)
+	if err != nil {
+		return types.SubmitTxResult{}, fmt.Errorf("failed to build tx: %w", err)
+	}
+
+	// Step 2: Sign the transaction
+	signParams := types.SignTxParams{
+		AccountNames:  params.AccountNames,
+		BuildTxResult: &buildResult,
+	}
+	signResult, err := w.SignTx(ctx, signParams)
+	if err != nil {
+		return types.SubmitTxResult{}, fmt.Errorf("failed to sign tx: %w", err)
+	}
+
+	// Step 3: Send the transaction
+	sendParams := types.SendTxParams{
+		AccountNames: params.AccountNames,
+		SignTxResult: &signResult,
+	}
+	sendResult, err := w.SendTx(ctx, sendParams)
+	if err != nil {
+		return types.SubmitTxResult{}, fmt.Errorf("failed to send tx: %w", err)
+	}
+
+	return types.SubmitTxResult(sendResult), nil
+}
+
 func (w *LocalWallet) Commit(transaction types.SignTxResult) (*avagoTxs.Tx, error) {
 	if transaction.Undefined() {
 		return nil, multisig.ErrUndefinedTx
