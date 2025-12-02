@@ -90,3 +90,11 @@ func WrapContext[T any](
 		return ret, err
 	}
 }
+
+func PointersSlice[T any](input []T) []*T {
+	output := make([]*T, 0, len(input))
+	for _, e := range input {
+		output = append(output, &e)
+	}
+	return output
+}

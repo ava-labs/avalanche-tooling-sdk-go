@@ -19,4 +19,5 @@ const (
 	PChainAddPermissionlessValidatorTx
 	PChainTransferSubnetOwnershipTx
 	PChainConvertSubnetToL1Tx
+	PChainRegisterL1ValidatorTx
 )
