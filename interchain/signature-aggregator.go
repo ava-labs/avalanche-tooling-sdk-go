@@ -37,9 +37,60 @@ type aggregateSignatureRequestCamelCase struct {
 	PChainHeight           uint64 `json:"pchainHeight"`
 }
 
+// signMessageSettings holds the configurable behavior for SignMessage.
+// All fields are initialized with sensible defaults and may be overridden
+// via SignMessageOption.
+type signMessageSettings struct {
+	requestTimeout time.Duration
+	maxRetries     int
+	initialBackoff time.Duration
+}
+
+// SignMessageOption allows callers to customize the behavior of SignMessage
+// without introducing a breaking API change.
+type SignMessageOption func(*signMessageSettings)
+
+// WithRequestTimeout overrides the default HTTP timeout used when calling
+// the signature aggregator endpoint.
+func WithRequestTimeout(d time.Duration) SignMessageOption {
+	return func(s *signMessageSettings) {
+		if d > 0 {
+			s.requestTimeout = d
+		}
+	}
+}
+
+// WithMaxRetries overrides the default number of attempts made when calling
+// the signature aggregator. Values less than 1 are ignored.
+func WithMaxRetries(n int) SignMessageOption {
+	return func(s *signMessageSettings) {
+		if n > 0 {
+			s.maxRetries = n
+		}
+	}
+}
+
+// WithInitialBackoff overrides the default initial backoff used between
+// retries when calling the signature aggregator. Values less than or equal
+// to zero are ignored.
+func WithInitialBackoff(seconds int) SignMessageOption {
+    return func(s *signMessageSettings) {
+        if seconds > 0 {
+            s.initialBackoff = time.Duration(seconds) * time.Second
+        }
+    }
+}
+
 // SignMessage sends a request to the signature aggregator to sign a message.
 // It returns the signed warp message or an error if the operation fails.
-// Automatically uses camelCase JSON for non-local endpoints and kebab-case for local endpoints.
+//
+// For backward-compatibility, the original parameters remain unchanged and
+// default retry behavior is preserved. Callers may optionally provide one
+// or more SignMessageOption values to override the default timeout, retry
+// count, or initial backoff.
+//
+// Automatically uses camelCase JSON for non-local endpoints and kebab-case
+// for local endpoints.
 func SignMessage(
 	logger logging.Logger,
 	signatureAggregatorEndpoint string,
@@ -48,15 +99,30 @@ func SignMessage(
 	signingSubnetID string,
 	quorumPercentage uint64,
 	pChainHeight uint64,
+	opts ...SignMessageOption,
 ) (*warp.Message, error) {
+	// Initialize settings with defaults.
+	settings := signMessageSettings{
+		requestTimeout: SignatureAggregatorRequestTimeout,
+		maxRetries:     MaxRetries,
+		initialBackoff: InitialBackoff,
+	}
+
+	// Apply any caller-provided overrides.
+	for _, opt := range opts {
+		opt(&settings)
+	}
+
 	if quorumPercentage == 0 {
 		quorumPercentage = DefaultQuorumPercentage
 	} else if quorumPercentage > 100 {
 		return nil, fmt.Errorf("quorum percentage cannot be greater than 100")
 	}
 
-	var requestBody []byte
-	var err error
+	var (
+		requestBody []byte
+		err         error
+	)
 
 	// Use camelCase JSON for non-local signature aggregators, kebab-case for local
 	useCamelCase := !utils.IsEndpointLocalhost(signatureAggregatorEndpoint)
@@ -92,13 +158,13 @@ func SignMessage(
 	)
 
 	client := &http.Client{
-		Timeout: SignatureAggregatorRequestTimeout,
+		Timeout: settings.requestTimeout,
 	}
 
 	var lastErr error
-	backoff := InitialBackoff
+	backoff := settings.initialBackoff
 
-	for attempt := 0; attempt < MaxRetries; attempt++ {
+	for attempt := 0; attempt < settings.maxRetries; attempt++ {
 		if attempt > 0 {
 			logger.Info("Retrying signature aggregator request",
 				zap.Int("attempt", attempt+1),
@@ -198,5 +264,5 @@ func SignMessage(
 		return signedMessage, nil
 	}
 
-	return nil, fmt.Errorf("failed after %d attempts, last error: %w", MaxRetries, lastErr)
+	return nil, fmt.Errorf("failed after %d attempts, last error: %w", settings.maxRetries, lastErr)
 }
