@@ -10,6 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
+	warpMessage "github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/cubist-labs/cubesigner-go-sdk/models"
 	"math/big"
 	"net/url"
 	"os"
@@ -580,4 +584,170 @@ func GetPChainHeight(rpcURL, blockchainID string) (uint64, error) {
 	}
 	epoch := response.Msg
 	return epoch.PChainHeight, nil
+}
+
+func InitValidatorRegistration(
+	ctx context.Context,
+	logger logging.Logger,
+	app *application.Avalanche,
+	network models.Network,
+	rpcURL string,
+	chainSpec contract.ChainSpec,
+	generateRawTxOnly bool,
+	ownerSigner *evm.Signer,
+	nodeID ids.NodeID,
+	blsPublicKey []byte,
+	expiry uint64,
+	balanceOwners warpMessage.PChainOwner,
+	disableOwners warpMessage.PChainOwner,
+	weight uint64,
+	aggregatorLogger logging.Logger,
+	isPos bool,
+	delegationFee uint16,
+	stakeDuration time.Duration,
+	rewardRecipient common.Address,
+	managerBlockchainID ids.ID,
+	managerAddressStr string,
+	useACP99 bool,
+	initiateTxHash string,
+	signatureAggregatorEndpoint string,
+	pchainHeight uint64,
+) (*warp.Message, ids.ID, *types.Transaction, error) {
+	subnetID, err := contract.GetSubnetID(
+		app,
+		network,
+		chainSpec,
+	)
+	if err != nil {
+		return nil, ids.Empty, nil, err
+	}
+
+	managerSubnetID, err := contract.GetSubnetID(
+		app,
+		network,
+		contract.ChainSpec{
+			BlockchainID: managerBlockchainID.String(),
+		},
+	)
+	if err != nil {
+		return nil, ids.Empty, nil, err
+	}
+
+	managerAddress := common.HexToAddress(managerAddressStr)
+
+	alreadyInitialized := initiateTxHash != ""
+	if validationID, err := validatormanager.GetValidationID(
+		rpcURL,
+		managerAddress,
+		nodeID,
+	); err != nil {
+		return nil, ids.Empty, nil, err
+	} else if validationID != ids.Empty {
+		alreadyInitialized = true
+	}
+
+	var receipt *types.Receipt
+	if !alreadyInitialized {
+		var tx *types.Transaction
+		if isPos {
+			stakeAmount, err := validatormanager.PoSWeightToValue(
+				rpcURL,
+				managerAddress,
+				weight,
+			)
+			if err != nil {
+				return nil, ids.Empty, nil, fmt.Errorf("failure obtaining value from weight: %w", err)
+			}
+			logger.Info("")
+			logger.Info("Initializing validator registration with PoS validator manager")
+			logger.Info(fmt.Sprintf("Using RPC URL: %s", rpcURL))
+			logger.Info(fmt.Sprintf("NodeID: %s staking %s tokens", nodeID.String(), utils.FormatAmount(stakeAmount, 18)))
+			logger.Info("")
+			tx, receipt, err = InitializeValidatorRegistrationPoSNative(
+				logger,
+				rpcURL,
+				managerAddress,
+				ownerSigner,
+				nodeID,
+				blsPublicKey,
+				expiry,
+				balanceOwners,
+				disableOwners,
+				delegationFee,
+				stakeDuration,
+				stakeAmount,
+				rewardRecipient,
+				useACP99,
+			)
+			if err != nil {
+				if !errors.Is(err, validatormanager.ErrNodeAlreadyRegistered) {
+					return nil, ids.Empty, nil, evm.TransactionError(tx, err, "failure initializing validator registration")
+				}
+				logger.Info(logging.LightBlue.Wrap("The validator registration was already initialized. Proceeding to the next step"))
+				alreadyInitialized = true
+			} else {
+				logger.Info(fmt.Sprintf("Validator registration initialized. InitiateTxHash: %s", tx.Hash()))
+			}
+			ux.Logger.PrintToUser("%s", fmt.Sprintf("Validator staked amount: %s", utils.FormatAmount(stakeAmount, 18)))
+		} else {
+			managerAddress = common.HexToAddress(managerAddressStr)
+			tx, receipt, err = InitializeValidatorRegistrationPoA(
+				logger,
+				rpcURL,
+				managerAddress,
+				ownerSigner,
+				nodeID,
+				blsPublicKey,
+				expiry,
+				balanceOwners,
+				disableOwners,
+				weight,
+				useACP99,
+			)
+			if err != nil {
+				if !errors.Is(err, validatormanager.ErrNodeAlreadyRegistered) {
+					return nil, ids.Empty, nil, evm.TransactionError(tx, err, "failure initializing validator registration")
+				}
+				logger.Info(logging.LightBlue.Wrap("The validator registration was already initialized. Proceeding to the next step"))
+				alreadyInitialized = true
+			} else if generateRawTxOnly {
+				return nil, ids.Empty, tx, nil
+			}
+			logger.Info(fmt.Sprintf("Validator weight: %d", weight))
+		}
+	} else {
+		logger.Info(logging.LightBlue.Wrap("The validator registration was already initialized. Proceeding to the next step"))
+	}
+
+	var unsignedMessage *warp.UnsignedMessage
+	if receipt != nil {
+		unsignedMessage, err = evm.ExtractWarpMessageFromReceipt(receipt)
+		if err != nil {
+			return nil, ids.Empty, nil, err
+		}
+	}
+	signedMessage, validationID, err := GetRegisterL1ValidatorMessage(
+		ctx,
+		rpcURL,
+		network,
+		aggregatorLogger,
+		0,
+		subnetID,
+		managerSubnetID,
+		managerBlockchainID,
+		managerAddress,
+		nodeID,
+		[48]byte(blsPublicKey),
+		expiry,
+		balanceOwners,
+		disableOwners,
+		weight,
+		alreadyInitialized,
+		initiateTxHash,
+		unsignedMessage,
+		signatureAggregatorEndpoint,
+		pchainHeight,
+	)
+
+	return signedMessage, validationID, nil, err
 }
