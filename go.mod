@@ -5,10 +5,10 @@ go 1.24.9
 require (
 	connectrpc.com/connect v1.19.1
 	github.com/ava-labs/avalanchego v1.14.0-fuji-rc.1
-	github.com/ava-labs/coreth v0.15.4-rc.4
+	github.com/ava-labs/coreth v0.16.0
 	github.com/ava-labs/icm-services v1.4.1-0.20251021221544-ae1d7d5a81f3
 	github.com/ava-labs/ledger-avalanche-go v1.1.0
-	github.com/ava-labs/libevm v1.13.15-0.20251003195629-910e897c54c3
+	github.com/ava-labs/libevm v1.13.15-0.20251016142715-1bccf4f2ddb2
 	github.com/ava-labs/subnet-evm v0.8.0-fuji
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cubist-labs/cubesigner-go-sdk v0.0.16
@@ -133,12 +133,12 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
-	golang.org/x/net v0.45.0 // indirect
+	golang.org/x/crypto v0.43.0 // indirect
+	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/term v0.35.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090 // indirect
