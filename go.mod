@@ -11,7 +11,7 @@ require (
 	github.com/ava-labs/libevm v1.13.15-0.20251003195629-910e897c54c3
 	github.com/ava-labs/subnet-evm v0.8.0-fuji
 	github.com/cavaliergopher/grab/v3 v3.0.1
-	github.com/cubist-labs/cubesigner-go-sdk v0.0.16
+	github.com/cubist-labs/cubesigner-go-sdk v0.0.17
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tyler-smith/go-bip32 v1.0.0
