@@ -74,11 +74,11 @@ func WithMaxRetries(n int) SignMessageOption {
 // retries when calling the signature aggregator. Values less than or equal
 // to zero are ignored.
 func WithInitialBackoff(seconds int) SignMessageOption {
-    return func(s *signMessageSettings) {
-        if seconds > 0 {
-            s.initialBackoff = time.Duration(seconds) * time.Second
-        }
-    }
+	return func(s *signMessageSettings) {
+		if seconds > 0 {
+			s.initialBackoff = time.Duration(seconds) * time.Second
+		}
+	}
 }
 
 // SignMessage sends a request to the signature aggregator to sign a message.
