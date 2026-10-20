@@ -1,6 +1,7 @@
 module github.com/ava-labs/avalanche-tooling-sdk-go
 
 go 1.24.9
+
 toolchain go1.26.10
 
 require (
