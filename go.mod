@@ -2,6 +2,8 @@ module github.com/ava-labs/avalanche-tooling-sdk-go
 
 go 1.24.9
 
+toolchain go1.26.10
+
 require (
 	connectrpc.com/connect v1.19.1
 	github.com/ava-labs/avalanchego v1.14.0-fuji-rc.1
