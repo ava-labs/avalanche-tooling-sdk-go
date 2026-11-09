@@ -6,13 +6,19 @@ on:
       - main
   pull_request:
 
+permissions: {}
+
 jobs:
   lint:
+    permissions:
+      contents: read
     name: Lint
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -28,6 +34,8 @@ jobs:
           addlicense -f ./LICENSE.header -check -v ./**/*.go ./**/**/*.go
 
   unit_test:
+    permissions:
+      contents: read
     name: Unit Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -36,6 +44,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@v5
